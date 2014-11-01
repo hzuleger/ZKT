@@ -1,3 +1,29 @@
+zkt 0.92 -- 1. Oct 2007
+
+* func	Parameter "Serialformat" in dnssec.conf added 
+	Now it is possible to use the unixtime format for
+	the SOA serial number. If you use BIND 9.4 or
+	greater in conjunction with this, than there is no
+	need for the special SOA serial formating in
+	the zonefile. (Thanks to Jakob Schlyter for the
+	-N option of dnssec-signzone and the suggestion to
+	add the unixtime support to zkt)
+	
+* func	Option --ksk-roll-stat added
+
+* port	Added macro HAS_GETOPT_LONG to support OS with
+	lack of getopt_long() (e.g. solaris)
+	Options -[01239] added
+
+* misc	Unused macro HAS_ULONG removed from config.h.
+	Deklaration of unsigned types moved from dki.h to
+	config.h (so it will be available in _all_ source
+	files). Thanks to Mans Nilsson.
+	Unused macro isblank() (ncparse.c) removed.
+
+* bug	In dosigning(): freeze the dynamic zone _before_ copying
+	the zone file
+
 zkt 0.91 -- 1. Apr 2007
 
 * doc	--ksk-rollover option added to usage()

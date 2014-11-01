@@ -17,7 +17,7 @@ CFLAGS	+=	$(PROFILE) $(OPTIM)
 LDFLAGS	+=	$(PROFILE)
 
 PROJECT =	zkt
-VERSION =	0.91
+VERSION =	0.92
 
 HEADER	=	dki.h misc.h domaincmp.h zconf.h config.h strlist.h \
 		zone.h zkt.h debug.h ncparse.h zktr.h
@@ -60,11 +60,11 @@ tar:	$(PROJECT)-$(VERSION).tar
 man:	$(MAN_ZKT).html $(MAN_ZKT).pdf $(MAN_SIG).html $(MAN_SIG).pdf
 
 $(MAN_ZKT).html: $(MAN_ZKT)
-	groff -Thtml -man $(MAN_ZKT) > $(MAN_ZKT).html
+	groff -Thtml -man -mhtml $(MAN_ZKT) > $(MAN_ZKT).html
 $(MAN_ZKT).pdf: $(MAN_ZKT)
 	groff -Tps -man $(MAN_ZKT) | ps2pdf - $(MAN_ZKT).pdf
 $(MAN_SIG).html: $(MAN_SIG)
-	groff -Thtml -man $(MAN_SIG) > $(MAN_SIG).html
+	groff -Thtml -man -mhtml $(MAN_SIG) > $(MAN_SIG).html
 $(MAN_SIG).pdf: $(MAN_SIG)
 	groff -Tps -man $(MAN_SIG) | ps2pdf - $(MAN_SIG).pdf
 	
@@ -77,11 +77,12 @@ depend:
 
 ## all dependicies
 #:r !make depend
-#gcc -MM dnssec-signer.c zone.c ncparse.c dnssec-zkt.c strlist.c zkt.c dki.c misc.c domaincmp.c zconf.c zktr.c
+#gcc -MM dnssec-signer.c zone.c ncparse.c zktr.c dnssec-zkt.c strlist.c zkt.c dki.c misc.c domaincmp.c zconf.c
 dnssec-signer.o: dnssec-signer.c config.h zconf.h debug.h misc.h \
   ncparse.h zone.h dki.h zktr.h
 zone.o: zone.c config.h debug.h misc.h zconf.h dki.h zone.h
 ncparse.o: ncparse.c debug.h misc.h ncparse.h
+zktr.o: zktr.c zktr.h
 dnssec-zkt.o: dnssec-zkt.c config.h debug.h misc.h strlist.h zconf.h \
   dki.h
 strlist.o: strlist.c strlist.h
@@ -90,4 +91,3 @@ dki.o: dki.c config.h debug.h misc.h zconf.h dki.h
 misc.o: misc.c config.h zconf.h misc.h
 domaincmp.o: domaincmp.c domaincmp.h
 zconf.o: zconf.c config.h zconf.h dki.h
-zktr.o: zktr.c zktr.h

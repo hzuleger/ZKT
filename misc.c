@@ -28,8 +28,7 @@
 
 extern	const	char	*progname;
 
-static	int	incr_soa (FILE *fp);
-static	int	incr_soa_serial (FILE *fp);
+static	int	incr_soa_serial (FILE *fp, int use_unixtime);
 
 /*****************************************************************
 **	str_delspace (s)
@@ -419,8 +418,8 @@ int	copyzonefile (const char *fromfile, const char *tofile)
 		}
 		else
 		{
-if ( bufoverflow )
-	fprintf (stderr, "buffer overflow\n");
+			if ( bufoverflow )
+				fprintf (stderr, "!! buffer overflow in copyzonefile() !!\n");
 			if ( !multi_line_dnskey )
 				fputs (buf, outfp);	
 			else
@@ -699,7 +698,7 @@ time_t	stop_timer (time_t start)
 
 /****************************************************************
 **
-**	int	incr_serial (filename)
+**	int	incr_serial (filename, use_unixtime)
 **
 **	This function depends on a special syntax formating the
 **	SOA record in the zone file!!
@@ -718,7 +717,7 @@ time_t	stop_timer (time_t start)
 **	<SPACEes or TABs>      1         ; Serial 
 **
 ****************************************************************/
-int	incr_serial (const char *fname)
+int	incr_serial (const char *fname, int use_unixtime)
 {
 	FILE	*fp;
 	char	buf[4095+1];
@@ -726,10 +725,19 @@ int	incr_serial (const char *fname)
 	int	ttl;
 	int	error;
 
+	/**
+	   since BIND 9.4, there is a dnssec-signzone option available for
+	   serial number increment.
+	   If the user request "unixtime" than use this mechanism 
+	**/
+#if defined(BIND_VERSION) && BIND_VERSION >= 940
+	if ( use_unixtime )
+		return 0;
+#endif
 	if ( (fp = fopen (fname, "r+")) == NULL )
 		return -1;
 
-		/* read until the line matches the begin of a soa record ... */
+		/* read until the line matches the beginning of a soa record ... */
 	while ( fgets (buf, sizeof buf, fp) &&
 		    sscanf (buf, "@ IN SOA %255s %*s (\n", master) != 1 )
 		;
@@ -740,7 +748,7 @@ int	incr_serial (const char *fname)
 		return-2;
 	}
 
-	error = incr_soa_serial (fp);	/* .. incr soa serial no ... */
+	error = incr_soa_serial (fp, use_unixtime);	/* .. incr soa serial no ... */
 
 	if ( fclose (fp) != 0 )
 		return -5;
@@ -768,11 +776,11 @@ static	ulong	today_serialtime ()
 }
 
 /*****************************************************************
-**	incr_soa_serial (fp)
+**	incr_soa_serial (fp, use_unixtime)
 **	increment the soa serial number of the file 'fp'
 **	'fp' must be opened "r+"
 *****************************************************************/
-static	int	incr_soa_serial (FILE *fp)
+static	int	incr_soa_serial (FILE *fp, int use_unixtime)
 {
 	int	c;
 	long	pos,	eos;
@@ -797,15 +805,20 @@ static	int	incr_soa_serial (FILE *fp)
 	if ( digits < 10 )	/* not enough space for serial no ? */
 		return -4;
 
-	today = today_serialtime ();	/* YYYYmmdd00 */
-	if ( serial > 1970010100L && serial < today )	
-		serial = today;			/* set to current time */
-	serial++;			/* increment anyway */
+	if ( use_unixtime )
+		today = time (NULL);
+	else
+	{
+		today = today_serialtime ();	/* YYYYmmdd00 */
+		if ( serial > 1970010100L && serial < today )	
+			serial = today;			/* set to current time */
+		serial++;			/* increment anyway */
+	}
 
 	fseek (fp, pos, SEEK_SET);	/* go back to the beginning */
 	fprintf (fp, "%-*lu", digits, serial);	/* write as many chars as before */
 
-	return serial;	/* yep! */
+	return 1;	/* yep! */
 }
 
 #ifdef SOA_TEST
@@ -821,7 +834,7 @@ main (int argc, char *argv[])
 	now = today_serialtime ();
 	printf ("now = %lu\n", now);
 
-	if ( (err = incr_serial (argv[1])) < 0 )
+	if ( (err = incr_serial (argv[1]), 0) < 0 )
 		error ("can't change serial errno=%d\n", err);
 
 	snprintf (cmd, sizeof(cmd), "head -15 %s", argv[1]);

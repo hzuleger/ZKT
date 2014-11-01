@@ -1,4 +1,4 @@
-.TH dnssec-signer 8 "April 1, 2007" "ZKT 0.91" ""
+.TH dnssec-signer 8 "Oct 1, 2007" "ZKT 0.92" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -166,26 +166,26 @@ Print out the online help.
 .SH SAMPLE USAGE
 .TP 
 .fam C
-.B "dnssec-signer -N /var/named/named.conf -r -v -v 
+.B "dnssec-signer \-N /var/named/named.conf \-r \-v \-v 
 .fam T
 Sign all secure zones found in the named.conf file and, if necessary,
 trigger a reload of the zone.
 Print some explanatory remarks on stdout.
 .TP
 .fam C
-.B "dnssec-signer -D zonedir/example.net. -f -v -v 
+.B "dnssec-signer \-D zonedir/example.net. \-f \-v \-v 
 .fam T
 Force the signing of the zone found in the directory
 .I zonedir/example.net .
 Do not reload the zone.
 .TP
 .fam C
-.B "dnssec-signer -D zonedir -f -v -v example.net.
+.B "dnssec-signer \-D zonedir \-f \-v \-v example.net.
 .fam T
 Same as above.
 .TP
 .fam C
-.B "dnssec-signer -f -v -v example.net.
+.B "dnssec-signer \-f \-v \-v example.net.
 .fam T
 Same as above if the
 .I dnssec.conf
@@ -194,7 +194,7 @@ file contains the path of the parent directory of the
 zone.
 .TP
 .fam C
-.B "dnssec-signer -f -v -v -o example.net. zone.db
+.B "dnssec-signer \-f \-v \-v \-o example.net. zone.db
 .fam T
 Same as above if we are in the directory containing the
 .I example.net
@@ -257,6 +257,7 @@ parameter
 The default is
 .I dnskey.db .
 .br
+.if t \{\
 .nf
 .fam C
    ...
@@ -266,22 +267,29 @@ $INCLUDE dnskey.db
    ...
 .fi
 .fam T
+.\}
 .TP
 Control the format of the SOA-Record
 For automatic incrementation of the serial number, the SOA-Record
-must be formated closely like the following template.
-The serial number must be on a single line and left justified in a field
-of at least 10 spaces!
+must be formated, so that the serial number is on a single line and
+left justified in a field of at least 10 spaces!
+.if t \{\
 .fam C
-.nf
-@	IN SOA	ns1.example.net. hostmaster.example.net.  (
-				60        ; Serial	
-				43200	; Refresh
-				1800	; Retry
-				2W	; Expire
-				7200 )	; Minimum
+.fi 0
+@  IN SOA  ns1.example.net. hostmaster.example.net.  (
+		60        ; Serial    
+		43200 ; Refresh
+		1800  ; Retry
+		2W    ; Expire
+		7200 ); Minimum
 .fi
 .fam T
+.\}
+If you use a BIND Verison of 9.4 or greater and
+use the unixtime format for the serial number (See parameter
+Serialformat in 
+.IR dnssec.conf )
+than this is not necessary.
 .TP
 Try to sign the zone
 If the current working directory is the directory of the zone
@@ -290,8 +298,8 @@ use the command
 .fam C
 .nf
 .sp 0.5
-    $  dnssec-signer -D .. -v -v example.net
-    $  dnssec-signer -o example.net.
+    $  dnssec-signer \-D .. \-v \-v example.net
+    $  dnssec-signer \-o example.net.
 .sp 0.5
 .fi
 .fam T
@@ -337,7 +345,7 @@ Maybe there is only limited usage in split dns environments.
 Holger Zuleger 
 
 .SH COPYRIGHT
-Copyright (c) 2005 by Holger Zuleger.
+Copyright (c) 2005 \- 2007 by Holger Zuleger.
 Licensed under the GPL 2. There is NO warranty; not even for MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
 .\"--------------------------------------------------

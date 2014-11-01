@@ -1,28 +1,32 @@
 #
 #	README  dnssec zone key tool
 #
-#	(c) March 2005 by Holger Zuleger  hznet
+#	(c) March 2005 - Aug 2007 by  Holger Zuleger  hznet
 #
 
-Please consult "http://www.hznet.de/dns/zkt/" to get more infos about zkt.
+For more information about the DNSSEC Zone Key Tool please
+have a look at "http://www.hznet.de/dns/zkt/"
 
 Build:
 
 a) Create a directory for the zkt source code
-	$ mkdir zkt-0.65
+	$ mkdir zkt-0.92
 
 b) Change to dir
-	$ cd zkt-0.65
+	$ cd zkt-0.92
 
 c) Get the current version of zkt
-	$ wget http://www.hznet.de/dns/zkt/zkt-0.65.tar 
+	$ wget http://www.hznet.de/dns/zkt/zkt-0.92.tar 
 
 d) Unpack
-	$ tar xvf zkt-0.65.tar
+	$ tar xvf zkt-0.92.tar
 
 e) (optional)  Change INSTALLDIR in Makefile (def: $HOME/bin/)
 
 f) (optional) Edit config.h
+	set HAS_UTYPES to 0 if your OS has no ulong etc.
+	set HAS_STRFTIME to 0 if your OS has no strftime() support
+	set BIND_VERSION to your installed bind version (def: 941)
 	set path of BIND dnssec utilities (BIND_UTIL_PATH, def: /usr/local/sbin/)
 	set CONFIG_FILEPATH of default dnssec.conf file (def: /var/named/)
 

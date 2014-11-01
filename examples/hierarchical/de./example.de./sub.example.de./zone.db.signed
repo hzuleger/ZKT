@@ -1,110 +1,103 @@
-; File written on Wed Dec 20 10:17:27 2006
-; dnssec_signzone version 9.4.0rc1
+; File written on Fri Aug 17 00:29:12 2007
+; dnssec_signzone version 9.5.0a6
 sub.example.de.		7200	IN SOA	ns1.example.de. hostmaster.example.de. (
-					2006122005 ; serial
+					2007081602 ; serial
 					86400      ; refresh (1 day)
 					1800       ; retry (30 minutes)
 					1209600    ; expire (2 weeks)
 					7200       ; minimum (2 hours)
 					)
-			7200	RRSIG	SOA 1 3 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					JDNDnRUf5XewmXk9UjhQNhqhUmYP/FuI26Kv
-					JxPM4bmmf4hY5jBjLz6w/iaTsXC9gxAknA91
-					67eA2Ew2eOijBg== )
+			7200	RRSIG	SOA 1 3 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					JsM24vB8MjgjzdtVt1qr6iSYbRhWk7TYQYyQ
+					VwZRNKO2gQkJR5vmkQKC7k1K/RlN/8kVjGpl
+					Xp/+flTMJZaQVQ== )
 			7200	NS	ns1.example.de.
-			7200	RRSIG	NS 1 3 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					Vmgjg8H324EUcJNWQJtbQFggDUMENA7tRZyx
-					w35S1o5Z95uyBSYshoZtWM1u3QbW3Kv4aXV6
-					prjidodyHQD+vw== )
+			7200	RRSIG	NS 1 3 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					PfqmS4e1ZeU1asENRP420WpLMxak7ikz08m8
+					8OhZ+2FqUGw6P1dPNUqcqwNPlGe5w9EieYEb
+					GM5BvbF78+mzOw== )
 			7200	NSEC	a.sub.example.de. NS SOA RRSIG NSEC DNSKEY
-			7200	RRSIG	NSEC 1 3 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					e80hdj5EN9W0p189jA0nCYT0zPM83L5295DV
-					5vwBVoVJFerQRZ937MZp+ggqGaxsPO9fLQct
-					RAH2xQn0oVJvPg== )
-			14400	DNSKEY	257 3 5 (
+			7200	RRSIG	NSEC 1 3 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					dvYJIRT0q4m22Mgbg2+DLdj6kapLdJ4Y8iA6
+					CUz8W1nsPdJZjKbMGXu/sgBv7kOpImNrpD3D
+					aGQmb/PKozkKxg== )
+			3600	DNSKEY	257 3 5 (
 					BQEAAAABv64v2IySqm36jeN5wYkeAZitFEdp
 					1OmapEqPdN6XP2C09gNPJmV082z+O3slrFPf
 					O4yawOKn3K/C/URkZ29Ozapog/4WQJ0bwgbD
 					JeE8nWLl1ZbwA8duz4GZPFg05g5TsXDFnxnc
 					NXfhN/xOYs7NfaZdbbzLxd1NYXHiC2na3xU=
 					) ; key id = 64524
-			14400	DNSKEY	257 3 5 (
-					BQEAAAABu0yzVsyTPlsw4fU+tuatjVcz0d0C
-					hxWGr7WUSUowTwTQKdSIDE+MU9L8AgUnu8FJ
-					TmCkkf4nTSoyRi+gRNRZJZTk3KRtxIWnfySo
-					8fRgz6idCnOmkpq7OwFJHLscjxY9moFKcKDE
-					koAHl5JO3JGehFzn5hJhnjdFa8/0CzR4dvU=
-					) ; key id = 31176
-			14400	DNSKEY	256 3 1 (
-					BQEAAAABsXqYV8CQfi3ovNevXqe/MmoqjCCh
-					ifPy9hQ7UmsYwLfsjl8GWJk/4xg6O3A6b1ob
-					A8g7aOl9JLBXRZ6UC/wD6Q==
-					) ; key id = 64515
-			14400	DNSKEY	256 3 1 (
+			3600	DNSKEY	256 3 1 (
+					BQEAAAABylyKYJAJDPvVGxLMaXIFLzF/nqQE
+					x6/68UbZJwau2rVbktY7mLa6X97fu9fz2dCE
+					c5kCA9/ecf5naXbD0ZCZew==
+					) ; key id = 37017
+			3600	DNSKEY	256 3 1 (
 					BQEAAAABrNDhCmNgMQbHFNJcK3kDynnO7ITJ
 					Bi1Yrfw4pIZqqW4Hg8q+TQD+reqtlY2lbyH8
 					9Vg6wNkvuMGqLGUUXoqKuw==
 					) ; key id = 35466
-			14400	RRSIG	DNSKEY 1 3 14400 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					aBbAkVhVkDoi1xWHatvKsMJVkJx9ctSEXdmz
-					/ZWZr1pdesZHLhHfJAYKYxr7WwJnmZYeUm8z
-					lAwCUonwKk8stA== )
-			14400	RRSIG	DNSKEY 5 3 14400 20061223081726 (
-					20061220081726 64524 sub.example.de.
-					Uf8SesGcO+O21tfp36rx8fGHnvJYLVcSfWTM
-					GhGl+/exJHpQ2CRDrhl+8YiBRggYNYBi4pI2
-					+vxAEb/AtwsEHgpkV03vfYThQR4GhsyD3dfr
-					d0CPCt2HVs4teAIeRlY8T76DrtcUKAUBCLdT
-					1xxiHeD8sWdKJFE9YC2uDEchZz4= )
+			3600	RRSIG	DNSKEY 1 3 3600 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					dm+v/fu4riVEeREZgwCqOCa/uoXugLAvRVhN
+					z2VRXS5fNEBFPzVFtcRe6rIPG5zg4yCMjfsh
+					Q6qTo0ybwu4ulw== )
+			3600	RRSIG	DNSKEY 5 3 3600 20070819212912 (
+					20070816212912 64524 sub.example.de.
+					vhqrL8g42wEXrSAFFF5OglGuWdJCJlRzJ3/+
+					zyfmb6bmSGRX94Cg/G1dDL+bgXpST2bRTi4Z
+					lfXhUaDhl3bEX6eYSrV72m5fwkZScZgVAiWX
+					NAuK72y8xzlKwtG5eipROeEIBn8cFww8V3/q
+					PZ2fQZj6IHCDaw7v5YRvsfBLo14= )
 a.sub.example.de.	7200	IN A	1.2.3.4
-			7200	RRSIG	A 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					nsWeLH9u9HoJDqFgyrmnWme2PKey6ILyeTEn
-					MSNQ/pkBBAB8chMrw6RuZFKXnIyF0+oN2drL
-					8XBge0LmkIvrTw== )
+			7200	RRSIG	A 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					RImYDRQNySzzVl9N/ruhTpx+NSiGh81MBCc8
+					K5kY3+lUummyVeQoUgT5cznp9gOu15ln/lLf
+					Kng8Ijg4fyiV1A== )
 			7200	NSEC	b.sub.example.de. A RRSIG NSEC
-			7200	RRSIG	NSEC 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					cp24KRenCaND3Ng8uitE/eLPj/C7n0Ms5lWl
-					0b5lnOv1Uy9OU5ej9LqaUEzXm7LBf0GtWS2W
-					wq1M/m4UjrsVPA== )
+			7200	RRSIG	NSEC 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					ElAyiMBrxnPzPZRki39K2PXCt3irLH+R6kAf
+					uMy7M5eZ7q56nB6TU6zcPp2QDXve3vTetDEJ
+					HPFcuxItZ0dfHQ== )
 b.sub.example.de.	7200	IN A	1.2.3.5
-			7200	RRSIG	A 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					GhHepX2Zd8cYUUnBpl3IMSiJthBtkrTu+tw5
-					IyxoY+OsoBElPicl7PAZv7vKIZX0UybC+/5G
-					t60wayfER0xXgQ== )
+			7200	RRSIG	A 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					lDmaQrx2z6/jOulNoCHJ7qtqFYbUKkkjg70B
+					WJz8L25DVbyToWju3MUeK33mzOaoUZQjaMeu
+					h09alVu0iKca6Q== )
 			7200	NSEC	c.sub.example.de. A RRSIG NSEC
-			7200	RRSIG	NSEC 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					EFqZVwprZWsAsKGDGflujhPR+qwfzQjFkdXg
-					3GNvVaNtGdN5eqBg1Z2KiOlcaBFoZcX0Z9cs
-					xVzZUQTfEYq5rg== )
+			7200	RRSIG	NSEC 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					Hjq6y2lrPFcfPSVNQ0T59wmx95BABJRi8rHe
+					R/FqiFJNIzVRqU+XpIZnBlRX1IFJNi84H0zZ
+					v6gOhsG40MAyVA== )
 c.sub.example.de.	7200	IN A	1.2.3.6
-			7200	RRSIG	A 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					eIqBpmQ0uGGvtUcQCzsAZPBYmg49d7v4nPdW
-					WDWX1t88FUHIDsaSlDDBiUF+tr1bN1Uxpedh
-					eQtuUjG14exFaw== )
+			7200	RRSIG	A 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					RBlIN2J5CpXYEJtWiK/g5JyDjfivp9WDnzrx
+					JmUDbBoT5jpR44m8QY1LgjTacob49Xpvjtgp
+					q9fC45KFln+0tQ== )
 			7200	NSEC	localhost.sub.example.de. A RRSIG NSEC
-			7200	RRSIG	NSEC 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					aA9xYLx00yocuZTDhzr7uKEV7+N5vyMWjRnv
-					J7+XZn26DEeoFA2671EOkyAjPYWa4OWIREQq
-					xNsR61SRSEA7Og== )
+			7200	RRSIG	NSEC 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					kdYkN0l6QtfGTpMW5BW2e+ES+cxd40XnYsT2
+					kp8L/2arwSd1mLlfymRRtypiMdjNyuX/LAFD
+					uAm6q6Ne9CYgaA== )
 localhost.sub.example.de. 7200	IN A	127.0.0.1
-			7200	RRSIG	A 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					BwV2FquFlpE2l4RZ7YiasXt1WZ+btV6ME7Df
-					2nzOVBiQ+iqps+7SYW1NyvD5QmSMP0JuZNP7
-					N/cNqdu4ddb3Kg== )
+			7200	RRSIG	A 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					RvNuyxvb3ieXI3/iNwCvMAzdOtrg8RpQo/aV
+					tPDopPM2btoB9OvCn3cYYr8vlnyCq31I8Tc2
+					HyMBUpoA8Hn3cw== )
 			7200	NSEC	sub.example.de. A RRSIG NSEC
-			7200	RRSIG	NSEC 1 4 7200 20061223081726 (
-					20061220081726 64515 sub.example.de.
-					h2Tt3lgeEW0UYtRcTtMiUxYawhtCp7eU77fp
-					48HJ30sbNQLOfTSnM8OEYEpIe01JfAS5O64k
-					HNANf3Ydsa31kA== )
+			7200	RRSIG	NSEC 1 4 7200 20070819212912 (
+					20070816212912 35466 sub.example.de.
+					hp4xPn1WBJHUhfwlFRAocAchRSldnAhDH1XP
+					NVP9S2NnuvZS9fl4zQSXH6FFY7be3MlRV7Sk
+					nRDsz2z9O5X9gQ== )

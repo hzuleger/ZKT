@@ -15,8 +15,6 @@
 # include "ncparse.h"
 #undef extern
 
-# define	isblank(c)	((c) == ' ' || (c) == '\t')
-
 # define	TOK_STRING	257
 # define	TOK_DIR		258
 # define	TOK_INCLUDE	259
@@ -186,7 +184,7 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 	while ( (tok = gettok (fp, strval, sizeof strval)) != EOF )
 	{
 		if ( tok > 0 && tok < 256 )
-			error ("parse_namedconf: found token with value %-10d: %c\n", tok, tok);
+			error ("parse_namedconf: token found with value %-10d: %c\n", tok, tok);
 		else if ( tok == TOK_DIR )
 		{
 			if ( gettok (fp, strval, sizeof (strval)) == TOK_STRING )

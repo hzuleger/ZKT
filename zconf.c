@@ -40,12 +40,14 @@
 #define CONF_TIMEINT	3
 #define CONF_BOOL	4
 #define CONF_ALGO	5
-#define CONF_COMMENT	6
+#define CONF_SERIAL	6
+#define CONF_COMMENT	7
 
 static	zconf_t	def = {
 	ZONEDIR, RECURSIVE, 
 	1, 0, 0,
-	SIG_VALIDITY, MAX_TTL, KEY_TTL, PROPTIME, RESIGN_INT,
+	SIG_VALIDITY, MAX_TTL, KEY_TTL, PROPTIME, Incremental,
+	RESIGN_INT,
 	KSK_LIFETIME, KSK_ALGO, KSK_BITS, KSK_RANDOM,
 	ZSK_LIFETIME, ZSK_ALGO, ZSK_BITS, ZSK_RANDOM,
 	DNSKEYFILE, ZONEFILE, KEYSETDIR,
@@ -72,7 +74,7 @@ static	zconf_para_t	conf[] = {
 	{ "LeftJustify",	CONF_BOOL,	&def.ljust },
 
 	{ "",			CONF_COMMENT,	NULL },
-	{ "",			CONF_COMMENT,	"zone specific timing values" },
+	{ "",			CONF_COMMENT,	"zone specific values" },
 	{ "ResignInterval",	CONF_TIMEINT,	&def.resign },
 	{ "Sigvalidity",	CONF_TIMEINT,	&def.sigvalidity },
 	{ "Max_TTL",		CONF_TIMEINT,	&def.max_ttl },
@@ -81,6 +83,7 @@ static	zconf_para_t	conf[] = {
 #if defined (DEF_TTL)
 	{ "def_ttl",		CONF_TIMEINT,	&def.def_ttl },
 #endif
+	{ "Serialformat",	CONF_SERIAL,	&def.serialform },
 
 	{ "",			CONF_COMMENT,	NULL },
 	{ "",			CONF_COMMENT,	"signing key parameters"},
@@ -161,6 +164,7 @@ static	int set_all_varptr (zconf_t *cp)
 #if defined (DEF_TTL)
 	set_varptr ("def_ttl", &cp->def_ttl);
 #endif
+	set_varptr ("serialformat", &cp->serialform);
 
 	set_varptr ("ksk_lifetime", &cp->k_life);
 	set_varptr ("ksk_algo", &cp->k_algo);
@@ -303,6 +307,15 @@ zconf_t	*loadconfig (char *filename, zconf_t *z)
 						error ("Illegal algorithm \"%s\" "
 							"in line %d.\n" , val, line);
 					break;
+				case CONF_SERIAL:
+					if ( strcasecmp (val, "unixtime") == 0 )
+						*((serial_form_t *)c->var) = Unixtime;
+					else if ( strcasecmp (val, "incremental") == 0 )
+						*((serial_form_t *)c->var) = Incremental;
+					else
+						error ("Illegal serial no format \"%s\" "
+							"in line %d.\n" , val, line);
+					break;
 				case CONF_BOOL:
 					*((int *)c->var) = ISTRUE (val);
 					break;
@@ -371,6 +384,13 @@ int	printconfig (const char *fname, const zconf_t *z)
 			i = *(int*)cp->var;
 			fprintf (fp, "%s:\t%s", cp->label, dki_algo2str (i));
 			fprintf (fp, "\t# (Algorithm ID %d)\n", i);
+			break;
+		case CONF_SERIAL:
+			fprintf (fp, "%s:\t", cp->label);
+			if ( *(serial_form_t*)cp->var == Unixtime )
+				fprintf (fp, "unixtime\n");
+			else
+				fprintf (fp, "incremental\n");
 			break;
 		case CONF_INT:
 			fprintf (fp, "%s:\t%d\n", cp->label, *(int *)cp->var);

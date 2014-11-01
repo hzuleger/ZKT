@@ -29,7 +29,7 @@ extern	void    error (char *fmt, ...);
 extern	void    fatal (char *fmt, ...);
 extern	void    logmesg (char *fmt, ...);
 extern	void	logflush (void);
-extern	int	incr_serial (const char *fname);
+extern	int	incr_serial (const char *fname, int use_unixtime);
 extern	char	*str_untaint (char *str);
 extern	char	*strchop (char *str, char c);
 extern	int	is_dotfile (const char *name);

@@ -6,16 +6,16 @@
 #ifndef CONF_H
 # define CONF_H
 
+#ifndef HAS_GETOPT_H
+# define	HAS_GETOPT_LONG	1
+#endif
+
 #ifndef HAS_STRFTIME
 # define	HAS_STRFTIME	1
 #endif
 
 #ifndef HAS_UTYPES
 # define	HAS_UTYPES	1
-#endif
-
-#ifndef HAS_ULONG
-# define	HAS_ULONG	1
 #endif
 
 #ifndef PRINT_TIMEZONE
@@ -42,7 +42,7 @@
 //# define	REG_URL		"regkey://trusted-keys.de"
 
 #ifndef BIND_VERSION
-# define	BIND_VERSION	940
+# define	BIND_VERSION	941
 #endif
 
 #ifndef BIND_UTIL_PATH
@@ -55,10 +55,19 @@
 
 #ifndef ZKT_VERSION
 # if defined(USE_TREE) && USE_TREE
-#  define	ZKT_VERSION	"vT0.91 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"vT0.92 (c) Feb 2005 - Oct 2007 Holger Zuleger hznet.de"
 # else
-#  define	ZKT_VERSION	"v0.91 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"v0.92 (c) Feb 2005 - Oct 2007 Holger Zuleger hznet.de"
 # endif
+#endif
+
+/* don't change anything below this */
+
+#if !defined(HAS_UTYPES) || !HAS_UTYPES
+typedef	unsigned long	ulong;
+typedef	unsigned int	uint;
+typedef	unsigned short	ushort;
+typedef	unsigned char	uchar;
 #endif
 
 #endif

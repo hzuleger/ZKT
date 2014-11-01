@@ -14,13 +14,6 @@
 #  include <time.h>
 # endif
 
-#if !defined(HAS_UTYPES) || !HAS_UTYPES
-typedef	unsigned long	ulong;
-typedef	unsigned int	uint;
-typedef	unsigned short	ushort;
-typedef	unsigned char	uchar;
-#endif
-
 # define	MAX_LABELSIZE	(255)	
 # define	MAX_FNAMESIZE	(1+255+2+3+1+5+1+11)
 				/* Kdomain.+ALG+KEYID.type  */

@@ -115,7 +115,7 @@ main (int argc, char *const argv[])
 		case 'd':
 			dynamic_zone = 1;
 			/* dynamic zone requires a NS reload... */
-			reloadflag = 0;		/* ...but rndc thaw reloads zone already */
+			reloadflag = 0;		/* ...but "rndc thaw" reloads the zone already */
 			break;
 #endif
 		case 'n':
@@ -266,6 +266,7 @@ static	int	dosigning (zone_t *zp)
 	int	err;
 	int	newkey;
 	int	newkeysetfile;
+	int	use_unixtime;
 	time_t	currtime;
 	time_t	zfile_time;
 	time_t	zfilesig_time;
@@ -317,18 +318,21 @@ static	int	dosigning (zone_t *zp)
 	** Check if it is time to do a re-sign. This is the case if
 	**	a) the command line flag -f is set, or
 	**	b) new keys are generated, or
-	**	c) if we found a new KSK of a delegated domain, or
-	**	d) the "zone.db" is newer than "zone.db.signed" or
-	**	e) "zone.db.signed" is older than the re-sign interval
+	**	c) we found a new KSK of a delegated domain, or
+	**	d) the "dnskey.db" file is newer than "zone.db" 
+	**	e) the "zone.db" is newer than "zone.db.signed" or
+	**	f) "zone.db.signed" is older than the re-sign interval
 	**/
 	if ( verbose )
 	{
 		if ( force )
 			logmesg ("\tRe-signing necessary: Option -f\n"); 
 		else if ( newkey )
-			logmesg ("\tRe-signing necessary: Modified keys\n"); 
+			logmesg ("\tRe-signing necessary: New zone keys\n"); 
 		else if ( newkeysetfile )
 			logmesg ("\tRe-signing necessary: Modified KSK in delegated domain\n"); 
+		else if ( get_mtime (path) > zfilesig_time )
+			logmesg ("\tRe-signing necessary: Modified keyes\n");
 		else if ( zfile_time > zfilesig_time )
 			logmesg ("\tRe-signing necessary: Zone file edited\n");
 		else if ( (currtime - zfilesig_time) > zp->conf->resign - (OFFSET) )
@@ -353,30 +357,19 @@ static	int	dosigning (zone_t *zp)
 	if ( !writekeyfile (path, zp->keys, zp->conf->key_ttl) )
 		error ("Can't create keyfile %s \n", path);
 
-	/* dynamic zones uses incremental signing, so we have to */
-	/* prepare the old (signed) file as new input file */
-	if ( dynamic_zone )
-	{
-		char	zfile[MAX_PATHSIZE+1];
-
-		pathname (zfile, sizeof (zfile), zp->dir, zp->file, NULL);
-		pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
-		if ( verbose )
-			logmesg ("\tDynamic Zone signing: copy old signed zone file %s to new input file %s\n",
-									path, zfile); 
-		if ( newkey )		
-			copyzonefile (path, zfile);
-		else
-			copyfile (path, zfile);
-		err = 1;
-	}
-	else		/* increment serial no in static zone files */
+	err = 1;
+	use_unixtime = ( zp->conf->serialform == Unixtime );
+#if defined(BIND_VERSION) && BIND_VERSION >= 940
+	if ( !dynamic_zone && !use_unixtime ) /* increment serial no in static zone files */
+#else
+	if ( !dynamic_zone ) /* increment serial no in static zone files */
+#endif
 	{
 		pathname (path, sizeof (path), zp->dir, zp->file, NULL);
 		err = 0;
 		if ( noexec == 0 )
 		{
-			if ( (err = incr_serial (path)) < 0 )
+			if ( (err = incr_serial (path, use_unixtime)) < 0 )
 				error ("Warning: could not increment serialno of domain %s in file %s (errno=%d)!\n",
 								zp->zone, path, err);
 			else if ( verbose )
@@ -385,7 +378,6 @@ static	int	dosigning (zone_t *zp)
 		else if ( verbose )
 				logmesg ("\tIncrementing serial number in file \"%s\"\n", path);
 	}
-
 
 	/* at last, sign the zone file */
 	if ( err > 0 )
@@ -398,14 +390,32 @@ static	int	dosigning (zone_t *zp)
 			logflush ();
 		}
 
+		/* dynamic zones uses incremental signing, so we have to */
+		/* prepare the old (signed) file as new input file */
 		if ( dynamic_zone )
-			dyn_update_freeze (zp->zone, 1);
+		{
+			char	zfile[MAX_PATHSIZE+1];
+
+			dyn_update_freeze (zp->zone, 1);	/* freeze dynmaic zone ! */
+
+			pathname (zfile, sizeof (zfile), zp->dir, zp->file, NULL);
+			pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
+			if ( verbose )
+				logmesg ("\tDynamic Zone signing: copy old signed zone file %s to new input file %s\n",
+										path, zfile); 
+			if ( newkey )	/* if we have new keys, they should be added to the zone file */
+				copyzonefile (path, zfile);
+			else		/* else we can do a simple file copy */
+				copyfile (path, zfile);
+		}
+
 		timer = start_timer ();
 		if ( (err = sign_zone (zp->dir, zp->zone, zp->file, zp->conf)) < 0 )
 			error ("Signing of zone %s failed (%d)!\n", zp->zone, err);
 		timer = stop_timer (timer);
+
 		if ( dynamic_zone )
-			dyn_update_freeze (zp->zone, 0);
+			dyn_update_freeze (zp->zone, 0);	/* thaw dynamic zone file */
 
 		if ( verbose )
 		{
@@ -694,10 +704,11 @@ static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl)
 static	int	sign_zone (const char *dir, const char *domain, const char *file, const zconf_t *conf)
 {
 	char	cmd[1023+1];
-	char	str[254+1];
+	char	str[1023+1];
 	char	rparam[254+1];
 	char	keysetdir[254+1];
 	char	*pseudo;
+	int	len;
 	FILE	*fp;
 
 	assert (conf != NULL);
@@ -705,7 +716,12 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 
 	str[0] = '\0';
 	if ( conf->lookaside && conf->lookaside[0] )
-		snprintf (str, sizeof (str), "-l %.250s", conf->lookaside);
+		len = snprintf (str, sizeof (str), "-l %.250s", conf->lookaside);
+
+#if defined(BIND_VERSION) && BIND_VERSION >= 940
+	if ( !dynamic_zone && conf->serialform == Unixtime )
+		snprintf (str+len, sizeof (str) - len, " -N unixtime");
+#endif
 
 	pseudo = "";
 	if ( conf->sig_pseudo )

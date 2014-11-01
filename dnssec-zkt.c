@@ -13,9 +13,12 @@
 # include <dirent.h>
 # include <assert.h>
 # include <unistd.h>
-# include <getopt.h>
 
 # include "config.h"
+#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+# include <getopt.h>
+#endif
+
 # include "debug.h"
 # include "misc.h"
 # include "strlist.h"
@@ -44,14 +47,18 @@ static	int	trustedkeyflag = 0;
 static	int	kskrollover = 0;
 static	char	*kskdomain = "";
 
+# define	short_options	":0:1:2:3:9A:C:D:P:R:HKTS:ZVac:dhkLl:prtz"
+#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
 static struct option long_options[] = {
-	{"ksk-rollover",	no_argument, NULL, 10},
-	{"ksk-newkey",		required_argument, NULL, 1},
-	{"ksk-publish",		required_argument, NULL, 2},
-	{"ksk-delkey",		required_argument, NULL, 3},
-	{"ksk-roll-phase1",	required_argument, NULL, 1},
-	{"ksk-roll-phase2",	required_argument, NULL, 2},
-	{"ksk-roll-phase3",	required_argument, NULL, 3},
+	{"ksk-rollover",	no_argument, NULL, '9'},
+	{"ksk-status",		required_argument, NULL, '0'},
+	{"ksk-roll-stat",	required_argument, NULL, '0'},
+	{"ksk-newkey",		required_argument, NULL, '1'},
+	{"ksk-publish",		required_argument, NULL, '2'},
+	{"ksk-delkey",		required_argument, NULL, '3'},
+	{"ksk-roll-phase1",	required_argument, NULL, '1'},
+	{"ksk-roll-phase2",	required_argument, NULL, '2'},
+	{"ksk-roll-phase3",	required_argument, NULL, '3'},
 	{"list-dnskeys",	no_argument, NULL, 'K'},
 	{"list-trustedkeys",	no_argument, NULL, 'T'},
 	{"ksk",			no_argument, NULL, 'k'},
@@ -73,6 +80,7 @@ static struct option long_options[] = {
 	{"help",		no_argument, NULL, 'H'},
 	{0, 0, 0, 0}
 };
+#endif
 
 static	int	parsedirectory (const char *dir, dki_t **listp);
 static	void	parsefile (const char *file, dki_t **listp);
@@ -112,16 +120,21 @@ main (int argc, char *argv[])
 
         opterr = 0;
 	opt_index = 0;
-	while ( (c = getopt_long (argc, argv, "A:C:D:P:R:HKTS:ZVac:dhkLl:prtz", long_options, &opt_index)) != -1 )
+#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+	while ( (c = getopt_long (argc, argv, short_options, long_options, &opt_index)) != -1 )
+#else
+	while ( (c = getopt (argc, argv, short_options)) != -1 )
+#endif
 	{
 		switch ( c )
 		{
-		case 10:		/* ksk rollover help */
-			ksk_rollover ("help", 0, NULL, NULL);
+		case '9':		/* ksk rollover help */
+			ksk_rollover ("help", c - '0', NULL, NULL);
 			exit (1);
-		case 1:		/* ksk rollover create new key */
-		case 2:		/* ksk rollover publish DS */
-		case 3:		/* ksk rollover delete old key */
+		case '1':		/* ksk rollover create new key */
+		case '2':		/* ksk rollover publish DS */
+		case '3':		/* ksk rollover delete old key */
+		case '0':		/* ksk rollover status */
 			action = c;
 			if ( !optarg )
 				usage ("ksk rollover requires an domain argument", config);
@@ -196,6 +209,11 @@ main (int argc, char *argv[])
 			break;
 		case 'z':		/* zsk only */
 			kskflag = 0;
+			break;
+		case ':':
+			snprintf (str, sizeof(str), "option \"-%c\" requires an argument.\n",
+										optopt);
+			usage (str, config);
 			break;
 		case '?':
 			if ( isprint (optopt) )
@@ -279,10 +297,11 @@ main (int argc, char *argv[])
 	case 'T':
 		zkt_list_trustedkeys (data);
 		break;
-	case 1:	/* ksk rollover new key */
-	case 2:	/* ksk rollover publish DS */
-	case 3:	/* ksk rollover delete old key */
-		ksk_rollover (kskdomain, action, data, config);
+	case '1':	/* ksk rollover new key */
+	case '2':	/* ksk rollover publish DS */
+	case '3':	/* ksk rollover delete old key */
+	case '0':	/* ksk rollover status */
+		ksk_rollover (kskdomain, action - '0', data, config);
 		break;
 	default:
 		zkt_list_keys (data);
@@ -291,66 +310,79 @@ main (int argc, char *argv[])
 	return 0;
 }
 
+# define	sopt_usage(mesg, value)	fprintf (stderr, mesg, value)
+#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+# define	lopt_usage(mesg, value)	fprintf (stderr, mesg, value)
+# define	loptstr(lstr, sstr)	lstr
+#else
+# define	lopt_usage(mesg, value)
+# define	loptstr(lstr, sstr)	sstr
+#endif
 static	void    usage (char *mesg, zconf_t *cp)
 {
         fprintf (stderr, "Secure DNS Zone Key Tool %s\n", ZKT_VERSION);
         fprintf (stderr, "\n");
         fprintf (stderr, "Show zone config parameter as %s file\n", LOCALCONF_FILE);
-        fprintf (stderr, "\tusage: %s -Z\n", progname);
-        fprintf (stderr, "\tusage: %s --zone-config\n", progname);
+        sopt_usage ("\tusage: %s -Z\n", progname);
+        lopt_usage ("\tusage: %s --zone-config\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "List keys in current or given directory (-r for recursive mode)\n");
-        fprintf (stderr, "\tusage: %s [-dhatkzpr] [-c config] [file|dir ...]\n", progname);
+        sopt_usage ("\tusage: %s [-dhatkzpr] [-c config] [file|dir ...]\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "List public part of keys in DNSKEY RR format\n");
-        fprintf (stderr, "\tusage: %s -K [-dhkzr] [-c config] [file|dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --list-dnskeys [-dhkzr] [-c config] [file|dir ...]\n", progname);
+        sopt_usage ("\tusage: %s -K [-dhkzr] [-c config] [file|dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --list-dnskeys [-dhkzr] [-c config] [file|dir ...]\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "List keys (output is suitable for trusted-keys section)\n");
-        fprintf (stderr, "\tusage: %s -T [-dhzr] [-c config] [file|dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --list-trustedkeys [-dhzr] [-c config] [file|dir ...]\n", progname);
+        sopt_usage ("\tusage: %s -T [-dhzr] [-c config] [file|dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --list-trustedkeys [-dhzr] [-c config] [file|dir ...]\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "Create a new key \n");
-        fprintf (stderr, "\tusage: %s -C <name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --create=<name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
+        sopt_usage ("\tusage: %s -C <name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --create=<name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\t\tKSK (use -k):  %s %d bits\n", dki_algo2str (cp->k_algo), cp->k_bits);
         fprintf (stderr, "\t\tZSK (default): %s %d bits\n", dki_algo2str (cp->z_algo), cp->z_bits);
         fprintf (stderr, "\n");
         fprintf (stderr, "Initiate a semi-automated KSK rollover");
-        fprintf (stderr, " ('%s --ksk-rollover' prints out a short description)\n", progname);
-        fprintf (stderr, "\tusage: %s {--ksk-roll-phase1|--ksk-newkey} do.ma.in.\n", progname);
-        fprintf (stderr, "\tusage: %s {--ksk-roll-phase2|--ksk-publish} do.ma.in.\n", progname);
-        fprintf (stderr, "\tusage: %s {--ksk-roll-phase3|--ksk-delkey} do.ma.in.\n", progname);
+        fprintf (stderr, "('%s -9%s' prints out a short description)\n", progname, loptstr ("|--ksk-rollover", ""));
+        sopt_usage ("\tusage: %s {-1} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-phase1|--ksk-newkey} do.ma.in.\n", progname);
+        sopt_usage ("\tusage: %s {-2} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-phase2|--ksk-publish} do.ma.in.\n", progname);
+        sopt_usage ("\tusage: %s {-3} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-phase3|--ksk-delkey} do.ma.in.\n", progname);
+        sopt_usage ("\tusage: %s {-0} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-stat|--ksk-status} do.ma.in.\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "Change key status of specified key to pre-publish, active or depreciated\n");
         fprintf (stderr, "\t(<keyspec> := tag | tag:name) \n");
-        fprintf (stderr, "\tusage: %s -P|-A|-D <keyspec> [-dr] [-c config] [dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --pre-publish=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --active=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --depreciated=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        sopt_usage ("\tusage: %s -P|-A|-D <keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --pre-publish=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --active=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --depreciated=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "Remove (rename) specified key (<keyspec> := tag | tag:name) \n");
-        fprintf (stderr, "\tusage: %s -R <keyspec> [-dr] [-c config] [dir ...]\n", progname);
-        fprintf (stderr, "\tusage: %s --rename=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        sopt_usage ("\tusage: %s -R <keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --rename=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "Destroy specified key (<keyspec> := tag | tag:name) \n");
-        fprintf (stderr, "\tusage: %s --destroy=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --destroy=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
 
         fprintf (stderr, "\n");
         fprintf (stderr, "General options \n");
-        fprintf (stderr, "\t-c file, --config=file\n");
+        fprintf (stderr, "\t-c file%s", loptstr (", --config=file\n", ""));
 	fprintf (stderr, "\t\t read config from <file> instead of %s\n", CONFIG_FILE);
         fprintf (stderr, "\t-h\t no headline or trusted-key section header/trailer in -T mode\n");
-        fprintf (stderr, "\t-d, --directory\t skip directory arguments\n");
-        fprintf (stderr, "\t-L, --leftjust\t print the domain name left justified (default: %s)\n", ljustflag ? "on": "off");
+        fprintf (stderr, "\t-d%s\t skip directory arguments\n", loptstr (", --directory", "\t"));
+        fprintf (stderr, "\t-L%s\t print the domain name left justified (default: %s)\n", loptstr (", --leftjust", "\t"), ljustflag ? "on": "off");
         fprintf (stderr, "\t-l list\t\t print out only zone keys out of the given domain list\n");
-        fprintf (stderr, "\t-p, --path\t show path of keyfile / create key in current directory\n");
-        fprintf (stderr, "\t-r, --recursive\t recursive mode on/off (default: %s)\n", recflag ? "on": "off");
-        fprintf (stderr, "\t-a, --age\t print age of key (default: %s)\n", ageflag ? "on": "off");
-        fprintf (stderr, "\t-t, --time\t print key generation time (default: %s)\n",
+        fprintf (stderr, "\t-p%s\t show path of keyfile / create key in current directory\n", loptstr (", --path", "\t"));
+        fprintf (stderr, "\t-r%s\t recursive mode on/off (default: %s)\n", loptstr(", --recursive", "\t"), recflag ? "on": "off");
+        fprintf (stderr, "\t-a%s\t print age of key (default: %s)\n", loptstr (", --age", "\t"), ageflag ? "on": "off");
+        fprintf (stderr, "\t-t%s\t print key generation time (default: %s)\n", loptstr (", --time", "\t"),
 								timeflag ? "on": "off");
-        fprintf (stderr, "\t-k, --ksk\t key signing keys only\n");
-        fprintf (stderr, "\t-z, --zsk\t zone signing keys only\n");
+        fprintf (stderr, "\t-k%s\t key signing keys only\n", loptstr (", --ksk", "\t"));
+        fprintf (stderr, "\t-z%s\t zone signing keys only\n", loptstr (", --ksk", "\t"));
         if ( mesg && *mesg )
                 fprintf (stderr, "%s\n", mesg);
         exit (1);
@@ -421,28 +453,32 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 	int	key_ttl;
 	int	ksk;
 
-	if ( phase == 0 )
+	if ( phase == 9 )	/* usage */
 	{
-		fprintf (stderr, "A KSK rollover requires three separate steps:\n");
+		fprintf (stderr, "A KSK rollover requires three consecutive steps:\n");
 		fprintf (stderr, "\n");
-		fprintf (stderr, "--ksk-roll-phase1 (--ksk-newkey)\n");
+		fprintf (stderr, "-1%s", loptstr ("|--ksk-roll-phase1 (--ksk-newkey)\n", ""));
 		fprintf (stderr, "\t Create a new KSK.\n");
 		fprintf (stderr, "\t This step also creates a parent-<domain> file which contains only\n");
 		fprintf (stderr, "\t the _old_ key.  This file will be copied in hierarchical mode\n");
 		fprintf (stderr, "\t by dnssec-signer to the parent directory as keyset-<domain> file.\n");
 		fprintf (stderr, "\t Wait until the new keyset is propagated, before going to the next step.\n");
 		fprintf (stderr, "\n");
-		fprintf (stderr, "--ksk-roll-phase2 (--ksk-publish)\n");
+		fprintf (stderr, "-2%s", loptstr ("|--ksk-roll-phase2 (--ksk-publish)\n", ""));
 		fprintf (stderr, "\t This step creates a parent-<domain> file with the _new_ key only.\n");
 		fprintf (stderr, "\t Please send this file immediately to the parent (In hierarchical\n");
 		fprintf (stderr, "\t mode this will be done automatically by the dnssec-signer command).\n");
 		fprintf (stderr, "\t Then wait until the new DS is generated by the parent and propagated\n");
 		fprintf (stderr, "\t to all the parent name server, plus the old DS TTL before going to step three.\n");
 		fprintf (stderr, "\n");
-		fprintf (stderr, "--ksk-roll-phase3 (--ksk-delkey)\n");
+		fprintf (stderr, "-3%s", loptstr ("|--ksk-roll-phase3 (--ksk-delkey)\n", ""));
 		fprintf (stderr, "\t Remove (rename) the old KSK and the parent-<domain> file.\n");
 		fprintf (stderr, "\t You have to manually delete the old KSK (look at file names beginning\n");
 		fprintf (stderr, "\t with an lower 'k').\n");
+		fprintf (stderr, "\n");
+		fprintf (stderr, "-0%s", loptstr ("|--ksk-roll-stat (--ksk-status)\n", ""));
+		fprintf (stderr, "\t Show the current KSK rollover state of a domain.\n");
+
 		fprintf (stderr, "\n");
 
 		return;
@@ -485,27 +521,26 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 		if ( dki_isksk (dkp) )
 			ksk++;
 
-#ifdef DBG
-	/* TODO: remove debug output */
-	fprintf (stdout, "ksk_rollover:\n");
-	fprintf (stdout, "\t domain = %s\n", keyname);
-	fprintf (stdout, "\t phase = %d\n", phase);
-	fprintf (stdout, "\t parent_file %s(%d)\n", path, parent_exist);
-	fprintf (stdout, "\t age of parent_file %d %s\n", parent_age, str_delspace (age2str (parent_age)));
-	fprintf (stdout, "\t parent_phase %d \n", parent_phase);
-	fprintf (stdout, "\t # of ksk %d\n", ksk);
-	fprintf (stdout, "\t parent_propagation %d %s\n", parent_propagation, str_delspace (age2str (parent_propagation)));
-	fprintf (stdout, "\t keys ttl %d %s\n", key_ttl, age2str (key_ttl));
-
-	for ( dkp = keylist; dkp; dkp = dkp->next )
-	{
-		/* TODO: Nur zum testen */
-		dki_prt_dnskey (dkp, stdout);
-	}
-#endif
 
 	switch ( phase )
 	{
+	case 0:	/* print status (debug) */
+		fprintf (stdout, "ksk_rollover:\n");
+		fprintf (stdout, "\t domain = %s\n", keyname);
+		fprintf (stdout, "\t phase = %d\n", parent_phase);
+		fprintf (stdout, "\t parent_file %s %s\n", path, parent_exist ? "exist": "not exist");
+		if ( parent_exist )
+			fprintf (stdout, "\t age of parent_file %d %s\n", parent_age, str_delspace (age2str (parent_age)));
+		fprintf (stdout, "\t # of ksk %d\n", ksk);
+		fprintf (stdout, "\t parent_propagation %d %s\n", parent_propagation, str_delspace (age2str (parent_propagation)));
+		fprintf (stdout, "\t keys ttl %d %s\n", key_ttl, age2str (key_ttl));
+
+		for ( dkp = keylist; dkp; dkp = dkp->next )
+		{
+			/* TODO: Nur zum testen */
+			dki_prt_dnskey (dkp, stdout);
+		}
+		break;
 	case 1:
 		if ( parent_exist || ksk > 1 )
 			fatal ("Can\'t create new ksk because there is already an ksk rollover in progress\n");
@@ -545,10 +580,10 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 			fatal ("ksk_rollover (phase3): you have to wait for DS propagation  (at least %dsec or %s)\n",
 				parent_propagation + key_ttl - parent_age,
 				str_delspace (age2str (parent_propagation + key_ttl - parent_age)));
-		/* parentfile loeschen */
+		/* remove the parentfile */
 		fprintf (stdout, "remove parentfile \n");
 		unlink (path);
-		/* oldkey loeschen oder sichern */
+		/* remove or rename the old key */
 		fprintf (stdout, "old ksk renamed \n");
 		dkp = keylist;	/* set dkp to old ksk */
 		dki_remove (dkp);

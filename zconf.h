@@ -15,7 +15,7 @@
 # define	MONTH	(DAY * 30)
 # define	YEAR	(DAY * 365)
 
-# define	SIG_VALID_DAYS	(10)
+# define	SIG_VALID_DAYS	(10)	/* or 3 Weeks ? */
 # define	SIG_VALIDITY	(SIG_VALID_DAYS * DAYSEC)
 # define	MAX_TTL		( 8 * HOURSEC)	/* default value of maximum ttl time */
 # define	KEY_TTL		( 4 * HOURSEC)	/* default value of KEY TTL */
@@ -26,7 +26,7 @@
 #endif
 
 # define	RESIGN_INT	((SIG_VALID_DAYS - (SIG_VALID_DAYS / 3)) * DAYSEC)
-# define	KSK_LIFETIME	0	/* 360 Days ? */
+# define	KSK_LIFETIME	(1 * YEARSEC)
 # define	ZSK_LIFETIME	((SIG_VALID_DAYS * 3) * DAYSEC)
 
 # define	KSK_ALGO	(DK_ALGO_RSASHA1)
@@ -59,6 +59,11 @@
 # define	KEYGENCMD	BIND_UTIL_PATH "dnssec-keygen"
 # define	RELOADCMD	BIND_UTIL_PATH "rndc"
 
+typedef	enum {
+	Unixtime = 1,
+	Incremental
+} serial_form_t;
+
 typedef	struct zconf	{
 	char	*zonedir;
 	int	recursive;
@@ -72,6 +77,7 @@ typedef	struct zconf	{
 #if defined (DEF_TTL)
 	int	def_ttl;	/* default ttl set in soa record  */
 #endif
+	serial_form_t	serialform;	/* format of serial no */
 	int	resign;		/* resign interval */
 	int	k_life;
 	int	k_algo;
