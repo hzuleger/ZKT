@@ -51,9 +51,9 @@
 
 #ifndef ZKT_VERSION
 # if defined(USE_TREE) && USE_TREE
-#  define	ZKT_VERSION	"vT0.70 (c) Feb - Aug 2005  Holger Zuleger  hznet.de"
+#  define	ZKT_VERSION	"vT0.90 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
 # else
-#  define	ZKT_VERSION	"v0.70 (c) Feb - Aug 2005  Holger Zuleger  hznet.de"
+#  define	ZKT_VERSION	"v0.90 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
 # endif
 #endif
 

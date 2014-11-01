@@ -15,20 +15,22 @@
 # define	MONTH	(DAY * 30)
 # define	YEAR	(DAY * 365)
 
-# define	SIG_VALIDITY	(30 * DAYSEC)
-# define	MAX_TTL		( 6 * HOURSEC)	/* default value of maximum ttl time */
+# define	SIG_VALID_DAYS	(10)
+# define	SIG_VALIDITY	(SIG_VALID_DAYS * DAYSEC)
+# define	MAX_TTL		( 8 * HOURSEC)	/* default value of maximum ttl time */
+# define	KEY_TTL		( 4 * HOURSEC)	/* default value of KEY TTL */
 # define	PROPTIME	( 5 * MINSEC)	/* expected slave propagation time */
 						/* should be small if notify is used  */
 #if defined (DEF_TTL)
 # define	DEF_TTL		(MAX_TTL/2)	/* currently not used */
 #endif
 
-# define	RESIGN_INT	(SIG_VALIDITY / 10)
+# define	RESIGN_INT	((SIG_VALID_DAYS - (SIG_VALID_DAYS / 3)) * DAYSEC)
 # define	KSK_LIFETIME	0	/* 360 Days ? */
-# define	ZSK_LIFETIME	(SIG_VALIDITY / 3)
+# define	ZSK_LIFETIME	((SIG_VALID_DAYS * 3) * DAYSEC)
 
 # define	KSK_ALGO	(DK_ALGO_RSASHA1)
-# define	KSK_BITS	(1024)
+# define	KSK_BITS	(1300)
 # define	KSK_RANDOM	NULL	/* "/dev/random" */
 # define	ZSK_ALGO	(DK_ALGO_RSASHA1)
 # define	ZSK_BITS	(512)
@@ -39,7 +41,7 @@
 # define	RECURSIVE	0
 # define	ZONEFILE	"zone.db"
 # define	DNSKEYFILE	"dnskey.db"
-# define	LOOKASIDEDOMAIN	""	/* "trusted-keys.de" */
+# define	LOOKASIDEDOMAIN	""	/* "dlv.trusted-keys.de" */
 # define	SIG_RANDOM	NULL	/* "/dev/urandom" */
 # define	SIG_PSEUDO	1
 
@@ -62,8 +64,10 @@ typedef	struct zconf	{
 	int	recursive;
 	int	printtime;
 	int	printage;
+	int	ljust;
 	int	sigvalidity;	/* should be less than expire time */
 	int	max_ttl;	/* should be set to the maximum used ttl in the zone */
+	int	key_ttl;
 	int	proptime;	/* expected time offset for zone propagation */
 #if defined (DEF_TTL)
 	int	def_ttl;	/* default ttl set in soa record  */

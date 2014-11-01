@@ -9,19 +9,22 @@
 *****************************************************************/
 # include <stdio.h>
 # include <string.h>
+# include <stdlib.h>
 # include <ctype.h>
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <time.h>
 # include <utime.h>
 # include <assert.h>
+# include <errno.h>
+# include <fcntl.h>
 # include "config.h"
 # include "zconf.h"
 #define extern
 # include "misc.h"
 #undef extern
 
-# define	TAINTCHARS	"$@;&<>|"
+# define	TAINTEDCHARS	"$@;&<>|"
 
 extern	const	char	*progname;
 
@@ -50,6 +53,10 @@ char	*str_delspace (char *s)
 	return start;
 }
 
+/*****************************************************************
+**	in_strarr (s, arr, cnt)
+**	check if string array 'arr' contains the string 's'
+*****************************************************************/
 int	in_strarr (const char *str, char *const arr[], int cnt)
 {
 	if ( arr == NULL || cnt <= 0 )
@@ -65,18 +72,26 @@ int	in_strarr (const char *str, char *const arr[], int cnt)
 	return 0;
 }
 
-char	*strtaint (char *str)
+/*****************************************************************
+**	str_untaint (s)
+**	Remove in string 's' all TAINTED chars
+*****************************************************************/
+char	*str_untaint (char *str)
 {
 	char	*p;
 
 	assert (str != NULL);
 
 	for ( p = str; *p; p++ )
-		if ( strchr (TAINTCHARS, *p) )
+		if ( strchr (TAINTEDCHARS, *p) )
 			*p = ' ';
 	return str;
 }
 
+/*****************************************************************
+**	strchop (str, c)
+**	delete all occurrences of char 'c' at the end of string 's'
+*****************************************************************/
 char	*strchop (char *str, char c)
 {
 	int	len;
@@ -90,6 +105,11 @@ char	*strchop (char *str, char c)
 	return str;
 }
 
+/*****************************************************************
+**	parseurl (url, &proto, &host, &port, &para )
+**	parses the given url (e.g. "proto://host.with.domain:port/para")
+**	and set the pointer variables to the corresponding part of the string.
+*****************************************************************/
 void	parseurl (char *url, char **proto, char **host, char **port, char **para)
 {
 	char	*start;
@@ -98,17 +118,17 @@ void	parseurl (char *url, char **proto, char **host, char **port, char **para)
 	assert ( url != NULL );
 
 	/* parse protocol */
-	if ( (p = strchr (url, ':')) == NULL )
+	if ( (p = strchr (url, ':')) == NULL )	/* no protocol string given ? */
 		p = url;
-	else
-		if ( p[1] == '/' && p[2] == '/' )
+	else					/* looks like a protocol string */
+		if ( p[1] == '/' && p[2] == '/' )	/* protocol string ? */
 		{
 			*p = '\0';
 			p += 3;
 			if ( proto )
 				*proto = url;
 		}
-		else
+		else				/* no protocol string found ! */
 			p = url;
 
 	/* parse host */
@@ -144,6 +164,9 @@ void	parseurl (char *url, char **proto, char **host, char **port, char **para)
 		*para = p;
 }
 
+/*****************************************************************
+**	splitpath (path, size, filename)
+*****************************************************************/
 const	char	*splitpath (char *path, size_t size, const char *filename)
 {
 	char 	*p;
@@ -167,6 +190,12 @@ const	char	*splitpath (char *path, size_t size, const char *filename)
 	return filename;
 }
 
+/*****************************************************************
+**	pathname (path, size, dir, file, ext)
+**	Concatenate 'dir', 'file' and 'ext' (if not null) to build
+**	a pathname, and store the result in the character array
+**	with length 'size' pointed to by 'path'.
+*****************************************************************/
 char	*pathname (char *path, size_t size, const char *dir, const char *file, const char *ext)
 {
 	int	len;
@@ -198,6 +227,11 @@ char	*pathname (char *path, size_t size, const char *dir, const char *file, cons
 	return path;
 }
 
+/*****************************************************************
+**	is_directory (name)
+**	Check if the given pathname 'name' exists and is a directory.
+**	returns 0 | 1
+*****************************************************************/
 int	is_directory (const char *name)
 {
 	struct	stat	st;
@@ -208,12 +242,22 @@ int	is_directory (const char *name)
 	return ( stat (name, &st) == 0 && S_ISDIR (st.st_mode) );
 }
 
+/*****************************************************************
+**	fileexist (name)
+**	Check if a file with the given pathname 'name' exists.
+**	returns 0 | 1
+*****************************************************************/
 int	fileexist (const char *name)
 {
 	struct	stat	st;
-	return ( stat (name, &st) == 0 && S_ISREG (st.st_mode) );
+	return ( stat (name, &st) == 0 && !!S_ISREG (st.st_mode) );
 }
 
+/*****************************************************************
+**	is_keyfilename (name)
+**	Check if the given pathname 'name' looks like a dnssec
+**	(public) keyfile name. Returns 0 | 1
+*****************************************************************/
 int	is_keyfilename (const char *name)
 {
 	int	len;
@@ -228,6 +272,11 @@ int	is_keyfilename (const char *name)
 	return 0;
 }
 
+/*****************************************************************
+**	is_dotfile (name)
+**	Check if the given pathname 'name' looks like "." or "..".
+**	Returns 0 | 1
+*****************************************************************/
 int	is_dotfile (const char *name)
 {
 	if ( name && (
@@ -238,6 +287,11 @@ int	is_dotfile (const char *name)
 	return 0;
 }
 
+/*****************************************************************
+**	touch (name, sec)
+**	Set the modification time of the given pathname 'fname' to
+**	'sec'.	Returns 0 on success.
+*****************************************************************/
 int	touch (const char *fname, time_t sec)
 {
 	struct	utimbuf	utb;
@@ -246,6 +300,93 @@ int	touch (const char *fname, time_t sec)
 	return utime (fname, &utb);
 }
 
+/*****************************************************************
+**	linkfile (fromfile, tofile)
+*****************************************************************/
+int	linkfile (const char *fromfile, const char *tofile)
+{
+	int	ret;
+
+	/* fprintf (stderr, "linkfile (%s, %s)\n", fromfile, tofile); */
+	if ( (ret = link (fromfile, tofile)) == -1 && errno == EEXIST )
+		if ( unlink (tofile) == 0 )
+			ret = link (fromfile, tofile);
+
+	return ret;
+}
+
+/*****************************************************************
+**	copyfile (fromfile, tofile)
+*****************************************************************/
+int	copyfile (const char *fromfile, const char *tofile)
+{
+	FILE	*infp;
+	FILE	*outfp;
+	int	c;
+
+	/* fprintf (stderr, "copyfile (%s, %s)\n", fromfile, tofile); */
+	if ( (infp = fopen (fromfile, "r")) == NULL )
+		return -1;
+	if ( (outfp = fopen (tofile, "w")) == NULL )
+	{
+		fclose (infp);
+		return -2;
+	}
+	while ( (c = getc (infp)) != EOF ) 
+		putc (c, outfp);
+
+	fclose (infp);
+	fclose (outfp);
+
+	return 0;
+}
+
+/*****************************************************************
+**	cmpfile (file1, file2)
+*****************************************************************/
+int	cmpfile (const char *file1, const char *file2)
+{
+	FILE	*fp1;
+	FILE	*fp2;
+	int	c1;
+	int	c2;
+
+	/* fprintf (stderr, "cmpfile (%s, %s)\n", file1, file2); */
+	if ( (fp1 = fopen (file1, "r")) == NULL )
+		return -1;
+	if ( (fp2 = fopen (file2, "r")) == NULL )
+	{
+		fclose (fp1);
+		return -1;
+	}
+
+	do {
+		c1 = getc (fp1);
+		c2 = getc (fp2);
+	}  while ( c1 != EOF && c2 != EOF && c1 == c2 );
+
+	fclose (fp1);
+	fclose (fp2);
+
+	if ( c1 == c2 )
+		return 0;
+	return 1;
+}
+
+/*****************************************************************
+**	file_age (fname)
+*****************************************************************/
+int	file_age (const char *fname)
+{
+	time_t	curr = time (NULL);
+	time_t	mtime = get_mtime (fname);
+
+	return curr - mtime;
+}
+
+/*****************************************************************
+**	get_mtime (fname)
+*****************************************************************/
 time_t	get_mtime (const char *fname)
 {
 	struct	stat	st;
@@ -255,6 +396,9 @@ time_t	get_mtime (const char *fname)
 	return st.st_mtime;
 }
 
+/*****************************************************************
+**	fatal (fmt, ...)
+*****************************************************************/
 void fatal (char *fmt, ...)
 {
         va_list ap;
@@ -267,6 +411,9 @@ void fatal (char *fmt, ...)
         exit (1);
 }
 
+/*****************************************************************
+**	error (fmt, ...)
+*****************************************************************/
 void error (char *fmt, ...)
 {
         va_list ap;
@@ -276,6 +423,9 @@ void error (char *fmt, ...)
         va_end(ap);
 }
 
+/*****************************************************************
+**	logmesg (fmt, ...)
+*****************************************************************/
 void logmesg (char *fmt, ...)
 {
         va_list ap;
@@ -288,11 +438,17 @@ void logmesg (char *fmt, ...)
         va_end(ap);
 }
 
+/*****************************************************************
+**	logflush ()
+*****************************************************************/
 void logflush ()
 {
         fflush (stdout);
 }
 
+/*****************************************************************
+**	time2str (sec)
+*****************************************************************/
 char	*time2str (time_t sec)
 {
 	struct	tm	*t;
@@ -333,6 +489,10 @@ char	*time2str (time_t sec)
 	return timestr;
 }
 
+/*****************************************************************
+**	age2str (sec)
+**	!!Attention: This is an not reentrant function
+*****************************************************************/
 char	*age2str (time_t sec)
 {
 	static	char	str[20+1];	/* "2y51w6d23h50m55s" == 16+1 chars */
@@ -416,11 +576,17 @@ char	*age2str (time_t sec)
 	return str;
 }
 
+/*****************************************************************
+**	start_timer ()
+*****************************************************************/
 time_t	start_timer ()
 {
 	return (time(NULL));
 }
 
+/*****************************************************************
+**	stop_timer ()
+*****************************************************************/
 time_t	stop_timer (time_t start)
 {
 	time_t	stop = time (NULL);
@@ -432,10 +598,10 @@ time_t	stop_timer (time_t start)
 **
 **	int	incr_serial (filename)
 **
-**	This function depends on a special syntax writing the
+**	This function depends on a special syntax formating the
 **	SOA record in the zone file!!
 **
-**	To match the SOA record the line must be formatted
+**	To match the SOA record, the SOA RR must be formatted
 **	like this:
 **	@    IN  SOA <master.fq.dn.> <hostmaster.fq.dn.> (
 **	<SPACEes or TABs>      1234567890; serial number 
@@ -444,8 +610,8 @@ time_t	stop_timer (time_t start)
 **	The space from the first digit of the serial number to
 **	the first none white space char or to the end of the line
 **	must be at least 10 characters!
-**	So left justify the serial number in a field with 10
-**	digits like this:
+**	So you have to left justify the serial number in a field
+**	of at least 10 characters like this:
 **	<SPACEes or TABs>      1         ; Serial 
 **
 ****************************************************************/
@@ -460,7 +626,7 @@ int	incr_serial (const char *fname)
 	if ( (fp = fopen (fname, "r+")) == NULL )
 		return -1;
 
-		/* read until line matches begin of soa record ... */
+		/* read until the line matches the begin of a soa record ... */
 	while ( fgets (buf, sizeof buf, fp) &&
 		    sscanf (buf, "@ IN SOA %255s %*s (\n", master) != 1 )
 		;
@@ -498,6 +664,11 @@ static	ulong	today_serialtime ()
 	return serialtime;
 }
 
+/*****************************************************************
+**	incr_soa_serial (fp)
+**	increment the soa serial number of the file 'fp'
+**	'fp' must be opened "r+"
+*****************************************************************/
 static	int	incr_soa_serial (FILE *fp)
 {
 	int	c;
@@ -569,6 +740,13 @@ main (int argc, char *argv[])
 
 	proto = host = port = para = NULL;
 
+	if ( --argc <= 0 )
+	{
+		fprintf (stderr, "usage: url_test <url>\n");
+		fprintf (stderr, "e.g.: url_test http://www.hznet.de:80/zkt\n");
+		exit (1);
+	}
+	
 	strcpy (url, argv[1]);
 	parseurl (url, &proto, &host, &port, &para);
 

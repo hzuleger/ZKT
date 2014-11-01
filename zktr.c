@@ -8,6 +8,7 @@
 # include <sys/select.h>	/* select() ... */
 # include <netdb.h>		/* getaddrinfo(), getnameinfo(), etc. */
 # include <stdio.h>
+# include <string.h>
 # include <time.h>
 # include <assert.h>
 # include "zktr.h"

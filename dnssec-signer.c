@@ -8,9 +8,11 @@
 
 # include <stdio.h>
 # include <string.h>
+# include <stdlib.h>
 # include <assert.h>
 # include <dirent.h>
 # include <unistd.h>	/* getopt() etc.. */
+# include <errno.h>	/* getopt() etc.. */
 # include "config.h"
 # include "zconf.h"
 # include "debug.h"
@@ -30,9 +32,9 @@ static	int	dosigning (zone_t *zp);
 static	int	kskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t *z);
 static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t *conf);
 static	int	check_keydb_timestamp (dki_t *keylist, time_t reftime);
-static	int	new_dsfiles (const char *dir, time_t zone_signing_time);
+static	int	new_keysetfiles (const char *dir, time_t zone_signing_time);
 static	dki_t	*genkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status);
-static	int	writekeyfile (const char *fname, const dki_t *list);
+static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl);
 static	int	sign_zone (const char *dir, const char *domain, const char *file, const zconf_t *conf);
 static	int	reload_zone (const char *domain);
 static	int	register_key (dki_t *listp, const zconf_t *z);
@@ -248,7 +250,7 @@ static	int	dosigning (zone_t *zp)
 	char	path[MAX_PATHSIZE+1];
 	int	err;
 	int	newkey;
-	int	newdsfile;
+	int	newkeysetfile;
 	time_t	currtime;
 	time_t	zfile_time;
 	time_t	zfilesig_time;
@@ -257,7 +259,6 @@ static	int	dosigning (zone_t *zp)
 	if ( verbose )
 		logmesg ("parsing zone \"%s\" in dir \"%s\"\n", zp->zone, zp->dir);
 
-	err = 0;
         pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
 	dbg_val("parsezonedir fileexist (%s)\n", path);
 	if ( !fileexist (path) )
@@ -292,17 +293,18 @@ static	int	dosigning (zone_t *zp)
 	if ( !newkey )
 		newkey = check_keydb_timestamp (zp->keys, get_mtime (path));
 
-	newdsfile = 0;
-#if 0		/* see new_dsfiles () function definition */
-	if ( !newkey )
-		newdsfile = new_dsfiles (zp->dir, zfilesig_time);
-#endif
+	/* if we work in subdir mode, check if there is a new keyset- file */
+	newkeysetfile = 0;
+	if ( !newkey && zp->conf->keysetdir && strcmp (zp->conf->keysetdir, "..") == 0 )
+		newkeysetfile = new_keysetfiles (zp->dir, zfilesig_time);
 
 	/**
 	** Check if it is time to do a re-sign. This is the case if
-	**	a) new keys are generated, or
-	**	b) "zone.db" is newer than "zone.db.signed" or
-	**	c) "zone.db.signed" is older than the re-sign interval
+	**	a) the command line flag -f is set, or
+	**	b) new keys are generated, or
+	**	c) if we found a new KSK of a delegated domain, or
+	**	d) the "zone.db" is newer than "zone.db.signed" or
+	**	e) "zone.db.signed" is older than the re-sign interval
 	**/
 	if ( verbose )
 	{
@@ -310,7 +312,7 @@ static	int	dosigning (zone_t *zp)
 			logmesg ("\tRe-signing necessary: Option -f\n"); 
 		else if ( newkey )
 			logmesg ("\tRe-signing necessary: Modified keys\n"); 
-		else if ( newdsfile )
+		else if ( newkeysetfile )
 			logmesg ("\tRe-signing necessary: Modified KSK in delegated domain\n"); 
 		else if ( zfile_time > zfilesig_time )
 			logmesg ("\tRe-signing necessary: Zone file edited\n");
@@ -321,7 +323,7 @@ static	int	dosigning (zone_t *zp)
 			logmesg ("\tRe-signing not necessary!\n"); 
 		logflush ();
 	}
-	if ( !(force || newkey || newdsfile || zfile_time > zfilesig_time ||	
+	if ( !(force || newkey || newkeysetfile || zfile_time > zfilesig_time ||	
 	     (currtime - zfilesig_time) > zp->conf->resign - (OFFSET)) )
 		return 0;	/* nothing to do */
 
@@ -330,20 +332,24 @@ static	int	dosigning (zone_t *zp)
 	/* create new "dnskey.db" file  (pathname is already build) */
 	if ( verbose )
 		logmesg ("\tWriting key file \"%s\"\n", path);
-	if ( !writekeyfile (path, zp->keys) )
+	if ( !writekeyfile (path, zp->keys, zp->conf->key_ttl) )
 		error ("Can't create keyfile %s \n", path);
 
 	/* increment serial no in zone file */
 	// pathname (path, sizeof (path), zp->dir, zp->conf->zonefile, NULL);
 	pathname (path, sizeof (path), zp->dir, zp->file, NULL);
-	if ( noexec == 0 && (err = incr_serial (path)) < 0 )
-		error ("Warning: could not increment serialno of domain %s in file %s (errno=%d)!\n",
+	err = 0;
+	if ( noexec == 0 )
+	{
+		if ( (err = incr_serial (path)) < 0 )
+			error ("Warning: could not increment serialno of domain %s in file %s (errno=%d)!\n",
 							zp->zone, path, err);
-	if ( verbose )
-		if ( noexec )
-			logmesg ("\tIncrementing serial number in file \"%s\"\n", path);
-		else
+		else if ( verbose )
 			logmesg ("\tIncrementing serial number (%u) in file \"%s\"\n", err, path);
+	}
+	else if ( verbose )
+			logmesg ("\tIncrementing serial number in file \"%s\"\n", path);
+
 	/* at last, sign the zone file */
 	if ( err > 0 )
 	{
@@ -483,7 +489,7 @@ static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const 
 			if ( verbose )
 				logmesg ("\tLifetime(%d sec) of depreciated key %d exceeded (%d sec)\n",
 					 lifetime, dkp->tag, dki_age (dkp, currtime));
-			dkp = dki_remove (dkp);	/* remove it */
+			dkp = dki_destroy (dkp);	/* delete the keyfiles */
 			dbg_msg("zskstatus depreciated key removed ");
 			if ( last )
 				last->next = dkp;
@@ -522,7 +528,7 @@ static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const 
 
 		/* Is the pre-publish key long enough in the zone ? */
 		/* As mentioned by olaf, this should be the ttl of the DNSKEY RR ! */
-		if ( nextkey && dki_age (nextkey, currtime) > z->max_ttl + z->proptime )
+		if ( nextkey && dki_age (nextkey, currtime) > z->key_ttl + z->proptime )
 		{
 			keychange = 1;
 			if ( verbose )
@@ -556,43 +562,43 @@ static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const 
 	return keychange;
 }
 
-#if 0
 /*
- *	The function works not with symbolic links to dsset- files,
+ *	This function is not working with symbolic links to keyset- files,
  *	because get_mtime() returns the mtime of the underlying file, and *not*
  *	that of the symlink file.
- *	This is bad, because the dsset-file will be newly generated by dnssec-signzone
+ *	This is bad, because the keyset-file will be newly generated by dnssec-signzone
  *	on every re-signing call.
- *	Instead we have to check the keytag in the DS RR (very complicated).
+ *	Instead, in the case of a hierarchical directory structure, we copy the file
+ *	(and so we change the timestamp) only if it was changed after the last
+ *	generation (checked with cmpfile(), see func sign_zone()).
  */
-# define	DS_FILE_PFX	"dsset-"
-static	int	new_dsfiles (const char *dir, time_t zone_signing_time)
+# define	KEYSET_FILE_PFX	"keyset-"
+static	int	new_keysetfiles (const char *dir, time_t zone_signing_time)
 {
 	DIR	*dirp;
 	struct  dirent  *dentp;
 	char	path[MAX_PATHSIZE+1];
-	int	newdsfile;
+	int	newkeysetfile;
 
 	if ( (dirp = opendir (dir)) == NULL )
 		return 0;
 
-	newdsfile = 0;
-	dbg_val2 ("new_dsfile (%s, %s)\n", dir, time2str (zone_signing_time)); 
-	while ( !newdsfile && (dentp = readdir (dirp)) != NULL )
+	newkeysetfile = 0;
+	dbg_val2 ("new_keysetfile (%s, %s)\n", dir, time2str (zone_signing_time)); 
+	while ( !newkeysetfile && (dentp = readdir (dirp)) != NULL )
 	{
-		if ( strncmp (dentp->d_name, DS_FILE_PFX, strlen (DS_FILE_PFX)) != 0 )
+		if ( strncmp (dentp->d_name, KEYSET_FILE_PFX, strlen (KEYSET_FILE_PFX)) != 0 )
 			continue;
 
 		pathname (path, sizeof (path), dir, dentp->d_name, NULL);
-		dbg_val2 ("newsfile timestamp of %s = %s\n", path, time2str (get_mtime(path))); 
+		dbg_val2 ("newkeysetfile timestamp of %s = %s\n", path, time2str (get_mtime(path))); 
 		if ( get_mtime (path) > zone_signing_time )
-			newdsfile = 1;
+			newkeysetfile = 1;
 	}
 	closedir (dirp);
 
-	return newdsfile;
+	return newkeysetfile;
 }
-#endif
 
 static	int	check_keydb_timestamp (dki_t *keylist, time_t reftime)
 {
@@ -609,7 +615,7 @@ static	int	check_keydb_timestamp (dki_t *keylist, time_t reftime)
 	return 0;
 }
 
-static	int	writekeyfile (const char *fname, const dki_t *list)
+static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl)
 {
 	FILE	*fp;
 	const	dki_t	*dkp;
@@ -636,7 +642,7 @@ static	int	writekeyfile (const char *fname, const dki_t *list)
 			ksk = 0;
 		}
 		dki_prt_comment (dkp, fp);
-		dki_prt_dnskey (dkp, fp);
+		dki_prt_dnskeyttl (dkp, fp, key_ttl);
 		putc ('\n', fp);
 	}
 	
@@ -669,7 +675,7 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 		snprintf (rparam, sizeof (rparam), "-r %.250s ", conf->sig_random);
 
 	keysetdir[0] = '\0';
-	if ( conf->keysetdir && conf->keysetdir[0] )
+	if ( conf->keysetdir && conf->keysetdir[0] && strcmp (conf->keysetdir, "..") != 0 )
 		snprintf (keysetdir, sizeof (keysetdir), "-d %.250s ", conf->keysetdir);
 
 	if ( dir == NULL || *dir == '\0' )
@@ -689,6 +695,31 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 
 	if ( verbose >= 2 )
 		logmesg ("\t  Cmd dnssec-signzone return: \"%s\"\n", strchop (str, '\n'));
+
+	/* propagate "keyset"-file to parent dir */
+	if ( conf->keysetdir && strcmp (conf->keysetdir, "..") == 0 )
+	{
+		char	fromfile[1024];
+		char	tofile[1024];
+		int	ret;
+
+		/* check if special parent-file exist (ksk rollover) */
+		snprintf (fromfile, sizeof (fromfile), "%s/parent-%s", dir, domain);
+		if ( !fileexist (fromfile) )	/* use "normal" keyset-file */
+			snprintf (fromfile, sizeof (fromfile), "%s/keyset-%s", dir, domain);
+
+		if ( verbose >= 2 )
+			logmesg ("\t  check \"%s\" against parent dir\n", fromfile);
+		snprintf (tofile, sizeof (tofile), "%s/../keyset-%s", dir, domain);
+		if ( cmpfile (fromfile, tofile) != 0 )
+		{
+			if ( verbose >= 2 )
+				logmesg ("\t  copy \"%s\" to parent dir\n", fromfile);
+			if ( (ret = copyfile (fromfile, tofile)) != 0 )
+				error ("Couldn't copy \"%s\" to parent dir (%d:%s)\n",
+					fromfile, ret, strerror(errno));
+		}
+	}
 
 	return 0;
 }

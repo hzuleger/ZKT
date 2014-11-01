@@ -8,9 +8,11 @@
 #ifndef DKI_H
 # define DKI_H
 
-# include <sys/types.h>
-# include <stdio.h>
-# include <time.h>
+# ifndef TYPES_H
+#  include <sys/types.h>
+#  include <stdio.h>
+#  include <time.h>
+# endif
 
 #if !defined(HAS_UTYPES) || !HAS_UTYPES
 typedef	unsigned long	ulong;
@@ -25,7 +27,8 @@ typedef	unsigned char	uchar;
 				/* domain == FQDN (max 255) */
 				/* ALG == 3; KEYID == 5 chars */
 				/* type == key||published|private|depreciated == 11 chars */
-# define	MAX_DNAMESIZE	(254)
+//# define	MAX_DNAMESIZE	(254)
+# define	MAX_DNAMESIZE	(1023)
 				/*   /path/name  /   filename  */
 # define	MAX_PATHSIZE	(MAX_DNAMESIZE + 1 + MAX_FNAMESIZE)
 
@@ -60,9 +63,11 @@ typedef	struct	dki {
 } dki_t;
 
 /* status types */
+# define	DKI_SEP	('s')
 # define	DKI_PUB	('p')
 # define	DKI_ACT	('a')
 # define	DKI_DEP	('d')
+# define	DKI_SECUREENTRYPOINT	DKI_SEP
 # define	DKI_PUBLISHED	DKI_PUB
 # define	DKI_ACTIVE	DKI_ACT
 # define	DKI_DEPRECIATED	DKI_DEP	
@@ -102,7 +107,7 @@ void	twalk (const dki_t *root, void (*action)(const dki_t **nodep, VISIT which, 
 #if defined(USE_TREE) && USE_TREE
 extern	void	dki_tfree (dki_t **tree);
 extern	dki_t	*dki_tadd (dki_t **tree, dki_t *new);
-extern	int	dki_keycmp (const dki_t *a, const dki_t *b);
+extern	int	dki_tagcmp (const dki_t *a, const dki_t *b);
 extern	int	dki_namecmp (const dki_t *a, const dki_t *b);
 extern	int	dki_allcmp (const dki_t *a, const dki_t *b);
 #endif
@@ -111,6 +116,7 @@ extern	dki_t	*dki_read (const char *dir, const char *fname);
 extern	int	dki_readdir (const char *dir, dki_t **listp, int recursive);
 extern	int	dki_prt_trustedkey (const dki_t *dkp, FILE *fp);
 extern	int	dki_prt_dnskey (const dki_t *dkp, FILE *fp);
+extern	int	dki_prt_dnskeyttl (const dki_t *dkp, FILE *fp, int ttl);
 extern	int	dki_prt_comment (const dki_t *dkp, FILE *fp);
 extern	int	dki_cmp (const dki_t *a, const dki_t *b);
 extern	int	dki_timecmp (const dki_t *a, const dki_t *b);
@@ -124,6 +130,7 @@ extern	int	dki_ispublished (const dki_t *dkp);
 extern	time_t	dki_time (const dki_t *dkp);
 extern	dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsize, const char *rfile);
 extern	dki_t	*dki_remove (dki_t *dkp);
+extern	dki_t	*dki_destroy (dki_t *dkp);
 extern	int	dki_setstatus (dki_t *dkp, int status);
 extern	int	dki_setstatus_preservetime (dki_t *dkp, int status);
 #if 0

@@ -17,14 +17,14 @@ CFLAGS	+=	$(PROFILE) $(OPTIM)
 LDFLAGS	+=	$(PROFILE)
 
 PROJECT =	zkt
-VERSION =	0.70
+VERSION =	0.90
 
 HEADER	=	dki.h misc.h domaincmp.h zconf.h config.h strlist.h \
 		zone.h zkt.h debug.h ncparse.h zktr.h
-SRC_ALL	=	dki.c misc.c domaincmp.c zconf.c zktr.c
+SRC_ALL	=	dki.c misc.c domaincmp.c zconf.c
 OBJ_ALL	=	$(SRC_ALL:.c=.o)
 
-SRC_SIG	=	dnssec-signer.c zone.c ncparse.c
+SRC_SIG	=	dnssec-signer.c zone.c ncparse.c zktr.c
 OBJ_SIG	=	$(SRC_SIG:.c=.o)
 MAN_SIG	=	dnssec-signer.8
 PROG_SIG= dnssec-signer
@@ -35,9 +35,7 @@ MAN_ZKT	=	dnssec-zkt.8
 PROG_ZKT= dnssec-zkt
 
 MAN	=	$(MAN_ZKT) $(MAN_SIG)
-OTHER	=	README BUGS LICENSE CHANGELOG tags Makefile dnssec.conf \
-		zonedir/example.net. zonedir/sub.example.net. \
-		zonedir/named.conf zonedir/zone.conf
+OTHER	=	README BUGS LICENSE CHANGELOG tags Makefile examples
 SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(MAN) $(OTHER)
 
 all:	$(PROG_ZKT) $(PROG_SIG) 
@@ -79,16 +77,17 @@ depend:
 
 ## all dependicies
 #:r !make depend
-#gcc -MM dnssec-signer.c zone.c ncparse.c dnssec-zkt.c strlist.c zkt.c dki.c misc.c domaincmp.c zconf.c
+#gcc -MM dnssec-signer.c zone.c ncparse.c dnssec-zkt.c strlist.c zkt.c dki.c misc.c domaincmp.c zconf.c zktr.c
 dnssec-signer.o: dnssec-signer.c config.h zconf.h debug.h misc.h \
-  ncparse.h zone.h dki.h
+  ncparse.h zone.h dki.h zktr.h
 zone.o: zone.c config.h debug.h misc.h zconf.h dki.h zone.h
 ncparse.o: ncparse.c debug.h misc.h ncparse.h
 dnssec-zkt.o: dnssec-zkt.c config.h debug.h misc.h strlist.h zconf.h \
   dki.h
 strlist.o: strlist.c strlist.h
-zkt.o: zkt.c dki.h config.h zkt.h
+zkt.o: zkt.c config.h dki.h zkt.h
 dki.o: dki.c config.h debug.h misc.h zconf.h dki.h
 misc.o: misc.c config.h zconf.h misc.h
 domaincmp.o: domaincmp.c domaincmp.h
 zconf.o: zconf.c config.h zconf.h dki.h
+zktr.o: zktr.c zktr.h

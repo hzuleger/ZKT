@@ -1,3 +1,66 @@
+zkt 0.90 -- 6. Dec 2006
+
+* func 	CHECK_RESIGN interval added to config.h
+	This is the dnssec-signer calling interval (at least 1 day or 86400 sec).
+
+* func 	new function dki_destroy() added; semantic of dk_remove()
+	changed to rename the key files instead of physical deletion
+
+* doc	Setup of new example directory (flat and hierarchical)
+
+* doc	dnssec-zkt man page updated
+	Added some comments in misc.c
+
+* misc	function strtaint() renamed to str_untaint(),
+	dki_keycmp() renamed to dki_tagcmp()
+
+* func	New parameter key_ttl added to dnssec.conf
+	New func dki_prt_dnskeyttl () added
+	Now dnskey.db is written with key_ttl value
+
+* func	dnssec-signer: In hierarchical mode sign_zone() copies the
+	parent-file (if such a file exist) instead of the
+	keyset-file to the parent directory.
+
+* func	dnssec-zkt: Option --ksk-roll-phase[123] and function
+	ksk_rollover() added
+
+* misc	zconf: default values for sigvalidity, resign_int etc. changed,
+	new dnssec.conf example file created
+
+* func	dnssec-zkt: Long option support added 
+
+zkt 0.83 -- 11. Sep 2006
+
+* bug	dosigning(): Fixed bug in the bug fixing of printing undefined
+	serial number if incr_serial() failed. (Thanks to Randy McCasskill)
+
+zkt 0.82 -- 8. Sep 2006
+
+* bug	Use option -e for dnssec-keygen calls in dki_new(), because
+	an RSA exponent of 3 is vulnerable
+
+* bug	dosigning(): Fixed bug in printing undefined serial
+	number if incr_serial() failed.
+
+zkt 0.81 -- 13. July 2006
+
+* bug	The function ceatekey() won't work with USE_TREE.
+	Size of MAX_DNAME increased.
+
+zkt 0.8 -- 09. July 2006
+
+* func	Now a hierarchical directory structure with subdomains stored in
+	subfolders of the parent domain are allowed. Added copyfile(),
+	cmpfile() and new_keysetfiles() for that.
+
+* func	Config parameter added to choose if the domain name is
+	right or left justified listed by dnssec-zkt (printkeyinfo)
+
+* func	New class of key added ("sep"). A SEP key is a (public) key file
+	without the private counterpart. So we could use the key solely
+	as an secure entry point. (dki.h, dki_read)
+
 zkt 0.70 -- 15. Sep 2005
 
 * func	Experimental code added to use a binary search tree instead of a
@@ -6,19 +69,19 @@ zkt 0.70 -- 15. Sep 2005
 	In the first step only dnssec-zkt use the new data structure.
 	The tree is build over the domain names and each node is the starting point
 	of a linked list of keys.
-	As a result, it's not possible anymore to search on key tags only. You must
-	specify the domain name plus the tag. :-(
+	As a result, it's not possible anymore to search on key tags only. You have
+	to specify the domain name plus the tag. :-(
 
 * func	Function parseurl added.
 
 * func	Experimental code to register a new ksk. Currently it's more like
-	a key announcement because the lack of identification and authentication.
+	a key announcement because of the lack of identification and authentication.
 
 zkt 0.65 -- 22. Aug 2005
 
 * misc	Rewrite of the domaincmp() function. Now it's round about 2 times faster.
 	After some additional changes and the compiler option -O3 the dnssec-zkt
-	on the ~ 120000 zones requires only a minute
+	on the ~ 12000 zones requires only a minute
 		$ time dnssec-zkt -z -r sec > /dev/null
 		real    0m58.287s
 		user    0m54.610s
@@ -52,7 +115,7 @@ zkt 0.64 -- 1. Aug 2005
 	- Directory structure "sec/<firstletter>/domain" with round about 12200 domains
 	- One of the domain is a big one (~ 820000 RRs), the others are mostly very small ones
 	- We use a dsa with 704 bits as ksk and a rsamd5 with 512 bits as zsk on each domain.
-	- All test made on Sun Fire V440 with 4 CPU and  4x2GB main memory
+	- All test made on Sun Fire V440 with 4 CPU and 4x2GB main memory
 
 		# sequential signing of all zones 
 		$ time dnssec-signer -v -v -f -D sec

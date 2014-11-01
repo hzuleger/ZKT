@@ -1,4 +1,4 @@
-.TH dnssec-zkt 8 "March 12, 2005" "ZKT 0.6" ""
+.TH dnssec-zkt 8 "Dec 6, 2006" "ZKT 0.90" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -12,12 +12,20 @@ dnssec-zkt \(em Secure DNS zone key tool
 .IR "file" ]
 .RB [ \-l
 .IR "list" ]
-.RB [ \-adhkrptz ]
+.RB [ \-adhkLrptz ]
 .RI [{ keyfile | dir }
 .RI "" ... ]
 
 .B dnssec-zkt
 .BR \-C <label>
+.RB [ \-c
+.IR "file" ]
+.RB [ \-krpz ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B dnssec-zkt
+.BR \-\-create= <label>
 .RB [ \-c
 .IR "file" ]
 .RB [ \-krpz ]
@@ -31,9 +39,59 @@ dnssec-zkt \(em Secure DNS zone key tool
 .RB [ \-r ]
 .RI [{ keyfile | dir }
 .RI "" ... ]
+.br
+.B dnssec-zkt
+.BR \-\-pre-publish= <keytag>
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B dnssec-zkt
+.BR \-\-active= <keytag>
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B dnssec-zkt
+.BR \-\-depreciate= <keytag>
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B dnssec-zkt
+.BR \-\-rename= <keytag>
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+
+.B dnssec-zkt
+.BR \-\-destroy= <keytag>
+.RB [ \-c
+.IR "file" ]
+.RB [ \-r ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
 
 .B dnssec-zkt
 .B \-T
+.RB [ \-c
+.IR "file" ]
+.RB [ \-l
+.IR "list" ]
+.RB [ \-hr ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B dnssec-zkt
+.B \-\-list-trustedkeys
 .RB [ \-c
 .IR "file" ]
 .RB [ \-l
@@ -51,17 +109,51 @@ dnssec-zkt \(em Secure DNS zone key tool
 .RB [ \-hkzr ]
 .RI [{ keyfile | dir }
 .RI "" ... ]
+.br
+.B dnssec-zkt
+.B \-\-list-dnskeys
+.RB [ \-c
+.IR "file" ]
+.RB [ \-l
+.IR "list" ]
+.RB [ \-hkzr ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
 
 .B dnssec-zkt
 .B \-Z
 .RB [ \-c
 .IR "file" ]
+.br
+.B dnssec-zkt
+.B \-\-zone-config
+.RB [ \-c
+.IR "file" ]
+
+.B dnssec-zkt
+.B \-\-ksk-rollover
+.br
+.B dnssec-zkt
+.BI \-\-ksk-roll-phase1 " do.ma.in."
+.RB [ \-c
+.IR "file" ]
+.br
+.B dnssec-zkt
+.BI \-\-ksk-roll-phase2 " do.ma.in."
+.RB [ \-c
+.IR "file" ]
+.br
+.B dnssec-zkt
+.BI \-\-ksk-roll-phase3 " do.ma.in."
+.RB [ \-c
+.IR "file" ]
+.br
 .ad
 
 .SH DESCRIPTION
 The 
 .I dnssec-zkt
-command is a wrapper around
+command is a wrapper around 
 .I dnssec-keygen(8)
 to assist in dnssec zone key management.
 .PP
@@ -84,51 +176,54 @@ It allows key livetime monitoring and status change.
 
 .SH GENERAL OPTIONS
 .TP
-.BI \-c " file"
+.BI \-c " file" ", \-\-config=" file
 Read default values from the specified config file.
 Otherwise the default config file is read or build in defaults
 will be used.
 .TP
 .BI \-l " list"
-Print out only information about domains given in the comma or space separated
+Print out information solely about domains given in the comma or space separated
 list.
-Be sure that every domain name ends with a dot.
+Take care of, that every domain name has a trailing dot.
 .TP
-.B \-d
+.BR \-d ", " \-\-directory
 Skip directory arguments.
 This will be useful in combination with wildcard arguments
 to prevent dnsssec-zkt to list all keys found in subdirectories. 
-For example "dnssec-zkt -d *" will give a list of all keys found only in
+For example "dnssec-zkt -d *" will print out a list of all keys only found in
 the current directory.
-Maybe its easier to use "dnssec-zkt ." instead.
+Maybe it's easier to use "dnssec-zkt ." instead (without -r set).
 The option works similar to the \-d option of
 .IR ls(1) .
 .TP
-.B \-k
+.BR \-L ", " \-\-left-justify
+Print out the domain name left justified.
+.TP
+.BR \-k ", " \-\-ksk
 Select and print key signing keys only (default depends on command mode).
 .TP
-.B \-z
+.BR \-z ", " \-\-zsk
 Select and print zone signing keys only (default depends on command mode).
 .TP
-.B \-r
+.BR \-r ", " \-\-recursive
 Recursive mode (default is off).
 .br
-Also settable in the dnssec.conf file (Parameter: Recursion).
+Also settable in the dnssec.conf file (Parameter: Recursive).
 .TP
-.B \-p
+.BR \-p ", " \-\-path
 Print pathname in listing mode.
 In -C mode, don't create the new key in the same directory as (already existing)
 keys with the same label.
 .TP
-.B \-a
+.BR \-a ", " \-\-age
 Print age of key in weeks, days, hours, minutes and seconds (default is off).
 .br
-Also settable in the dnssec.conf file.
+Also settable in the dnssec.conf file (Paremeter: PrintAge).
 .TP
-.B \-t
+.BR \-t ", " \-\-time
 Print key generation time (default is on).
 .br
-Also settable in the dnssec.conf file.
+Also settable in the dnssec.conf file (Paremeter: PrintTime).
 .TP
 .B \-h
 No header or trusted-key section header and trailer in -T mode
@@ -136,10 +231,10 @@ No header or trusted-key section header and trailer in -T mode
 
 .SH COMMAND OPTIONS
 .TP
-.B \-H
+.BR \-H ", " \-\-help
 Print out the online help.
 .TP
-.B \-T
+.BR \-T ", " \-\-list-trustedkeys
 List all key signing keys as a
 .I named.conf
 trusted-key section.
@@ -147,13 +242,13 @@ Use
 .B \-h
 to supress the section header/trailer.
 .TP
-.B \-K
+.BR \-K ", " \-\-list-dnskeys
 List the public part of all the keys in DNSKEY resource record format.
 Use
 .B \-h
 to suppress comment lines.
 .TP
-.BI \-C " zone"
+.BI \-C " zone" ",  \-\-create=" zone
 Create a new zone signing key for the given zone.
 Add option
 .B \-k
@@ -168,13 +263,18 @@ the
 .B \-p
 option is specified.
 .TP
-.BI \-R " keyid"
-Remove the key with the given keyid.
+.BI \-R " keyid" ", \-\-rename=" keyid
+Rename the key files of the key with the given keyid
+(Look at key file names starting with an lower 'k').
+The keyid is the numeric keytag with an optionally added zone name separated by a colon.
+.TP
+.BI \-\-destroy= keyid
+Deletes the key with the given keyid.
 The keyid is the numeric keytag with an optionally added zone name separated by a colon.
 Beware that this deletes both private and public keyfiles, thus the key is
 unrecoverable lost.
 .TP
-.BI \-P|A|D " keyid"
+.BI \-P|A|D " keyid," " \-\-pre-publish=" keyid, " \-\-active=" keyid, " \-\-depreciated=" keyid
 Change the status of the given dnssec key to
 pre-published
 .RB ( \-P ),
@@ -195,7 +295,7 @@ Key activation via option
 .B \-A
 will restore the original timestamp and file name (".private").
 .TP
-.B \-Z
+.BR \-Z ", " \-\-zone-config
 Write all config parameters to stdout.
 The output is suitable as a template for the
 .I dnssec.conf
@@ -203,6 +303,13 @@ file, so the easiest way to create a
 .I dnssec.conf
 file is to redirect the standard output of the above command.
 Pay attention not to overwrite an existing file.
+.TP
+.BI \-\-ksk-roll-phase[123] " do.ma.in."
+Initiate a key signing key rollover of the specified domain.
+This feature is currently in experimental status and is mainly for the use
+in an hierachical environment.
+Use --ksk-rollover for a little more detailed description.
+
 
 .SH SAMPLE USAGE
 .TP 
@@ -248,7 +355,7 @@ mode).
 Some of the general options will not be meaningful in all of the command modes.
 .br
 The option
-.CW -l
+.B -l
 insists on domain names ending with dot.
 .PP
 
@@ -256,16 +363,15 @@ insists on domain names ending with dot.
 Holger Zuleger 
 
 .SH COPYRIGHT
-Copyright (c) 2005 by Holger Zuleger.
+Copyright (c) 2005 \- 2006 by Holger Zuleger.
 Licensed under the GPL 2. There is NO warranty; not even for MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
 .\"--------------------------------------------------
 .SH SEE ALSO
 dnssec-keygen(8), dnssec-signzone(8), rndc(8), named.conf(5), dnssec-signer(8),
 .br
-"DNSSEC Operational Practices" by Miek Gieben and Olaf Kolkman
-.br
-(draft-ietf-dnsop-dnssec-operational-practices-03.txt),
+RFC4641 
+"DNSSEC Operational Practices" by Miek Gieben and Olaf Kolkman,
 .br
 DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC
 .br

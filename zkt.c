@@ -12,6 +12,7 @@ extern	int	ageflag;
 extern	int	kskflag;
 extern	int	zskflag;
 extern	int	pathflag;
+extern	int	ljustflag;
 
 static	void	printkeyinfo (const dki_t *dkp, const char *oldpath);
 
@@ -42,7 +43,10 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 
 	if ( kskflag && dki_isksk (dkp) || zskflag && !dki_isksk (dkp) )
 	{
-		printf ("%-33.33s ", dkp->name);
+		if ( ljustflag )
+			printf ("%-33.33s ", dkp->name);
+		else
+			printf ("%33.33s ", dkp->name);
 		printf ("%05d ", dkp->tag);
 		printf ("%3s ", dki_isksk (dkp) ? "KSK" : "ZSK");
 		printf ("%-3.3s ", dki_statusstr (dkp) );
@@ -63,17 +67,11 @@ static	void	list_key (const dki_t **nodep, const VISIT which, int depth)
 
 	if ( nodep == NULL )
 		return;
-
-	dkp = *nodep;
 //fprintf (stderr, "listkey %d %d %s\n", which, depth, dkp->name);
-	switch ( which )
+
+	if ( which == INORDER || which == LEAF )
 	{
-	case PREORDER:   	/* print headline if list is not empty */
-		if ( depth == 0 )
-			printkeyinfo (NULL, "");
-		break;
-	case INORDER:
-	case LEAF:
+		dkp = *nodep;
 		while ( dkp )	/* loop through list */
 		{
 			if ( labellist == NULL || isinlist (dkp->name, labellist) )
@@ -87,15 +85,15 @@ static	void	list_key (const dki_t **nodep, const VISIT which, int depth)
 
 void	zkt_list_keys (const dki_t *data)
 {
-#if defined(USE_TREE) && USE_TREE
-	twalk (data, list_key);
-#else
 	const   dki_t   *dkp;
 	const   char    *oldpath;
 
 	if ( data )    /* print headline if list is not empty */
 		printkeyinfo (NULL, "");
 
+#if defined(USE_TREE) && USE_TREE
+	twalk (data, list_key);
+#else
 	oldpath = "";
 	for ( dkp = data; dkp; dkp = dkp->next )       /* loop through list */
 	{

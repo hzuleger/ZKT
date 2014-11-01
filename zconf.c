@@ -44,10 +44,10 @@
 
 static	zconf_t	def = {
 	ZONEDIR, RECURSIVE, 
-	1, 0,
-	SIG_VALIDITY, MAX_TTL, PROPTIME, RESIGN_INT,
-	KSK_LIFETIME, KSK_ALGO, 1024, KSK_RANDOM,
-	ZSK_LIFETIME, ZSK_ALGO, 512, ZSK_RANDOM,
+	1, 0, 0,
+	SIG_VALIDITY, MAX_TTL, KEY_TTL, PROPTIME, RESIGN_INT,
+	KSK_LIFETIME, KSK_ALGO, KSK_BITS, KSK_RANDOM,
+	ZSK_LIFETIME, ZSK_ALGO, ZSK_BITS, ZSK_RANDOM,
 	DNSKEYFILE, ZONEFILE, KEYSETDIR,
 	LOOKASIDEDOMAIN, SIG_RANDOM, SIG_PSEUDO,
 };
@@ -69,6 +69,7 @@ static	zconf_para_t	conf[] = {
 	{ "Recursive",		CONF_BOOL,	&def.recursive },
 	{ "PrintTime",		CONF_BOOL,	&def.printtime },
 	{ "PrintAge",		CONF_BOOL,	&def.printage },
+	{ "LeftJustify",	CONF_BOOL,	&def.ljust },
 
 	{ "",			CONF_COMMENT,	NULL },
 	{ "",			CONF_COMMENT,	"zone specific timing values" },
@@ -76,6 +77,7 @@ static	zconf_para_t	conf[] = {
 	{ "Sigvalidity",	CONF_TIMEINT,	&def.sigvalidity },
 	{ "Max_TTL",		CONF_TIMEINT,	&def.max_ttl },
 	{ "Propagation",	CONF_TIMEINT,	&def.proptime },
+	{ "KEY_TTL",		CONF_TIMEINT,	&def.key_ttl },
 #if defined (DEF_TTL)
 	{ "def_ttl",		CONF_TIMEINT,	&def.def_ttl },
 #endif
@@ -108,24 +110,24 @@ static	const char	*bool2str (int val)
 	return val ? "True" : "False";
 }
 
-static	const char	*timeint2str (int val)
+static	const char	*timeint2str (ulong val)
 {
 	static	char	str[20+1];
 
 	if ( val == 0 )
-		snprintf (str, sizeof (str), "%d", val / YEARSEC);
+		snprintf (str, sizeof (str), "%lu", val / YEARSEC);
 	else if ( val % YEARSEC == 0 )
-		snprintf (str, sizeof (str), "%dy", val / YEARSEC);
+		snprintf (str, sizeof (str), "%luy", val / YEARSEC);
 	else if ( val % WEEKSEC == 0 )
-		snprintf (str, sizeof (str), "%dw", val / WEEKSEC);
+		snprintf (str, sizeof (str), "%luw", val / WEEKSEC);
 	else if ( val % DAYSEC == 0 )
-		snprintf (str, sizeof (str), "%dd", val / DAYSEC);
+		snprintf (str, sizeof (str), "%lud", val / DAYSEC);
 	else if ( val % HOURSEC == 0 )
-		snprintf (str, sizeof (str), "%dh", val / HOURSEC);
+		snprintf (str, sizeof (str), "%luh", val / HOURSEC);
 	else if ( val % MINSEC == 0 )
-		snprintf (str, sizeof (str), "%dm", val / MINSEC);
+		snprintf (str, sizeof (str), "%lum", val / MINSEC);
 	else
-		snprintf (str, sizeof (str), "%ds", val);
+		snprintf (str, sizeof (str), "%lus", val);
 
 	return str;
 }
@@ -149,10 +151,12 @@ static	int set_all_varptr (zconf_t *cp)
 	set_varptr ("recursive", &cp->recursive);
 	set_varptr ("printage", &cp->printage);
 	set_varptr ("printtime", &cp->printtime);
+	set_varptr ("leftjustify", &cp->ljust);
 
 	set_varptr ("resigninterval", &cp->resign);
 	set_varptr ("sigvalidity", &cp->sigvalidity);
 	set_varptr ("max_ttl", &cp->max_ttl);
+	set_varptr ("key_ttl", &cp->key_ttl);
 	set_varptr ("propagation", &cp->proptime);
 #if defined (DEF_TTL)
 	set_varptr ("def_ttl", &cp->def_ttl);
@@ -268,7 +272,7 @@ zconf_t	*loadconfig (char *filename, zconf_t *z)
 				case CONF_STRING:
 					str = (char **)c->var;
 					*str = strdup (val);
-					strtaint (*str);	/* remove "bad" characters */
+					str_untaint (*str);	/* remove "bad" characters */
 					break;
 				case CONF_INT:
 					sscanf (val, "%d", (int *)c->var);
@@ -386,10 +390,10 @@ int	checkconfig (const zconf_t *z)
 		fprintf (stderr, "The current value is %s\n", timeint2str (z->sigvalidity));
 	}
 
-	if ( z->resign > (z->sigvalidity/3) - (z->max_ttl + z->proptime) )
+	if ( z->resign > (z->sigvalidity*5/6) - (z->max_ttl + z->proptime) )
 	{
 		fprintf (stderr, "Re-signing interval (%s) should be less than ", timeint2str (z->resign));
-		fprintf (stderr, "a third of sigvalidity\n");
+		fprintf (stderr, "5/6 of sigvalidity\n");
 	}
 	if ( z->resign < (z->max_ttl + z->proptime) )
 	{
@@ -402,18 +406,23 @@ int	checkconfig (const zconf_t *z)
 		fprintf (stderr, "Max TTL (%d) should be less than signatur validity (%d)\n",
 								z->max_ttl, z->sigvalidity);
 
-	if ( z->z_life > (12 * WEEKSEC) * (z->z_bits / 512) )
+	if ( z->z_life > (12 * WEEKSEC) * (z->z_bits / 512.) )
 	{
 		fprintf (stderr, "Lifetime of zone signing key (%s) ", timeint2str (z->z_life));
-		fprintf (stderr, "seems a little bit high\n");
+		fprintf (stderr, "seems a little bit high ");
 		fprintf (stderr, "(In respect of key size (%d))\n", z->z_bits);
 	}
 
-	if ( z->k_life > 0 && z->k_life < z->z_life * (z->k_bits / 512) )
+	if ( z->k_life > 0 && z->k_life <= z->z_life )
 	{
 		fprintf (stderr, "Lifetime of key signing key (%s) ", timeint2str (z->k_life));
-		fprintf (stderr, "seems a little bit low\n");
-		fprintf (stderr, "(In respect of key size (%d) and lifetime of zsk)\n", z->k_bits);
+		fprintf (stderr, "should be greater than lifetime of zsk\n");
+	}
+	if ( z->k_life > 0 && z->k_life > (26 * WEEKSEC) * (z->k_bits / 512.) )
+	{
+		fprintf (stderr, "Lifetime of key signing key (%s) ", timeint2str (z->k_life));
+		fprintf (stderr, "seems a little bit high ");
+		fprintf (stderr, "(In respect of key size (%d))\n", z->k_bits);
 	}
 
 	return 1;
