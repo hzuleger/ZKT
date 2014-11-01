@@ -1,32 +1,43 @@
 #################################################################
 #
-#	@(#) Makefile for dnssec zone key tool  (c) July 2004 hoz
+#	@(#) Makefile for dnssec zone key tool  (c) Mar 2005 hoz
 #
 #################################################################
 
 INSTALL_DIR =	$$HOME/bin
 
-CFLAGS	=	-Wmissing-prototypes #-DDBG
+CC	=	gcc
+
+PROFILE =	# -pg
+OPTIM	=	# -O3 -DNDEBUG
+
+CFLAGS	=	#-DDBG
+CFLAGS	+=	-Wmissing-prototypes
+CFLAGS	+=	$(PROFILE) $(OPTIM)
+LDFLAGS	+=	$(PROFILE)
 
 PROJECT =	zkt
-VERSION =	0.5
+VERSION =	0.70
 
-HEADER	=	dki.h misc.h zconf.h config.h strlist.h zone.h debug.h
-SRC_ALL	=	dki.c misc.c zconf.c
+HEADER	=	dki.h misc.h domaincmp.h zconf.h config.h strlist.h \
+		zone.h zkt.h debug.h ncparse.h zktr.h
+SRC_ALL	=	dki.c misc.c domaincmp.c zconf.c zktr.c
 OBJ_ALL	=	$(SRC_ALL:.c=.o)
 
-SRC_SIG	=	dnssec-signer.c zone.c strlist.c
+SRC_SIG	=	dnssec-signer.c zone.c ncparse.c
 OBJ_SIG	=	$(SRC_SIG:.c=.o)
-#MAN_SIG	=	dnssec-signer.8
+MAN_SIG	=	dnssec-signer.8
 PROG_SIG= dnssec-signer
 
-SRC_ZKT	=	dnssec-zkt.c
+SRC_ZKT	=	dnssec-zkt.c strlist.c zkt.c
 OBJ_ZKT	=	$(SRC_ZKT:.c=.o)
 MAN_ZKT	=	dnssec-zkt.8
 PROG_ZKT= dnssec-zkt
 
-MAN	=	$(MAN_ZKT) #$(MAN_SIG)
-OTHER	=	README BUGS LICENSE Makefile dnssec.conf zonedir/example.net zonedir/sub.example.net
+MAN	=	$(MAN_ZKT) $(MAN_SIG)
+OTHER	=	README BUGS LICENSE CHANGELOG tags Makefile dnssec.conf \
+		zonedir/example.net. zonedir/sub.example.net. \
+		zonedir/named.conf zonedir/zone.conf
 SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(MAN) $(OTHER)
 
 all:	$(PROG_ZKT) $(PROG_SIG) 
@@ -48,12 +59,16 @@ clean:
 
 tar:	$(PROJECT)-$(VERSION).tar
 
-man:	$(MAN_ZKT).html $(MAN_ZKT).pdf
+man:	$(MAN_ZKT).html $(MAN_ZKT).pdf $(MAN_SIG).html $(MAN_SIG).pdf
 
 $(MAN_ZKT).html: $(MAN_ZKT)
 	groff -Thtml -man $(MAN_ZKT) > $(MAN_ZKT).html
 $(MAN_ZKT).pdf: $(MAN_ZKT)
 	groff -Tps -man $(MAN_ZKT) | ps2pdf - $(MAN_ZKT).pdf
+$(MAN_SIG).html: $(MAN_SIG)
+	groff -Thtml -man $(MAN_SIG) > $(MAN_SIG).html
+$(MAN_SIG).pdf: $(MAN_SIG)
+	groff -Tps -man $(MAN_SIG) | ps2pdf - $(MAN_SIG).pdf
 	
 	
 $(PROJECT)-$(VERSION).tar:	$(SAVE)
@@ -63,12 +78,17 @@ depend:
 	$(CC) -MM $(SRC_SIG) $(SRC_ZKT) $(SRC_ALL)
 
 ## all dependicies
-#cc -MM dnssec-signer.c zone.c strlist.c dnssec-zkt.c dki.c misc.c zconf.c
-dnssec-signer.o: dnssec-signer.c config.h zconf.h strlist.h debug.h \
-  misc.h zone.h dki.h
+#:r !make depend
+#gcc -MM dnssec-signer.c zone.c ncparse.c dnssec-zkt.c strlist.c zkt.c dki.c misc.c domaincmp.c zconf.c
+dnssec-signer.o: dnssec-signer.c config.h zconf.h debug.h misc.h \
+  ncparse.h zone.h dki.h
 zone.o: zone.c config.h debug.h misc.h zconf.h dki.h zone.h
+ncparse.o: ncparse.c debug.h misc.h ncparse.h
+dnssec-zkt.o: dnssec-zkt.c config.h debug.h misc.h strlist.h zconf.h \
+  dki.h
 strlist.o: strlist.c strlist.h
-dnssec-zkt.o: dnssec-zkt.c config.h debug.h misc.h zconf.h dki.h
+zkt.o: zkt.c dki.h config.h zkt.h
 dki.o: dki.c config.h debug.h misc.h zconf.h dki.h
 misc.o: misc.c config.h zconf.h misc.h
+domaincmp.o: domaincmp.c domaincmp.h
 zconf.o: zconf.c config.h zconf.h dki.h

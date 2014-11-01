@@ -1,11 +1,13 @@
 /****************************************************************
 **
 **	@(#) zconf.c -- configuration file parser for dnssec.conf
-**	Most of the code is from SixXS Heartbeat Client
-**	written by by Jeroen Massar <jeroen@sixxs.net>
 **
-**	New config types and some slightly code changes by <hoz>
-
+**	Most of the code is from the SixXS Heartbeat Client
+**	written by Jeroen Massar <jeroen@sixxs.net>
+**
+**	New config types and some slightly code changes
+**	by Holger Zuleger
+**
 **	See LICENCE file for licence
 **
 ****************************************************************/
@@ -44,10 +46,10 @@ static	zconf_t	def = {
 	ZONEDIR, RECURSIVE, 
 	1, 0,
 	SIG_VALIDITY, MAX_TTL, PROPTIME, RESIGN_INT,
-	KSK_LIFETIME, KSK_ALGO, 1024,
-	ZSK_LIFETIME, ZSK_ALGO, 512,
-	DNSKEYFILE, ZONEFILE, 
-	LOOKASIDEDOMAIN,
+	KSK_LIFETIME, KSK_ALGO, 1024, KSK_RANDOM,
+	ZSK_LIFETIME, ZSK_ALGO, 512, ZSK_RANDOM,
+	DNSKEYFILE, ZONEFILE, KEYSETDIR,
+	LOOKASIDEDOMAIN, SIG_RANDOM, SIG_PSEUDO,
 };
 
 typedef	struct {
@@ -83,15 +85,20 @@ static	zconf_para_t	conf[] = {
 	{ "KSK_lifetime",	CONF_TIMEINT,	&def.k_life },
 	{ "KSK_algo",		CONF_ALGO,	&def.k_algo },
 	{ "KSK_bits",		CONF_INT,	&def.k_bits },
+	{ "KSK_randfile",	CONF_STRING,	&def.k_random },
 	{ "ZSK_lifetime",	CONF_TIMEINT,	&def.z_life },
 	{ "ZSK_algo",		CONF_ALGO,	&def.z_algo },
 	{ "ZSK_bits",		CONF_INT,	&def.z_bits },
+	{ "ZSK_randfile",	CONF_STRING,	&def.z_random },
 
 	{ "",			CONF_COMMENT,	NULL },
 	{ "",			CONF_COMMENT,	"dnssec-signer options"},
 	{ "Keyfile",		CONF_STRING,	&def.keyfile },
 	{ "Zonefile",		CONF_STRING,	&def.zonefile },
+	{ "KeySetDir",		CONF_STRING,	&def.keysetdir },
 	{ "DLV_Domain",		CONF_STRING,	&def.lookaside },
+	{ "Sig_randfile",	CONF_STRING,	&def.sig_random },
+	{ "Sig_Pseudorand",	CONF_BOOL,	&def.sig_pseudo },
 
 	{ NULL,			CONF_END,	NULL},
 };
@@ -154,14 +161,19 @@ static	int set_all_varptr (zconf_t *cp)
 	set_varptr ("ksk_lifetime", &cp->k_life);
 	set_varptr ("ksk_algo", &cp->k_algo);
 	set_varptr ("ksk_bits", &cp->k_bits);
+	set_varptr ("ksk_randfile", &cp->k_random);
 
 	set_varptr ("zsk_lifetime", &cp->z_life);
 	set_varptr ("zsk_algo", &cp->z_algo);
 	set_varptr ("zsk_bits", &cp->z_bits);
+	set_varptr ("zsk_randfile", &cp->z_random);
 
 	set_varptr ("keyfile", &cp->keyfile);
 	set_varptr ("zonefile", &cp->zonefile);
+	set_varptr ("keysetdir", &cp->keysetdir);
 	set_varptr ("dlv_domain", &cp->lookaside);
+	set_varptr ("sig_randfile", &cp->sig_random);
+	set_varptr ("sig_pseudorand", &cp->sig_pseudo);
 }
 
 zconf_t	*loadconfig (char *filename, zconf_t *z)
@@ -361,4 +373,48 @@ int	printconfig (const char *fname, const zconf_t *z)
 			break;
 		}
 	}
+}
+
+int	checkconfig (const zconf_t *z)
+{
+	if ( z == NULL )
+		return 1;
+
+	if ( z->sigvalidity < (1 * DAYSEC) || z->sigvalidity > (12 * WEEKSEC) )
+	{
+		fprintf (stderr, "Signature should be valid for at least 1 day and not longer than 3 month (12 weeks)\n");
+		fprintf (stderr, "The current value is %s\n", timeint2str (z->sigvalidity));
+	}
+
+	if ( z->resign > (z->sigvalidity/3) - (z->max_ttl + z->proptime) )
+	{
+		fprintf (stderr, "Re-signing interval (%s) should be less than ", timeint2str (z->resign));
+		fprintf (stderr, "a third of sigvalidity\n");
+	}
+	if ( z->resign < (z->max_ttl + z->proptime) )
+	{
+		fprintf (stderr, "Re-signing interval (%s) should be ", timeint2str (z->resign));
+		fprintf (stderr, "greater than max_ttl (%d) plus ", z->max_ttl);
+		fprintf (stderr, "propagation time (%d)\n", z->proptime);
+	}
+
+	if ( z->max_ttl >= z->sigvalidity )
+		fprintf (stderr, "Max TTL (%d) should be less than signatur validity (%d)\n",
+								z->max_ttl, z->sigvalidity);
+
+	if ( z->z_life > (12 * WEEKSEC) * (z->z_bits / 512) )
+	{
+		fprintf (stderr, "Lifetime of zone signing key (%s) ", timeint2str (z->z_life));
+		fprintf (stderr, "seems a little bit high\n");
+		fprintf (stderr, "(In respect of key size (%d))\n", z->z_bits);
+	}
+
+	if ( z->k_life > 0 && z->k_life < z->z_life * (z->k_bits / 512) )
+	{
+		fprintf (stderr, "Lifetime of key signing key (%s) ", timeint2str (z->k_life));
+		fprintf (stderr, "seems a little bit low\n");
+		fprintf (stderr, "(In respect of key size (%d) and lifetime of zsk)\n", z->k_bits);
+	}
+
+	return 1;
 }

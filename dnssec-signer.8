@@ -1,0 +1,355 @@
+.TH dnssec-signer 8 "May 12, 2005" "ZKT 0.62" ""
+\" turn off hyphenation
+.\"	if n .nh
+.nh
+.SH NAME
+dnssec-signer \(em Secure DNS zone signing tool 
+
+.SH SYNOPSYS
+.na
+.B dnssec-signer
+.RB [ \-c
+.IR "file" ]
+.RB [ \-fhnr ]
+.RB [ \-v
+.RB [ \-v ]]
+.B \-N
+.I "named.conf"
+.RI [ zone
+.RI "" ... ]
+.br
+.B dnssec-signer
+.RB [ \-c
+.IR "file" ]
+.RB [ \-fhnr ]
+.RB [ \-v
+.RB [ \-v ]]
+.RB [ \-D
+.IR "directory" ]
+.RI [ zone
+.RI "" ... ]
+.br
+.B dnssec-signer
+.RB [ \-c
+.IR "file" ]
+.RB [ \-fhnr ]
+.RB [ \-v
+.RB [ \-v ]]
+.B \-o 
+.IR "origin"
+.RI [ zonefile ]
+
+.SH DESCRIPTION
+The 
+.I dnssec-signer
+command is a wrapper around
+.I dnssec-signzone(8)
+and
+.I dnssec-keygen(8)
+to sign a zone and manage the necessary zone keys.
+It's able to increment the serial number before signing the zone
+and can trigger
+.I named(8)
+to reload the signed zone file.
+The command controls several secure zones and, if started in regular
+intervals via
+.IR cron(8) ,
+can do all that stuff automatically.
+.PP
+In the most useful usage scenario the command will be called with option
+.B \-N 
+to read the secure zones out of the given
+.I named.conf
+file.
+All master zone statements will be scanned for filenames
+ending with ".signed".
+These zones will be checked if the necessary zone- and key signing keys
+are existent and fresh enough to be used in the signing process.
+If some out-dated keys where found, new keying material will be generated via
+the
+.I dnssec-keygen(8)
+command and the old ones will be marked as depreciated.
+So the command do anything needed for a zone key rollover as defined by [2].
+.PP
+If the resigning interval is reached or any new key must be announced,
+the serial number of the zone will be incremented and the
+.I dnssec-signzone(8)
+command will be evoked to sign the zone.
+After that, if the option
+.B \-r
+is given, the
+.I rndc(8)
+command will be called to reload the zone on the
+nameserver.
+.ig
+.br
+If the command is called in regular intervals (e.g. via
+.IR cron(8) ),
+the key management and resigning of secure zones is done complete
+automatically.
+..
+.PP
+In the second form of the command it's possible to specify a directory
+tree with the option
+.B \-D
+.IR dir .
+Every secure zone found in a subdirectory below
+.I dir
+will be signed.
+However, it's also possible to reduce the signing to those
+zones given as arguments.
+In directory mode the pre-requisite is, that the directory name is
+exactly (including the trailing dot) the same as the zone name.
+.PP
+In the last form of the command, the functionality is more or less the same
+as the
+.I dnssec-signzone (8)
+command.
+The parameter specify the zone file name and the option
+.B \-o
+takes the name of the zone.
+.PP
+If neither
+.B \-N
+nor
+.B \-D
+nor
+.B \-o
+is given, then the default directory specified in the
+.I dnssec.conf
+file by the parameter
+.I zonedir
+will be used as the top level directory.
+
+.SH OPTIONS
+.TP
+.BI \-c " file"
+Read configuration values out of the specified file.
+Otherwise the default config file is read or build-in defaults
+will be used.
+.TP
+.B \-f
+Force a resigning of the zone, regardless if the resigning interval
+is reached, or any new keys must be announced.
+.TP
+.B \-n
+Don't execute the
+.I dnssec-signzone(8)
+command.
+Currently this option is of very limited usage.
+.TP
+.B \-r
+Reload the zone via
+.I rndc(8)
+after successful signing.
+In a production environment it's recommended to use this option
+to be sure that a freshly signed zone will be immediately propagated.
+However, that's only feasable if the named runs on the signing
+machine, which is not recommended.
+Otherwise the signed zonefile must be copied to the production
+server before reloading the zone.
+If this is the case, the parameter
+.I propagation
+in the
+.I dnssec.conf
+file must be set to a reasonable value.
+.TP
+.B \-v
+Verbose mode (recommended).
+A second
+.B \-v
+will be a little more verbose.
+.TP
+.B \-h
+Print out the online help.
+
+.SH SAMPLE USAGE
+.TP 
+.fam C
+.B "dnssec-signer -N /var/named/named.conf -r -v -v 
+.fam T
+Sign all secure zones found in the named.conf file and, if necessary,
+trigger a reload of the zone.
+Print some explanatory remarks on stdout.
+.TP
+.fam C
+.B "dnssec-signer -D zonedir/example.net. -f -v -v 
+.fam T
+Force the signing of the zone found in the directory
+.I zonedir/example.net .
+Do not reload the zone.
+.TP
+.fam C
+.B "dnssec-signer -D zonedir -f -v -v example.net.
+.fam T
+Same as above.
+.TP
+.fam C
+.B "dnssec-signer -f -v -v example.net.
+.fam T
+Same as above if the
+.I dnssec.conf
+file contains the path of the parent directory of the
+.I example.net
+zone.
+.TP
+.fam C
+.B "dnssec-signer -f -v -v -o example.net. zone.db
+.fam T
+Same as above if we are in the directory containing the
+.I example.net
+files.
+
+.SH Zone setup and initial preparation
+.TP
+Create a separate directory for every secure zone.
+.br
+This is useful because there are many additional files needed to
+secure a zone.
+Besides the zone file
+.RI ( zone.db ),
+there is a signed zone file
+.RI ( zone.db.signed),
+a minimum of four files containing the keying material,
+a file called
+.I dnskey.db
+with the current used keys,
+and the
+.I dsset-
+and
+.IR keyset- files
+created by the
+.I dnssec-signzone(8)
+command.
+So in summary there is a minimum of nine files used per secure zone.
+For every additional key there are two extra files and
+every delegated subzone creates also two or three files.
+.TP
+Name the directory just like the zone.
+.br
+That's only needed if you want to use the dnssec-signer command in
+directory mode
+.RB ( \-D ).
+Then the name of the zone will be parsed out of the directory name.
+.TP
+Change the name of the zone file to \fIzone.db\fP
+Otherwise you have to set the name via the
+.I dnssec.conf
+parameter
+.IR zonefile ,
+or you have to use the option
+.B \-o
+to name the zone and specify the zone file as argument.
+.TP
+Add the name of the signed zonefile to the \fInamed.conf\fP file
+The filename is the name of the zone file with the 
+extension
+.IR .signed .
+Create an empty file with the name
+.IB zonefile .signed
+in the zone directory.
+.TP
+Include the keyfile in the zone.
+The name of the keyfile is settable by the
+.I dnssec.conf
+parameter
+.I keyfile .
+The default is
+.I dnskey.db .
+.br
+.nf
+.fam C
+   ...
+		IN  NS		ns1.example.net.
+		IN  NS		ns2.example.net.
+$INCLUDE dnskey.db
+   ...
+.fi
+.fam T
+.TP
+Control the format of the SOA-Record
+For automatic incrementation of the serial number, the SOA-Record
+must be formated closely like the following template.
+The serial number must be on a single line and left justified in a field
+of at least 10 spaces!
+.fam C
+.nf
+@	IN SOA	ns1.example.net. hostmaster.example.net.  (
+				60        ; Serial	
+				43200	; Refresh
+				1800	; Retry
+				2W	; Expire
+				7200 )	; Minimum
+.fi
+.fam T
+.TP
+Try to sign the zone
+If the current working directory is the directory of the zone
+.IR example.net ,
+use the command
+.fam C
+.nf
+.sp 0.5
+    $  dnssec-signer -D .. -v -v example.net
+    $  dnssec-signer -o example.net.
+.sp 0.5
+.fi
+.fam T
+to create the initial keying material and a signed zone file.
+Then try to load the file on the name server.
+
+.SH FILES
+.TP
+.I /var/named/dnssec.conf
+Global configuration file.
+Use
+.I dnssec-zkt(8)
+with option
+.B \-Z
+to create an initial config file.
+.TP
+.I ./dnssec.conf
+Local configuration file.
+.TP
+.I dnskey.db
+The file contains the currently used key and zone signing keys.
+It will be created by
+.IR dnsssec-signer(8) .
+The name of the file is settable via the dnssec configuration
+file (parameter
+.IR keyfile ).
+.TP
+.I zone.db
+This is the zone file.
+The name of the file is settable via the dnssec configuration
+file (parameter
+.IR zonefile ).
+
+.SH BUGS
+.PP
+The zone names given as arguments must be ending with a dot.
+.PP
+The named.conf parser is a little bit rudimental and not
+very good tested.
+Maybe there is only limited usage in split dns environments.
+
+.SH AUTHOR
+Holger Zuleger 
+
+.SH COPYRIGHT
+Copyright (c) 2005 by Holger Zuleger.
+Licensed under the GPL 2. There is NO warranty; not even for MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+.\"--------------------------------------------------
+.SH SEE ALSO
+dnssec-keygen(8), dnssec-signzone(8), rndc(8), named.conf(5), dnssec-zkt(8)
+.br
+RFC4033, RFC4034, RFC4035
+.br
+[1] DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC
+.br
+(http://www.ripe.net/projects/disi/dnssec_howto/)
+.br
+[2] "DNSSEC Operational Practices" by Miek Gieben and Olaf Kolkman
+.br
+(draft-ietf-dnsop-dnssec-operational-practices-03.txt),

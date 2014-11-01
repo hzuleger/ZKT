@@ -44,7 +44,7 @@ static	dki_t	*dki_alloc ()
 static	int	dki_readfile (FILE *fp, dki_t *dkp)
 {
 	int	algo,	flags,	type;
-	int	ret;
+	int	c;
 	char	*p;
 	char	buf[4095+1];
 
@@ -57,8 +57,18 @@ static	int	dki_readfile (FILE *fp, dki_t *dkp)
 	if ( strcmp (buf, dkp->name) != 0 )
 		return -2;
 
-	if ( (ret = fscanf (fp, " IN DNSKEY %d %d %d", &flags, &type, &algo)) != 3 &&
-	     (ret = fscanf (fp, "KEY %d %d %d", &flags, &type, &algo)) != 3 )
+#if defined(TTL_IN_KEYFILE_ALLOWED) && TTL_IN_KEYFILE_ALLOWED
+	/* skip potentially available TTL value */
+	while ( (c = getc (fp)) != EOF && isspace (c) )	/* skip spaces */
+		;
+	if ( isdigit (c) )				/* skip ttl */
+		fscanf (fp, "%*d");
+	else
+		ungetc (c, fp);				/* oops, no ttl */
+#endif
+
+	if ( (c = fscanf (fp, " IN DNSKEY %d %d %d", &flags, &type, &algo)) != 3 &&
+	     (c = fscanf (fp, "KEY %d %d %d", &flags, &type, &algo)) != 3 )
 		return -3;
 	if ( type != 3 || algo != dkp->algo )
 		return -4;		/* no DNSKEY or algorithm mismatch */
@@ -78,6 +88,8 @@ static	int	dki_readfile (FILE *fp, dki_t *dkp)
 
 	return 0;
 }
+
+static	int	dki_setstat (dki_t *dkp, int status, int preserve_time);
 
 /*****************************************************************
 **	public function definition
@@ -116,15 +128,30 @@ void	dki_freelist (dki_t **listp)
 		*listp = NULL;
 }
 
+#if defined(USE_TREE) && USE_TREE
+/*****************************************************************
+**	dki_tfree ()
+*****************************************************************/
+void	dki_tfree (dki_t **tree)
+{
+	dki_t	*p;
+
+	assert (tree != NULL);
+	// TODO: tdestroy is a GNU extension
+	// tdestroy (*tree, dki_free);
+}
+#endif
+
 /*****************************************************************
 **	dki_new ()
 **	create new keyfile
 **	allocate memory for new dki key and init with keyfile
 *****************************************************************/
-dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsize)
+dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsize, const char *rfile)
 {
 	char	cmdline[254+1];
 	char	fname[254+1];
+	char	randfile[254+1];
 	FILE	*fp;
 	int	len;
 	char	*flag = "";
@@ -132,13 +159,18 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 	if ( ksk )
 		flag = "-f KSK";
 
-	/* TODO: check if "name" and "dir" is safe (strings coming from external source) ! */
+	randfile[0] = '\0';
+	if ( rfile && *rfile )
+		snprintf (randfile, sizeof (randfile), "-r %.250s ", rfile);
+		
 	if ( dir && *dir )
-		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s -n ZONE -a %s -b %d %s %s",
-			dir, KEYGENCMD, dki_algo2str(algo), bitsize, flag, name);
+		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s-n ZONE -a %s -b %d %s %s",
+			dir, KEYGENCMD, randfile, dki_algo2str(algo), bitsize, flag, name);
 	else
-		snprintf (cmdline, sizeof (cmdline), "%s -n ZONE -a %s -b %d %s %s",
-			KEYGENCMD, dki_algo2str(algo), bitsize, flag, name);
+		snprintf (cmdline, sizeof (cmdline), "%s %s-n ZONE -a %s -b %d %s %s",
+			KEYGENCMD, randfile, dki_algo2str(algo), bitsize, flag, name);
+
+	dbg_msg (cmdline);
 
 	if ( (fp = popen (cmdline, "r")) == NULL || fgets (fname, sizeof fname, fp) == NULL )
 		return NULL;
@@ -153,7 +185,7 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 
 /*****************************************************************
 **	dki_read ()
-**	read key from file 'filename' (with or without extension .key or .private)
+**	read key from file 'filename' (independed from the extension)
 *****************************************************************/
 dki_t	*dki_read (const char *dirname, const char *filename)
 {
@@ -173,7 +205,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	strncpy (fname, filename, len);
 
 	len = strlen (fname);			/* delete extension */
-	if ( len > 4 && strcmp (&fname[len - 4], ".key") == 0 )
+	if ( len > 4 && strcmp (&fname[len - 4], DKI_KEY_FILEEXT) == 0 )
 		fname[len - 4] = '\0';
 	else if ( len > 10 && strcmp (&fname[len - 10], DKI_PUB_FILEEXT) == 0 )
 		fname[len - 10] = '\0';
@@ -196,7 +228,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 		return (NULL);
 	}
 
-	pathname (path, sizeof (path), dkp->dname, dkp->fname, ".key");
+	pathname (path, sizeof (path), dkp->dname, dkp->fname, DKI_KEY_FILEEXT);
 	dbg_val ("dki_read: path \"%s\"\n", path);
 	if ( (fp = fopen (path, "r")) == NULL )
 	{
@@ -245,7 +277,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 
 /*****************************************************************
 **	dki_readdir ()
-**	read key files from directory 'dir' and, if recursive if
+**	read key files from directory 'dir' and, if recursive is
 **	true, from all directorys below that.
 *****************************************************************/
 int	dki_readdir (const char *dir, dki_t **listp, int recursive)
@@ -279,13 +311,31 @@ int	dki_readdir (const char *dir, dki_t **listp, int recursive)
 	return 1;
 }
 
+/*****************************************************************
+**	dki_setstatus_preservetime ()
+**	set status of key and change extension to
+**	".published", ".private" or ".depreciated"
+*****************************************************************/
+int	dki_setstatus_preservetime (dki_t *dkp, int status)
+{
+	return dki_setstat (dkp, status, 1);
+}
 
 /*****************************************************************
 **	dki_setstatus ()
-**	set status of key 
-**	(move to ".published", ".private" or ".depreciated")
+**	set status of key and change extension to
+**	".published", ".private" or ".depreciated"
 *****************************************************************/
 int	dki_setstatus (dki_t *dkp, int status)
+{
+	return dki_setstat (dkp, status, 0);
+}
+
+/*****************************************************************
+**	dki_setstat ()
+**	low level function of dk_setstatus and dki_setstatus_preservetime
+*****************************************************************/
+static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 {
 	char	frompath[MAX_PATHSIZE+1];
 	char	topath[MAX_PATHSIZE+1];
@@ -317,14 +367,15 @@ int	dki_setstatus (dki_t *dkp, int status)
 		return 0;
 	}
 
-	dbg_val ("dki_setstatus: \"%s\"\n", frompath);
-	dbg_val ("dki_setstatus: to status \"%c\"\n", status);
+	dbg_val ("dki_setstat: \"%s\"\n", frompath);
+	dbg_val ("dki_setstat: to status \"%c\"\n", status);
 	totime = 0L;
 	topath[0] = '\0';
 	switch ( status )
 	{
 	case 'a':
-		totime = get_mtime (frompath);    /* set .key file to time of .private file */
+		if ( preserve_time )
+			totime = get_mtime (frompath);    /* set .key file to time of .private file */
 		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_ACT_FILEEXT);
 		break;
 	case 'd':
@@ -336,79 +387,13 @@ int	dki_setstatus (dki_t *dkp, int status)
 	}
 	if ( topath[0] )
 	{
-		dbg_val ("dki_setstatus: to  \"%s\"\n", topath);
+		dbg_val ("dki_setstat: to  \"%s\"\n", topath);
 		if ( link (frompath, topath) == 0 )
 			unlink (frompath);
 		dkp->status = status;
 		if ( !totime )
 			totime = time (NULL);	/* set .key file to current time */
-		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, ".key");
-		touch (topath, totime);	/* store/restore time of status change */
-		return 1;
-	}
-
-	return 0;
-}
-
-/*****************************************************************
-**	dki_depreciate ()
-**	mark key as depreciated 
-**	(move ".private" file to ".depreciated")
-*****************************************************************/
-int	dki_depreciate (dki_t *dkp)
-{
-	char	frompath[MAX_PATHSIZE+1];
-	char	topath[MAX_PATHSIZE+1];
-	time_t	totime;
-
-	if ( dkp == NULL )
-		return 0;
-
-	topath[0] = '\0';
-	if ( dkp->status == 'a' )
-	{
-		pathname (frompath, sizeof (frompath), dkp->dname, dkp->fname, DKI_ACT_FILEEXT);
-		dbg_val ("dki_depreciate: \"%s\"\n", frompath);
-		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_DEP_FILEEXT);
-
-		if ( link (frompath, topath) == 0 )
-			unlink (frompath);
-		dkp->status = 'd';
-		totime = time (NULL);	/* set .key file to local time */
-		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, ".key");
-		touch (topath, totime);	/* store/restore time of status change */
-		return 1;
-	}
-
-	return 0;
-}
-
-/*****************************************************************
-**	dki_activate ()
-**	mark key as active
-**	(move ".published" file to ".private")
-*****************************************************************/
-int	dki_activate (dki_t *dkp)
-{
-	char	frompath[MAX_PATHSIZE+1];
-	char	topath[MAX_PATHSIZE+1];
-	time_t	totime;
-
-	if ( dkp == NULL )
-		return 0;
-
-	topath[0] = '\0';
-	if ( dkp->status == 'p' )
-	{
-		pathname (frompath, sizeof (frompath), dkp->dname, dkp->fname, DKI_PUB_FILEEXT);
-		dbg_val ("dki_activate: \"%s\"\n", frompath);
-		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_ACT_FILEEXT);
-
-		if ( link (frompath, topath) == 0 )
-			unlink (frompath);
-		dkp->status = 'a';
-		totime = time (NULL);	/* set .key file to local time */
-		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, ".key");
+		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_KEY_FILEEXT);
 		touch (topath, totime);	/* store/restore time of status change */
 		return 1;
 	}
@@ -424,26 +409,25 @@ dki_t	*dki_remove (dki_t *dkp)
 {
 	char	path[MAX_PATHSIZE+1];
 	dki_t	*next;
+	const	char	**pext;
+	static	const	char	*ext[] = {
+		DKI_KEY_FILEEXT, DKI_PUB_FILEEXT, 
+		DKI_ACT_FILEEXT, DKI_DEP_FILEEXT, 
+		NULL
+	};
 
 	if ( dkp == NULL )
-		return;
+		return NULL;
 
-	pathname (path, sizeof (path), dkp->dname, dkp->fname, ".key");
-	dbg_val ("dki_remove: %s \n", path);
-	unlink (path);
-
-	pathname (path, sizeof (path), dkp->dname, dkp->fname, DKI_PUB_FILEEXT);
-	dbg_val ("dki_remove: %s \n", path);
-	unlink (path);
-
-	pathname (path, sizeof (path), dkp->dname, dkp->fname, DKI_ACT_FILEEXT);
-	dbg_val ("dki_remove: %s \n", path);
-	unlink (path);
-
-	pathname (path, sizeof (path), dkp->dname, dkp->fname, DKI_DEP_FILEEXT);
-	dbg_val ("dki_remove: %s \n", path);
-	unlink (path);
-
+	for ( pext = ext; *pext; pext++ )
+	{
+		pathname (path, sizeof (path), dkp->dname, dkp->fname, *pext);
+		if ( fileexist (path) )
+		{
+			dbg_val ("dki_remove: %s \n", path);
+			unlink (path);
+		}
+	}
 	next = dkp->next;
 	dki_free (dkp);
 
@@ -452,7 +436,7 @@ dki_t	*dki_remove (dki_t *dkp)
 
 /*****************************************************************
 **	dki_algo2str ()
-**	return string describing key algorithm
+**	return a string describing the key algorithm
 *****************************************************************/
 char	*dki_algo2str (int algo)
 {
@@ -538,7 +522,7 @@ int	dki_prt_trustedkey (const dki_t *dkp, FILE *fp)
 /*****************************************************************
 **	dki_cmp () 	return <0 | 0 | >0
 *****************************************************************/
-int	dki_cmp (const dki_t *a, const dki_t *b, short merge_keytype)
+int	dki_cmp (const dki_t *a, const dki_t *b)
 {
 	int	res;
 
@@ -547,15 +531,69 @@ int	dki_cmp (const dki_t *a, const dki_t *b, short merge_keytype)
 	if ( b == NULL )
 		return 1;
 
-	/* sort by domain name */
+	/* sort by domain name, */
 	if ( (res = domaincmp (a->name, b->name)) != 0 )
 		return res; 
-	if ( !merge_keytype )		/* then by key type */
-		if ( (res = dki_isksk (b) - dki_isksk (a)) != 0 )
-			return res;
 
-	return dki_timecmp (a, b);	/* last by creation time */
+	/* then by key type, */
+	if ( (res = dki_isksk (b) - dki_isksk (a)) != 0 )
+		return res;
+
+	/* and last by creation time,  */
+	return (ulong)a->time - (ulong)b->time;
 }
+
+#if defined(USE_TREE) && USE_TREE
+/*****************************************************************
+**	dki_allcmp () 	return <0 | 0 | >0
+*****************************************************************/
+int	dki_allcmp (const dki_t *a, const dki_t *b)
+{
+	int	res;
+
+	if ( a == NULL ) return -1;
+	if ( b == NULL ) return 1;
+
+// fprintf (stderr, "dki_allcmp %s, %s)\n", a->name, b->name);
+	/* sort by domain name, */
+	if ( (res = domaincmp (a->name, b->name)) != 0 )
+		return res; 
+
+	/* then by key type, */
+	if ( (res = dki_isksk (b) - dki_isksk (a)) != 0 )
+		return res;
+
+	/* creation time,  */
+	if ( (res = (ulong)a->time - (ulong)b->time) != 0 )
+		return res;
+
+	/* and last by tag */
+	return a->tag - b->tag;
+}
+
+/*****************************************************************
+**	dki_namecmp () 	return <0 | 0 | >0
+*****************************************************************/
+int	dki_namecmp (const dki_t *a, const dki_t *b)
+{
+	if ( a == NULL ) return -1;
+	if ( b == NULL ) return 1;
+
+	return domaincmp (a->name, b->name);
+}
+/*****************************************************************
+**	dki_keycmp () 	return <0 | 0 | >0
+*****************************************************************/
+int	dki_keycmp (const dki_t *a, const dki_t *b)
+{
+	int	res;
+
+	if ( a == NULL ) return -1;
+	if ( b == NULL ) return 1;
+
+	return a->tag - b->tag;
+}
+#endif
 
 /*****************************************************************
 **	dki_timecmp ()
@@ -570,7 +608,7 @@ int	dki_timecmp (const dki_t *a, const dki_t *b)
 }
 
 /*****************************************************************
-**	dki_time ()
+**	dki_time ()	return the timestamp of the key
 *****************************************************************/
 time_t	dki_time (const dki_t *dkp)
 {
@@ -579,7 +617,7 @@ time_t	dki_time (const dki_t *dkp)
 }
 
 /*****************************************************************
-**	dki_age ()
+**	dki_age ()	return the key age in seconds since 'curr'
 *****************************************************************/
 int	dki_age (const dki_t *dkp, time_t curr)
 {
@@ -601,12 +639,28 @@ int	dki_isksk (const dki_t *dkp)
 *****************************************************************/
 int	dki_isdepreciated (const dki_t *dkp)
 {
-	assert (dkp != NULL);
-	return (dkp->status == 'd');
+	return dki_status (dkp) == DKI_DEPRECIATED;
 }
 
 /*****************************************************************
-**	dki_status ()
+**	dki_isactive ()
+*****************************************************************/
+int	dki_isactive (const dki_t *dkp)
+{
+	return dki_status (dkp) == DKI_ACTIVE;
+}
+
+/*****************************************************************
+**	dki_ispublished ()
+*****************************************************************/
+int	dki_ispublished (const dki_t *dkp)
+{
+	return dki_status (dkp) == DKI_PUBLISHED;
+}
+
+
+/*****************************************************************
+**	dki_status ()	return key status
 *****************************************************************/
 int	dki_status (const dki_t *dkp)
 {
@@ -615,7 +669,7 @@ int	dki_status (const dki_t *dkp)
 }
 
 /*****************************************************************
-**	dki_statusstr ()
+**	dki_statusstr ()	return key status as string
 *****************************************************************/
 const	char	*dki_statusstr (const dki_t *dkp)
 {
@@ -630,7 +684,7 @@ const	char	*dki_statusstr (const dki_t *dkp)
 }
 
 /*****************************************************************
-**	dki_add ()
+**	dki_add ()	add a key to the given list
 *****************************************************************/
 dki_t	*dki_add (dki_t **list, dki_t *new)
 {
@@ -643,7 +697,7 @@ dki_t	*dki_add (dki_t **list, dki_t *new)
 		return *list;
 
 	last = curr = *list;
-	while ( curr && dki_cmp (curr, new, 0) < 0 )
+	while ( curr && dki_cmp (curr, new) < 0 )
 	{
 		last = curr;
 		curr = curr->next;
@@ -659,7 +713,8 @@ dki_t	*dki_add (dki_t **list, dki_t *new)
 }
 
 /*****************************************************************
-**	dki_search ()
+**	dki_search ()	search a key with the given tag, or the first
+**			occurence of a key with the given name
 *****************************************************************/
 const dki_t	*dki_search (const dki_t *list, int tag, const char *name)
 {
@@ -679,8 +734,69 @@ const dki_t	*dki_search (const dki_t *list, int tag, const char *name)
 	return curr;
 }
 
+#if defined(USE_TREE) && USE_TREE
 /*****************************************************************
-**	dki_find ()
+**	dki_tadd ()	add a key to the given tree
+*****************************************************************/
+dki_t	*dki_tadd (dki_t **tree, dki_t *new)
+{
+	dki_t	**p;
+
+	p = tsearch (new, tree, dki_namecmp);
+	if ( *p == new )
+		dbg_val ("dki_tadd: New entry %s added\n", new->name);
+	else
+	{
+		dbg_val ("dki_tadd: New key added to %s\n", new->name);
+		dki_add (p, new);
+	}
+
+	return *p;
+}
+
+#if 0
+//T1
+static	int	tag_cmp (const dki_t *a, const dki_t *b)
+{
+	int	cmp;
+
+	if  ( a->tag != b->tag )
+		return a->tag - b->tag;
+	if ( a->name && (cmp = strcmp (a->name, b->name)) != 0 )
+		return cmp;
+	return 0;
+}
+static	int	name_cmp (const dki_t *a, const dki_t *b)
+{
+	int	cmp;
+
+	if ( a->name && (cmp = strcmp (a->name, b->name)) != 0 )
+		return cmp;
+	return 0;
+}
+#endif
+/*****************************************************************
+**	dki_tsearch ()	search a key with the given tag, or the first
+**			occurence of a key with the given name
+*****************************************************************/
+const dki_t	*dki_tsearch (const dki_t *tree, int tag, const char *name)
+{
+	dki_t	search;
+	dki_t	**p;
+	int	(*cmpfkt) (const dki_t *a, const dki_t *b); 
+
+	search.tag = tag;
+	snprintf (search.name, sizeof (search.name), "%s", name);
+	p = tfind (&search, &tree, dki_namecmp);
+	if ( p == NULL )
+		return NULL;
+
+	return dki_search (*p, tag, name);
+}
+#endif
+
+/*****************************************************************
+**	dki_find ()	find the n'th ksk or zsk key with given status
 *****************************************************************/
 const dki_t	*dki_find (const dki_t *list, int ksk, int status, int no)
 {

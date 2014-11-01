@@ -8,32 +8,36 @@
 *****************************************************************/
 
 # include <stdio.h>
+# include <string.h>
 # include <dirent.h>
 # include <assert.h>
 # include <unistd.h>
 # include "config.h"
 # include "debug.h"
 # include "misc.h"
+# include "strlist.h"
 # include "zconf.h"
 # include "dki.h"
 
-extern  int     optopt;
+extern  int	optopt;
+extern  int	opterr;
+extern  int	optind;
+extern  char	*optarg;
 const	char	*progname;
 
-static	int	pathflag = 0;
-static	int	headerflag = 1;
-static	int	kskflag = 1;
-static	int	zskflag = 1;
+char	*labellist = NULL;
+
+int	headerflag = 1;
+int	ageflag = 0;
+int	timeflag = 1;
+int	pathflag = 0;
+int	kskflag = 1;
+int	zskflag = 1;
+
 static	int	dirflag = 0;
 static	int	recflag = RECURSIVE;
-static	int	ageflag = 0;
-static	int	timeflag = 1;
 static	int	trustedkeyflag = 0;
 
-static	void	list_keys (const dki_t *listp);
-static	void	list_dnskeys (const dki_t *listp);
-static	void	list_trustedkeys (const dki_t *listp);
-static	void	printkeyinfo (const dki_t *dkp, const char *oldpath);
 static	int	parsedirectory (const char *dir, dki_t **listp);
 static	void	parsefile (const char *file, dki_t **listp);
 static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *conf);
@@ -42,11 +46,10 @@ static	const char *parsetag (const char *str, int *tagp);
 
 main (int argc, char *argv[])
 {
-	dki_t	*list = NULL;
+	dki_t	*data = NULL;
 	dki_t	*dkp;
 	int	c;
 	int	action;
-	int	len;
 	const	char	*file;
 	char	*p;
 	char	str[254+1];
@@ -59,8 +62,8 @@ main (int argc, char *argv[])
 		progname = ++p;
 
 	config = loadconfig ("", (zconf_t *)NULL);	/* load built in config */
-	if ( fileexist (CONFIGFILE) )			/* load default config file */
-		config = loadconfig (CONFIGFILE, config);
+	if ( fileexist (CONFIG_FILE) )			/* load default config file */
+		config = loadconfig (CONFIG_FILE, config);
 	if ( config == NULL )
 		fatal ("Out of memory\n");
 	recflag = config->recursive;
@@ -68,7 +71,7 @@ main (int argc, char *argv[])
 	timeflag = config->printtime;
 
         opterr = 0;
-	while ( (c = getopt (argc, argv, "A:C:D:P:R:HKTS:ZVac:dhkprtz")) != -1 )
+	while ( (c = getopt (argc, argv, "A:C:D:P:R:HKTS:ZVac:dhkl:prtz")) != -1 )
 	{
 		switch ( c )
 		{
@@ -83,17 +86,21 @@ main (int argc, char *argv[])
 			action = c;
 			break;
 		case 'C':
+			pathflag = !pathflag;
+			/* fall through */
 		case 'P':
 		case 'A':
 		case 'D':
 		case 'R':
 		case 'S':
-			keyname = parsetag (optarg, &searchtag);
-			len = strlen (keyname);
-			if ( len > 0 && keyname[len-1] != '.' )
+			if ( (keyname = parsetag (optarg, &searchtag)) != NULL )
 			{
-				snprintf (str, sizeof(str), "%s.", keyname);
-				keyname = str;
+				int len = strlen (keyname);
+				if ( len > 0 && keyname[len-1] != '.' )
+				{
+					snprintf (str, sizeof(str), "%s.", keyname);
+					keyname = str;
+				}
 			}
 			action = c;
 			break;
@@ -105,6 +112,7 @@ main (int argc, char *argv[])
 			recflag = config->recursive;
 			ageflag = config->printage;
 			timeflag = config->printtime;
+			checkconfig (config);
 			break;
 		case 'd':		/* ignore directory arg */
 			dirflag = 1;
@@ -114,6 +122,11 @@ main (int argc, char *argv[])
 			break;
 		case 'k':		/* ksk only */
 			zskflag = 0;
+			break;
+		case 'l':		/* label list */
+			labellist = prepstrlist (optarg, LISTDELIM);
+			if ( labellist == NULL )
+				fatal ("Out of memory\n");
 			break;
 		case 'p':		/* print path */
 			pathflag = 1;
@@ -141,6 +154,13 @@ main (int argc, char *argv[])
 		}
 	}
 
+	/* it's better to do this before we read the whole subdirectory tree */
+	if ( action == 'Z' )
+	{
+		printconfig ("stdout", config);
+		return 0;
+	}
+
 	if ( kskflag == 0 && zskflag == 0 )
 		kskflag = zskflag = 1;
 
@@ -152,9 +172,9 @@ main (int argc, char *argv[])
 			file = argv[c++];
 
 		if ( is_directory (file) )
-			parsedirectory (file, &list);
+			parsedirectory (file, &data);
 		else
-			parsefile (file, &list);
+			parsefile (file, &data);
 
 	}  while ( c < argc );	/* for all arguments */
 
@@ -164,36 +184,39 @@ main (int argc, char *argv[])
 	case 'V':
 		usage ("", config);
 	case 'C':
-		createkey (keyname, list, config);
+		createkey (keyname, data, config);
 		break;
 	case 'P':
 	case 'A':
 	case 'D':
-		if ( (dkp = (dki_t*)dki_search (list, searchtag, keyname)) == NULL )
+		if ( (dkp = (dki_t*)zkt_search (data, searchtag, keyname)) == NULL )
 			fatal ("Key with tag %u not found\n", searchtag);
-		dki_setstatus (dkp, action);
+		else if ( dkp == (void *) 01 )
+			fatal ("Key with tag %u found multiple times\n", searchtag);
+		dki_setstatus_preservetime (dkp, action);
 		break;
 	case 'R':
-		if ( (dkp = (dki_t *)dki_search (list, searchtag, keyname)) == NULL )
-			fatal ("Key (id=%u) not found\n", searchtag);
+		if ( (dkp = (dki_t *)zkt_search (data, searchtag, keyname)) == NULL )
+			fatal ("Key with tag %u not found\n", searchtag);
+		else if ( dkp == (void *) 01 )
+			fatal ("Key with tag %u found multiple times\n", searchtag);
 		dki_remove (dkp);
 		break;
 	case 'S':
-		if ( (dkp = (dki_t *)dki_search (list, searchtag, keyname)) == NULL )
-			fatal ("Key (id=%u) not found\n", searchtag);
+		if ( (dkp = (dki_t *)zkt_search (data, searchtag, keyname)) == NULL )
+			fatal ("Key with tag %u not found\n", searchtag);
+		else if ( dkp == (void *) 01 )
+			fatal ("Key with tag %u found multiple times\n", searchtag);
 		dki_prt_dnskey (dkp, stdout);
 		break;
-	case 'Z':
-		printconfig ("stdout", config);
-		break;
 	case 'K':
-		list_dnskeys (list);
+		zkt_list_dnskeys (data);
 		break;
 	case 'T':
-		list_trustedkeys (list);
+		zkt_list_trustedkeys (data);
 		break;
 	default:
-		list_keys (list);
+		zkt_list_keys (data);
 	}
 
 	return 0;
@@ -203,7 +226,7 @@ static	void    usage (char *mesg, zconf_t *cp)
 {
         fprintf (stderr, "Secure DNS Zone Key Tool %s\n", ZKT_VERSION);
         fprintf (stderr, "\n");
-        fprintf (stderr, "Show zone config parameter as %s file\n", LOCALCONFFILE);
+        fprintf (stderr, "Show zone config parameter as %s file\n", LOCALCONF_FILE);
         fprintf (stderr, "\tusage: %s -Z\n", progname);
         fprintf (stderr, "\n");
         fprintf (stderr, "List keys in current or given directory (-r for recursive mode)\n");
@@ -215,7 +238,7 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "List keys (output is suitable for trusted-keys section)\n");
         fprintf (stderr, "\tusage: %s -T [-dhzr] [-c config] [file|dir ...]\n", progname);
         fprintf (stderr, "\n");
-        fprintf (stderr, "Create new key \n");
+        fprintf (stderr, "Create a new key \n");
         fprintf (stderr, "\tusage: %s -C <name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\t\tKSK (use -k):  %s %d bits\n", dki_algo2str (cp->k_algo), cp->k_bits);
         fprintf (stderr, "\t\tZSK (default): %s %d bits\n", dki_algo2str (cp->z_algo), cp->z_bits);
@@ -229,10 +252,11 @@ static	void    usage (char *mesg, zconf_t *cp)
 
         fprintf (stderr, "\n");
         fprintf (stderr, "General options \n");
-        fprintf (stderr, "\t-c file\t read config from <file> instead of %s\n", CONFIGFILE);
+        fprintf (stderr, "\t-c file\t read config from <file> instead of %s\n", CONFIG_FILE);
         fprintf (stderr, "\t-d\t skip directory arguments\n");
         fprintf (stderr, "\t-h\t no headline or trusted-key section header/trailer in -T mode\n");
-        fprintf (stderr, "\t-p\t show path of keyfile / create key in (already existing) directory\n");
+        fprintf (stderr, "\t-l list\t print out only zone keys out of the given domain list\n");
+        fprintf (stderr, "\t-p\t show path of keyfile / create key in current directory\n");
         fprintf (stderr, "\t-r\t recursive mode on/off\n");
         fprintf (stderr, "\t-a\t print age of key (default: %s)\n", ageflag ? "on": "off");
         fprintf (stderr, "\t-t\t print key generation time (default: %s)\n",
@@ -244,56 +268,6 @@ static	void    usage (char *mesg, zconf_t *cp)
         exit (1);
 }
 
-static	void	list_keys (const dki_t *listp)
-{
-	const	dki_t	*dkp;
-	const	char	*oldpath;
-
-	if ( listp ) 	/* print headline if list is not empty */
-		printkeyinfo (NULL, "");
-
-	oldpath = "";
-	for ( dkp = listp; dkp; dkp = dkp->next )	/* loop through list */
-	{
-		printkeyinfo (dkp, oldpath);		/* print entry */
-		oldpath = dkp->dname;
-	}
-}
-
-static	void	list_trustedkeys (const dki_t *listp)
-{
-	const	dki_t	*dkp;
-
-	/* print headline if list is not empty */
-	if ( listp && headerflag )
-		printf ("trusted-keys {\n");
-
-	for ( dkp = listp; dkp; dkp = dkp->next )	/* loop through list */
-		if ( dki_isksk (dkp) || zskflag )
-			dki_prt_trustedkey (dkp, stdout);
-
-	/* print end of trusted-key section */
-	if ( listp && headerflag )
-		printf ("};\n");
-}
-
-static	void	list_dnskeys (const dki_t *listp)
-{
-	const	dki_t	*dkp;
-	int	ksk;
-
-	for ( dkp = listp; dkp; dkp = dkp->next )
-	{
-		ksk = dki_isksk (dkp);
-		if ( ksk && !kskflag || !ksk && !zskflag )
-			continue;
-
-		if ( headerflag )
-			dki_prt_comment (dkp, stdout);
-		dki_prt_dnskey (dkp, stdout);
-	}
-}
-
 static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *conf)
 {
 	const char *dir = "";
@@ -302,6 +276,7 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 	if ( keyname == NULL || *keyname == '\0' )
 		fatal ("Create key: no keyname!");
 
+	dbg_val ("createkey: keyname %s\n", keyname);
 	/* search for already existent key to get the directory name */
 	if ( pathflag && (dkp = (dki_t *)dki_search (list, 0, keyname)) != NULL )
 	{
@@ -309,7 +284,7 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 		zconf_t localconf;
 
 		dir = dkp->dname;
-		pathname (path, sizeof (path), dir, LOCALCONFFILE, NULL);
+		pathname (path, sizeof (path), dir, LOCALCONF_FILE, NULL);
 		if ( fileexist (path) )                 /* load local config file */
 		{
 			dbg_val ("Load local config file \"%s\"\n", path);
@@ -319,53 +294,13 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 	}
 	
 	if  ( zskflag )
-		dkp = dki_new (dir, keyname, 0, conf->z_algo, conf->z_bits);
+		dkp = dki_new (dir, keyname, 0, conf->z_algo, conf->z_bits, conf->z_random);
 	else
-		dkp = dki_new (dir, keyname, 1, conf->k_algo, conf->k_bits);
+		dkp = dki_new (dir, keyname, 1, conf->k_algo, conf->k_bits, conf->k_random);
 	if ( dkp == NULL )
 		fatal ("Can't create key %s: %s!\n", keyname, dki_geterrstr ());
 	if  ( zskflag )
 		dki_setstatus (dkp, 'p');
-}
-
-static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
-{
-	time_t	currtime;
-
-	if ( dkp == NULL )	/* print headline */
-	{
-		if ( headerflag )
-		{
-			printf ("%-33.33s %5s %3s %3.3s %-7s ", "Keyname",
-				"Tag", "Typ", "Status", "Algorit");
-			if ( timeflag )
-				printf ("%-20s ", "Generation Time");
-			if ( ageflag  )
-				printf ("%16s ", "  Age");
-			putchar ('\n');
-		}
-		return;
-	}
-	time (&currtime);
-
-	/* TODO: use if dname is dynamically allocated */
-	/* if ( pathflag && dkp->dname && strcmp (oldpath, dkp->dname) != 0 ) */
-	if ( pathflag && strcmp (oldpath, dkp->dname) != 0 )
-		printf ("%s/\n", dkp->dname);
-
-	if ( kskflag && dki_isksk (dkp) || zskflag && !dki_isksk (dkp) )
-	{
-		printf ("%-33.33s ", dkp->name);
-		printf ("%05d ", dkp->tag);
-		printf ("%3s ", dki_isksk (dkp) ? "KSK" : "ZSK");
-		printf ("%-3.3s ", dki_statusstr (dkp) );
-		printf ("%-7s ", dki_algo2str(dkp->algo));
-		if ( timeflag )
-			printf ("%-20s ", time2str (dkp->time)); 
-		if ( ageflag )
-			printf ("%16s ", age2str (dki_age (dkp, currtime))); 
-		putchar ('\n');
-	}
 }
 
 static	int	parsedirectory (const char *dir, dki_t **listp)
@@ -396,7 +331,15 @@ static	int	parsedirectory (const char *dir, dki_t **listp)
 		}
 		else if ( is_keyfilename (dentp->d_name) )
 			if ( (dkp = dki_read (dir, dentp->d_name)) )
+			{
+				// fprintf (stderr, "parsedir: tssearch (%d %s)\n", dkp, dkp->name);
+				dki_t	**p;
+#if defined (USE_TREE) && USE_TREE
+				dki_tadd (listp, dkp);
+#else
 				dki_add (listp, dkp);
+#endif
+			}
 	}
 	closedir (dirp);
 	return 1;
@@ -413,7 +356,11 @@ static	void	parsefile (const char *file, dki_t **listp)
 	if ( is_keyfilename (file) )	/* plain file name looks like DNS key file ? */
 	{
 		if ( (dkp = dki_read (path, file)) )	/* read DNS key file ... */
+#if defined (USE_TREE) && USE_TREE
+			dki_tadd (listp, dkp);		/* ... and add to tree */
+#else
 			dki_add (listp, dkp);		/* ... and add to list */
+#endif
 		else
 			error ("error parsing %s: (%s)\n", file, dki_geterrstr());
 	}
@@ -421,19 +368,25 @@ static	void	parsefile (const char *file, dki_t **listp)
 
 static	const char *parsetag (const char *str, int *tagp)
 {
-	const	char	*p = str;
+	const	char	*p;
 
 	*tagp = 0;
-	while ( isspace (*p) )
-		p++;
-	if ( isdigit (*p) )
+	while ( isspace (*str) )	/* skip leading ws */
+		str++;
+
+	p = str;
+	if ( isdigit (*p) )		/* keytag starts with digit */
 	{
-		sscanf (p, "%u", tagp);
+		sscanf (p, "%u", tagp);	/* try to read keytag as number */
 		do
 			p++;
 		while ( isdigit (*p) );
+
+		if ( *p == ':' )	/* label follows ? */
+			return p+1;	/* return that */
+		if ( *p == '\0' )
+			return NULL;	/* no label */
 	}
-	if ( *p == ':' )
-		p++;
-	return p;
+	return str;	/* return as label string if not a numeric keytag */
 }
+

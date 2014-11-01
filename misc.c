@@ -1,6 +1,7 @@
 /*****************************************************************
 **
-**	@(#) misc.c -- helper functions for dnssec tools
+**	@(#) misc.c -- helper functions for the dnssec zone key tools
+**
 **	(c) Jan 2005  Holger Zuleger  hznet.de
 **
 **	See LICENCE file for licence
@@ -27,17 +28,48 @@ extern	const	char	*progname;
 static	int	incr_soa (FILE *fp);
 static	int	incr_soa_serial (FILE *fp);
 
-int	touch (const char *fname, time_t sec)
+/*****************************************************************
+**	str_delspace (s)
+**	Remove in string 's' all white space char 
+*****************************************************************/
+char	*str_delspace (char *s)
 {
-	struct	utimbuf	utb;
+	char	*start;
+	char	*p;
 
-	utb.actime = utb.modtime = sec;
-	return utime (fname, &utb);
+	if ( !s )	/* is there a string ? */
+		return s;
+
+	start = s;
+	for ( p = s; *p; p++ )
+		if ( !isspace (*p) )
+			*s++ = *p;	/* copy each nonspace */
+
+	*s = '\0';	/* terminate string */
+
+	return start;
+}
+
+int	in_strarr (const char *str, char *const arr[], int cnt)
+{
+	if ( arr == NULL || cnt <= 0 )
+		return 1;
+
+	if ( str == NULL || *str == '\0' )
+		return 0;
+
+	while ( --cnt >= 0 )
+		if ( strcmp (str, arr[cnt]) == 0 )
+			return 1;
+
+	return 0;
 }
 
 char	*strtaint (char *str)
 {
 	char	*p;
+
+	assert (str != NULL);
 
 	for ( p = str; *p; p++ )
 		if ( strchr (TAINTCHARS, *p) )
@@ -45,7 +77,74 @@ char	*strtaint (char *str)
 	return str;
 }
 
-const	char	*splitpath (char *path, size_t  size, const char *filename)
+char	*strchop (char *str, char c)
+{
+	int	len;
+
+	assert (str != NULL);
+
+	len = strlen (str) - 1;
+	if ( len >= 0 && str[len] == c )
+		str[len] = '\0';
+
+	return str;
+}
+
+void	parseurl (char *url, char **proto, char **host, char **port, char **para)
+{
+	char	*start;
+	char	*p;
+
+	assert ( url != NULL );
+
+	/* parse protocol */
+	if ( (p = strchr (url, ':')) == NULL )
+		p = url;
+	else
+		if ( p[1] == '/' && p[2] == '/' )
+		{
+			*p = '\0';
+			p += 3;
+			if ( proto )
+				*proto = url;
+		}
+		else
+			p = url;
+
+	/* parse host */
+	if ( *p == '[' )	/* ipv6 address as hostname ? */
+	{
+		for ( start = ++p; *p && *p != ']'; p++ )
+			;
+		if ( *p )
+			*p++ = '\0';
+	}
+	else
+		for ( start = p; *p && *p != ':' && *p != '/'; p++ )
+			;
+	if ( host )
+		*host = start;
+
+	/* parse port */
+	if ( *p == ':' )
+	{
+		*p++ = '\0';
+		for ( start = p; *p && isdigit (*p); p++ )
+			;
+		if ( *p )
+			*p++ = '\0';
+		if ( port )
+			*port = start;
+	}
+
+	if ( *p == '/' )
+		*p++ = '\0';
+
+	if ( *p && para )
+		*para = p;
+}
+
+const	char	*splitpath (char *path, size_t size, const char *filename)
 {
 	char 	*p;
 
@@ -139,46 +238,12 @@ int	is_dotfile (const char *name)
 	return 0;
 }
 
-static	const char *strnrchr (const char *start, const char *end, int c)
+int	touch (const char *fname, time_t sec)
 {
-	assert ( start != NULL );
-	if ( end == NULL )
-		end = start + strlen (start) - 1;
+	struct	utimbuf	utb;
 
-	while ( end >= start && *end != c )
-		end--;
-
-	return end >= start ? end : NULL;
-}
-
-/*****************************************************************
-**	int domaincmp (a, b)
-**	compare a and b as fqdns.
-**	return <0 | 0 | >0 as in strcmp
-**	A subdomain is less than te corresponding toplevel domain,
-**	thus domaincmp ("a.example.net", "example.net") return < 0 !!
-*****************************************************************/
-int	domaincmp (const char *a, const char *b)
-{
-	int	res;
-	const	char	*pa = NULL;
-	const	char	*pb = NULL;
-
-	if ( a == NULL ) return -1;
-	if ( b == NULL ) return 1;
-	do
-	{
-		if ( (pa = strnrchr (a, pa, '.')) == NULL )
-			pa = a;
-		if ( (pb = strnrchr (b, pb, '.')) == NULL )
-			pb = b;
-		if ( (res = strcmp (pa, pb)) != 0 )	/* not equal ? */
-			return res;
-		pa--;
-		pb--;
-	}  while ( pa >= a && pb >= b );
-
-	return  (pa >= a) - (pb >= b );
+	utb.actime = utb.modtime = sec;
+	return utime (fname, &utb);
 }
 
 time_t	get_mtime (const char *fname)
@@ -215,10 +280,17 @@ void logmesg (char *fmt, ...)
 {
         va_list ap;
 
+#if defined (LOG_WITH_PROGNAME) && LOG_WITH_PROGNAME
         fprintf (stdout, "%s: ", progname);
+#endif
         va_start(ap, fmt);
         vfprintf (stdout, fmt, ap);
         va_end(ap);
+}
+
+void logflush ()
+{
+        fflush (stdout);
 }
 
 char	*time2str (time_t sec)
@@ -228,7 +300,7 @@ char	*time2str (time_t sec)
 
 #if defined(HAS_STRFTIME) && HAS_STRFTIME
 	t = localtime (&sec);
-# if SHOW_TIMEZONE
+# if PRINT_TIMEZONE
 	strftime (timestr, sizeof (timestr), "%b %d %Y %T %z", t);
 # else
 	strftime (timestr, sizeof (timestr), "%b %d %Y %T", t);
@@ -238,7 +310,7 @@ char	*time2str (time_t sec)
 			"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-# if SHOW_TIMEZONE
+# if PRINT_TIMEZONE
 	int	h,	s;
 
 	t = localtime (&sec);
@@ -269,7 +341,7 @@ char	*age2str (time_t sec)
 
 	len = 0;
 #if 1
-# if SHOW_AGE_WITH_YEAR
+# if PRINT_AGE_WITH_YEAR
 	if ( sec / (YEARSEC) > 0 )
 	{
 		len += snprintf (str+len, strsize - len, "%1luy", sec / YEARSEC );
@@ -311,7 +383,7 @@ char	*age2str (time_t sec)
 	else
 		len += snprintf (str+len, strsize - len, "   ");
 #else
-# if SHOW_AGE_WITH_YEAR
+# if PRINT_AGE_WITH_YEAR
 	if ( sec / (YEARSEC) > 0 )
 	{
 		len += snprintf (str+len, strsize - len, "%luy", sec / YEARSEC );
@@ -342,6 +414,18 @@ char	*age2str (time_t sec)
 		snprintf (str+len, strsize - len, "%2lus", sec);
 #endif
 	return str;
+}
+
+time_t	start_timer ()
+{
+	return (time(NULL));
+}
+
+time_t	stop_timer (time_t start)
+{
+	time_t	stop = time (NULL);
+
+	return stop - start;
 }
 
 /****************************************************************
@@ -395,7 +479,8 @@ int	incr_serial (const char *fname)
 }
 
 /*****************************************************************
-**	returns the today serial number in the form of YYYYmmdd00
+**	return the serial number of the current day in the form
+**	of YYYYmmdd00
 *****************************************************************/
 static	ulong	today_serialtime ()
 {
@@ -428,14 +513,14 @@ static	int	incr_soa_serial (FILE *fp)
 
 	pos = ftell (fp);	/* mark position */
 
-	serial = 0L;	/* read in the actual serial number */
+	serial = 0L;	/* read in the current serial number */
 	/* be aware of the trailing space in the format string !! */
 	if ( fscanf (fp, "%lu ", &serial) != 1 )	/* try to get serial no */
 		return -3;
 	eos = ftell (fp);	/* mark first non digit/ws character pos */
 
-	digits =  eos - pos;
-	if ( digits < 10 )	/* not enough space for serial no */
+	digits = eos - pos;
+	if ( digits < 10 )	/* not enough space for serial no ? */
 		return -4;
 
 	today = today_serialtime ();	/* YYYYmmdd00 */
@@ -469,55 +554,33 @@ main (int argc, char *argv[])
 	system (cmd);
 }
 #endif
-#ifdef DOMAINCMP_TEST
-static	struct {
-	char	*a;
-	char	*b;
-	int	res;
-} ex[] = {
-	{ ".",		".",	0 },
-	{ "de",		"de",	0 },
-	{ "de.",	"de.",	0 },
-	{ ".de",	".de",	0 },
-	{ ".de.",	".de.",	0 },
-	{ "a.de",	".de",	1 },
-	{ "a.de",	"b.de",	-1 },
-	{ "aa.de",	"b.de",	-1 },
-	{ "ba.de",	"b.de",	1 },
-	{ "a.de",	"a.dk",	-1 },
-	{ "anna.example.de",	"anna.example.de",	0 },
-	{ "anna.example.de",	"annamirl.example.de",	-1 },
-	{ "anna.example.de",	"ann.example.de",	1 },
-	{ "example.de.",	"xy.example.de.",	1 },	/* top level domain is "greater" */
-	{ "example.de.",	"ab.example.de.",	1 },
-	{ "abc.example.de.",	"xy.example.de.",	-1 },
-	{ NULL,	NULL,	0 }
-};
+
+#ifdef URL_TEST
+const char *progname;
 main (int argc, char *argv[])
 {
-	
-	int	expect;
-	int	res;
-	int	c;
-	int	i;
+	char	*proto;
+	char	*host;
+	char	*port;
+	char	*para;
+	char	url[1024];
 
-	for ( i = 0; ex[i].a; i++ )
-	{
-		expect = ex[i].res;
-		if ( expect < 0 )
-			c = '<'; 
-		else if ( expect > 0 )
-			c = '>'; 
-		else 
-			c = '='; 
-		printf ("%-20s %-20s ==> %c 0 ", ex[i].a, ex[i].b, c);
-		fflush (stdout);
-		res = domaincmp (ex[i].a, ex[i].b);
-		printf ("%3d  ", res);
-		if ( res < 0 && expect < 0 || res > 0 && expect > 0 || res == 0 && expect == 0 ) 
-			puts ("ok");
-		else
-			puts ("not ok");
-	}
+	progname = *argv;
+
+	proto = host = port = para = NULL;
+
+	strcpy (url, argv[1]);
+	parseurl (url, &proto, &host, &port, &para);
+
+	if ( proto )
+		printf ("proto: \"%s\"\n", proto);
+	if ( host )
+		printf ("host: \"%s\"\n", host);
+	if ( port )
+		printf ("port: \"%s\"\n", port);
+	if ( para )
+		printf ("para: \"%s\"\n", para);
+
 }
 #endif
+

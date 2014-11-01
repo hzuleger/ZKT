@@ -1,0 +1,153 @@
+zkt 0.70 -- 15. Sep 2005
+
+* func	Experimental code added to use a binary search tree instead of a
+	single linked list. This is mainly for performance improvement for large
+	sites. If you don't want to use it, set USE_TREE in config.h to zero.
+	In the first step only dnssec-zkt use the new data structure.
+	The tree is build over the domain names and each node is the starting point
+	of a linked list of keys.
+	As a result, it's not possible anymore to search on key tags only. You must
+	specify the domain name plus the tag. :-(
+
+* func	Function parseurl added.
+
+* func	Experimental code to register a new ksk. Currently it's more like
+	a key announcement because the lack of identification and authentication.
+
+zkt 0.65 -- 22. Aug 2005
+
+* misc	Rewrite of the domaincmp() function. Now it's round about 2 times faster.
+	After some additional changes and the compiler option -O3 the dnssec-zkt
+	on the ~ 120000 zones requires only a minute
+		$ time dnssec-zkt -z -r sec > /dev/null
+		real    0m58.287s
+		user    0m54.610s
+		sys     0m3.680s
+
+* func	A keyset directory is introduced (experimental)
+	The parameter -d is added to the call of the dnssec-signzone command
+	if the config option KeySetDir is set.
+	As a result, all dsset-, keyset- and dlvset- files are stored in one directory.
+	The advantage is, that the chain of trust of all local subzone is build
+	automatically (This is the reason why we sort the zones with the child zones
+	first).
+	The disadvantage is that we store many files in single directory (3 files
+	per zone).
+
+zkt 0.64 -- 1. Aug 2005
+
+* bug	The code for option -Z of dnssec-zkt should be executed before we read the
+	complete directory tree. This is usefull if we have a very deep directory
+	structure and the recursive flag is switched on.
+
+* func	SIG_Pseudorand  parameter added
+
+* func	([KZ]SK)|(SIG)_randfile parameter added
+
+* func	measure the time used for signing of each zone 
+
+* bug	function logflush() added to misc.c and called by dosigning()
+
+* misc	some perfomance test made:
+	- Directory structure "sec/<firstletter>/domain" with round about 12200 domains
+	- One of the domain is a big one (~ 820000 RRs), the others are mostly very small ones
+	- We use a dsa with 704 bits as ksk and a rsamd5 with 512 bits as zsk on each domain.
+	- All test made on Sun Fire V440 with 4 CPU and  4x2GB main memory
+
+		# sequential signing of all zones 
+		$ time dnssec-signer -v -v -f -D sec
+		real	434m	(~ 7h 14min)
+		user	188
+		sys	175
+
+		# with option -p and -r /dev/urandom
+		$ time dnssec-signer -v -v -f -D sec > log
+		real	96m28.306s
+		user	290m41.980s
+		sys	6m13.790s
+
+		# one process for each firstletter subdirectory
+		$ time par_signer.sh
+		real	394m12.334s
+		user	295m58.390s
+		sys	786m42.479s
+
+		# with option -p and -r /dev/urandom
+		$ time par_signer.sh
+		real	78m49.323s
+		user	284m58.350s
+		sys	5m39.340s
+
+
+		$ time dnssec-zkt -z -r sec > /dev/null
+		real	2m5.722s
+		user	2m0.060s
+		sys	0m4.510s
+
+	
+		# signing the big (820000 RR) domain only
+		$ time dnssec-signer -v -v -f -D sec/b/big-domain
+		real	196m23.165	(~ 3h 16min)
+		user	176m57.610
+		sys	167m27.570
+
+		# with option -p and -r /dev/urandom
+		$ time dnssec-signer -v -v -f -D sec/b/big-domain
+		real	49m53.152
+		user	173m59.520
+		sys	1m40.150
+
+zkt 0.63 -- 14. June 2005
+
+* bug	allow TTL value in keyfiles (see TTL_IN_KEYFILES_ALLOWED
+	in dki_readfile() )
+
+* misc	function strchop() added to misc.c
+
+zkt 0.62 -- 13. May 2005
+
+* func	dnssec-signer: Option -o added.
+	Now it works a little bit more like dnssec-signzone
+
+* func	strlist.c: prepstrlist and unprepstrlist functions get a
+	second parameter for the delimiter
+
+* bug	fixed some typos and inaccurate usage of symbolic constants.
+	Doing some housekeeping.
+
+zkt 0.61 -- 3. May 2005
+
+* bug	local config file will not be mentioned if -N switch is used
+
+zkt 0.6 -- 1. May 2005
+
+* doc	dnssec-signer: man page added
+
+* func	dnssec-signer: Print out a warning message if ksk lifetime is exceeded
+
+* func	dnssec-signer: Remaining arguments will be interpreted as zone names
+	(in_strarr () added)
+
+* func	dnssec-signer: Option -D added
+
+
+zkt 0.51 -- 8. April 2005
+
+* func	dnssec-signer: Option -N added
+
+* func	dnssec-signer: change of keystatus from pre-published to active
+	reset timestamp of key, thus age of active key counts 0
+
+* bug	prepstrlist: resulting string was not terminated with '\0'
+
+* bug	dnssec-signer: do signing if there are additional keys, or the
+	status of any key is changed (function check_keytimestamp)
+
+* func	dnssec-zkt: -l <list> option added
+
+* func	dnssec-zkt: -p flag defaults to on in key creation mode (-C)
+
+* bug	dnssec-zkt: parsetag() doesn't return label if called with -C
+	and domain name starts with digit (e.g. ENUM Domain).
+
+zkt 0.5 -- 1. April 2005 (first public release)

@@ -9,7 +9,7 @@
 
 # define	LISTDELIM	" ,:;|^\t"
 
-char	*prepstrlist (const char *str);
+char	*prepstrlist (const char *str, const char *delim);
 int	isinlist (const char *str, const char *list);
-char	*unprepstrlist (char *list);
+char	*unprepstrlist (char *list, char delimc);
 #endif

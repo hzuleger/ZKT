@@ -2,6 +2,10 @@
 **
 **	@(#) strlist.c (c) Mar 2005  Holger Zuleger
 **
+**	TODO:	Maybe we should use a special type for the list:
+**		typedef struct { char cnt; char list[0+1]; } strlist__t;
+**		This results in better type control of the function parameters
+**
 *****************************************************************/
 
 #ifdef TEST
@@ -13,13 +17,14 @@
 
 
 /*****************************************************************
-**	prepare str list
-**	String is a list of substrings delimeted by LISTDELIM
-**	The function returns a pointer to a dynamic allocated memory
-**	which looks like
-**	|2ZZ
+**	prepstrlist (str, delim)
+**	prepare a string with delimeters to a so called strlist.
+**	'str' is a list of substrings delimeted by 'delim'
+**	The # of strings is stored at the first byte of the allocated
+**	memory. Every substring is stored as a '\0' terminated C-String.
+**	The function returns a pointer to dynamic allocated memory
 *****************************************************************/
-char	*prepstrlist (const char *str)
+char	*prepstrlist (const char *str, const char *delim)
 {
 	char	*p;
 	char	*new;
@@ -37,7 +42,7 @@ char	*prepstrlist (const char *str)
 	p = new;
 	for ( *p++ = '\0'; *str; str++ )
 	{
-		if ( strchr (LISTDELIM, *str) == NULL )
+		if ( strchr (delim, *str) == NULL )
 			*p++ = *str;
 		else if ( p[-1] != '\0' )
 		{
@@ -45,6 +50,7 @@ char	*prepstrlist (const char *str)
 			cnt++;
 		}
 	}
+	*p = '\0';	/*terminate string */
 	if ( p[-1] != '\0' )
 		cnt++;
 	*new = cnt & 0xFF;
@@ -52,6 +58,10 @@ char	*prepstrlist (const char *str)
 	return new;
 }
 
+/*****************************************************************
+**	isinlist (str, list)
+**	check if 'list' contains 'str'
+*****************************************************************/
 int	isinlist (const char *str, const char *list)
 {
 	int	cnt;
@@ -73,17 +83,20 @@ int	isinlist (const char *str, const char *list)
 	return 0;
 }
 
-char	*unprepstrlist (char *list)
+/*****************************************************************
+**	unprepstrlist (list, delimc)
+*****************************************************************/
+char	*unprepstrlist (char *list, char delimc)
 {
 	char	*p;
 	int	cnt;
 
-	cnt = *list;
+	cnt = *list & 0xFF;
 	p = list;
-	for ( *p++ = ' '; cnt > 0; p++ )
+	for ( *p++ = delimc; cnt > 1; p++ )
 		if ( *p == '\0' )
 		{
-			*p = ' ';
+			*p = delimc;
 			cnt--;
 		}
 
@@ -99,7 +112,7 @@ main (int argc, char *argv[])
 	char	group[255];
 
 	if ( argc > 1 )
-		searchlist = prepstrlist (argv[1]);
+		searchlist = prepstrlist (argv[1], LISTDELIM);
 
 	printf ("searchlist: %d entrys: \n", searchlist[0]);
 	if ( (fp = fopen ("/etc/group", "r")) == NULL )
@@ -111,7 +124,7 @@ main (int argc, char *argv[])
 
 	fclose (fp);
 
-	printf ("searchlist: \"%s\"\n", unprepstrlist  (searchlist));
+	printf ("searchlist: \"%s\"\n", unprepstrlist  (searchlist, *LISTDELIM));
 	for ( p = searchlist; *p; p++ )
 		if ( *p < 32 )
 			printf ("<%d>", *p);

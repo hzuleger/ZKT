@@ -1,0 +1,108 @@
+; File written on Mon Sep  5 15:18:20 2005
+; dnssec_signzone version 9.3.1
+sub.example.net.	7200	IN SOA	ns1.example.net. hostmaster.example.net. (
+					2005090502 ; serial
+					86400      ; refresh (1 day)
+					1800       ; retry (30 minutes)
+					1209600    ; expire (2 weeks)
+					7200       ; minimum (2 hours)
+					)
+			7200	RRSIG	SOA 1 3 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					M3NqaoGwG0OBIdKkSQfCmj/riPGK9q231ssS
+					+DeNJ3u8OxDsrthX1veeoYBnxf3wJmo2wp7s
+					m3CGEa2NlIXmvA== )
+			7200	NS	ns1.example.net.
+			7200	RRSIG	NS 1 3 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					gtmBpEGLsnVVBtk84e3z3XmSYibWd12vxyfh
+					fqLfaJJWU9c286uB+cpan+NtMOPpagQZiNaY
+					Yy8T4jnKqAxChA== )
+			7200	NSEC	a.sub.example.net. NS SOA RRSIG NSEC DNSKEY
+			7200	RRSIG	NSEC 1 3 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					qi5gO1jFd14Of+N1/p5TYABtozQ97DoYmLf7
+					0q1UuKemFAImMpWEr9bTp9/QruPmY7f35vKY
+					nv+FSQCOLd4vFg== )
+			7200	DNSKEY	256 3 1 (
+					AQOzJ+vrnDnDf218h2Sm0iYEz1vRdYkTfXuZ
+					w97SQDBBReFT2XPeIn5v/e+AYMQd1E1iUOgn
+					+jRGSWzSq79Nzb1n
+					) ; key id = 52669
+			7200	DNSKEY	256 3 1 (
+					AQPKrEgLjfK0/M0wiwMoWcBsSoPwv1XOlXD1
+					gbSaE1zNvG6NL1vhseSXFgsgl4Fkig/iR9aF
+					cWNJIeTxkMWnm/lb
+					) ; key id = 39929
+			7200	DNSKEY	256 3 1 (
+					AQPV3rPl1j/ZpxF5LC0/CpNtjPC1we2htFbD
+					sMa1cs6Id9gV+33u08CV9Pm8CKy5xLdVM8PL
+					ckFsnvQFlb5SJFzx
+					) ; key id = 9308
+			7200	DNSKEY	257 3 5 (
+					AQPXmEA63Hmg1HOwdZTDBmFP3QFE62UR2wbM
+					X+CgNE7BkFoLhnuthE4g8PxyD7FYHB7g7a+D
+					tRWZyli6Qn2lrBmuAAg2hQgN43pUoWOsGKdJ
+					565709a9cXXPGmzWtll6QWL0UsYLETbAr8NK
+					Y0GDjNoZJXpGsCmOelUDHHh30kURvQ==
+					) ; key id = 61917
+			7200	RRSIG	DNSKEY 1 3 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					A2vFOPv1nmgvvapaGJ2HJIYC/FpqULRh8FRW
+					OmrFndzgAKUONrThF6wLh6PvqjqO8Ra613om
+					TTc0Jyuq8FvY0A== )
+			7200	RRSIG	DNSKEY 5 3 7200 20051005121820 (
+					20050905121820 61917 sub.example.net.
+					O4RP/umPF/6j+82zFFVGQXt5s1/LugrmHEwE
+					SUC07ZtN6QIWJN8O5bSJqiwvwuiWba6Qy5W2
+					Y4c6H2I/zcXYOLhSqa6Yvx6m+LZiNMN6SJ4L
+					2rf9uMel28uxh10/yfJLSTKVctqiebbLmlzT
+					Hdk2CSxev32Li87S0InXNRanZqU= )
+a.sub.example.net.	7200	IN A	1.2.3.4
+			7200	RRSIG	A 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					yAF1Vdr7NM+a417Cq/S/fn+0RhEZ2FdsKkRo
+					qO6P4DMf9I4O0O3OWERzDTMJNAX1FKLCU94O
+					aSU+M4MmXwE8xQ== )
+			7200	NSEC	b.sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					J8IjR/wjCQ6naTopkkp4lDtTmQNE4zNYBJGG
+					zxHgj8KOAcwZm8AxtQUw47v5XRF4C4CTZw8k
+					9b+MSZINaRMApQ== )
+b.sub.example.net.	7200	IN A	1.2.3.5
+			7200	RRSIG	A 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					nSvTp4e2+ZphWH7kCrxttxODLsocAFNgQrY7
+					tRT/MJMS1fbE2yAP6TRkPgSCsjX/KJyXif+A
+					zu8fRr27w72hxw== )
+			7200	NSEC	c.sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					YSIyd2eQJ/dliozuyZK/zaV6DIO1pGNaubtH
+					zIEjRKKMG22Q+aR7Sb/TMzImWY7Krsx1bxYb
+					U7yKOZRMxsNRmw== )
+c.sub.example.net.	7200	IN A	1.2.3.6
+			7200	RRSIG	A 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					ChO1yPYufbOnnGLx9NOZnmnwDxJKXDl2Dp6z
+					I+PGwkbJdXy1G3x4GOPtvYhKwcen20eETKfU
+					2ZWrXpAS+2VQJw== )
+			7200	NSEC	localhost.sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					dFo5orPd9lXqs/ykLL7TDJgiKGgQbch+grXa
+					5CvdRkIacN+oQb1zISGpI6CMk42fH213OyiJ
+					7IBWeLOBjsEclA== )
+localhost.sub.example.net. 7200	IN A	127.0.0.1
+			7200	RRSIG	A 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					C+BpHJZ5Lzzo82Z2MBtUBvxEqH95P+y2V7UO
+					gdI2w0dU+1Fw4RpfFutch+CWRj77Z05S2jD3
+					alC2its87ge+nA== )
+			7200	NSEC	sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 1 4 7200 20051005121820 (
+					20050905121820 39929 sub.example.net.
+					vB0tyGgZOOKBYyIUedkHMoQwsV918lUT9mXE
+					BipAs11voriatrlyJ4Nkt+uS18TnJAj2x6Kx
+					B8mCnlXDXJPwjA== )

@@ -6,24 +6,25 @@
 
 Please consult "http://www.hznet.de/dns/zkt/" to get more infos about zkt.
 
-Build 
-a) Create a directory for zkt
-	$ mkdir zkt-0.5
+Build:
+
+a) Create a directory for the zkt source code
+	$ mkdir zkt-0.65
 
 b) Change to dir
-	$ cd zkt-0.5
+	$ cd zkt-0.65
 
-c) Get current version of zkt
-	$ wget http://www.hznet.de/dns/zkt/zkt-0.5.tar 
+c) Get the current version of zkt
+	$ wget http://www.hznet.de/dns/zkt/zkt-0.65.tar 
 
 d) Unpack
-	$ tar xvf zkt-0.5.tar
+	$ tar xvf zkt-0.65.tar
 
-e) Change INSTALLDIR in Makefile (def: $HOME/bin/)
+e) (optional)  Change INSTALLDIR in Makefile (def: $HOME/bin/)
 
-f) Edit config.h	(optional)
-		set path of BIND dnssec tools (def: /usr/local/bin/)
-		set path of default dnssec.conf file (def: /var/named/)
+f) (optional) Edit config.h
+	set path of BIND dnssec utilities (BIND_UTIL_PATH, def: /usr/local/sbin/)
+	set CONFIG_FILEPATH of default dnssec.conf file (def: /var/named/)
 
 g) Compile
 	$ make
@@ -31,5 +32,6 @@ g) Compile
 h) Install
 	$ make install
 
-i) Install default dnssec.conf file (Optional)
+i) (optional) Install and modify the default dnssec.conf file 
 	$ ./dnssec-zkt -c "" -Z > /var/named/dnssec.conf
+	$ vi /var/named/dnssec.conf
