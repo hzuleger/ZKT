@@ -260,7 +260,7 @@ int	main (int argc, char *const argv[])
 #endif
 	lg_args (LG_NOTICE, argc, argv);
 
-	/* 1.0rc1: If the ttl for dynamic zones is not known or if it is 0, use sig valid time for this */
+	/* 1.0rc1: The ttl for dynamic zones is not known or if it is 0, use sig valid time for this */
 	if ( config->max_ttl <= 0 || dynamic_zone )
 	{
 		// config = dupconfig (config);

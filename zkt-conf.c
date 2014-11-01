@@ -70,10 +70,9 @@ static	int	writeflag = 0;
 static	int	allflag = 0;
 static	int	testflag = 0;
 
-# define	short_options	":aC:c:O:dlstvwV:rh"
+# define	short_options	":ac:O:dlstvwV:rh"
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
-	{"compability",		required_argument, NULL, 'C'},
 	{"config",		required_argument, NULL, 'c'},
 	{"option",		required_argument, NULL, 'O'},
 	{"config-option",	required_argument, NULL, 'O'},
@@ -99,8 +98,6 @@ int	main (int argc, char *argv[])
 	int	c;
 	int	opt_index;
 	int	action;
-	int	major;
-	int	minor;
 	const	char	*file;
 	const	char	*defconfname = NULL;
 	const	char	*confname = NULL;
@@ -130,7 +127,6 @@ int	main (int argc, char *argv[])
         opterr = 0;
 	opt_index = 0;
 	action = 0;
-	setconfigversion (100);
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 	while ( (c = getopt_long (argc, argv, short_options, long_options, &opt_index)) != -1 )
 #else
@@ -150,16 +146,6 @@ int	main (int argc, char *argv[])
 			break;
 		case 'O':		/* read option from commandline */
 			config = loadconfig_fromstr (optarg, config);
-			break;
-		case 'C':
-			switch ( sscanf (optarg, "%d.%d", &major, &minor) )
-			{
-			case 2:	major = major * 100 + minor;
-			case 1: break;
-			default:
-				usage ("illegal release number");
-			}
-			setconfigversion (major);
 			break;
 		case 'c':
 			if ( *optarg == '\0' )

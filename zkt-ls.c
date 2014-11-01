@@ -80,7 +80,6 @@ int	pathflag = 0;
 int	kskflag = 1;
 int	zskflag = 1;
 int	ljustflag = 0;
-int	subdomain_before_parent = 1;
 
 static	int	dirflag = 0;
 static	int	recflag = RECURSIVE;
@@ -89,9 +88,9 @@ static	const	char	*view = "";
 static	const	char	*term = NULL;
 
 #if defined(COLOR_MODE) && COLOR_MODE
-# define	short_options	":HKTV:afC::c:O:dhkLl:prstez"
+# define	short_options	":HKTV:afC::c:O:dhkLl:prtez"
 #else
-# define	short_options	":HKTV:af:c:O:dhkLl:prstez"
+# define	short_options	":HKTV:af:c:O:dhkLl:prtez"
 #endif
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
@@ -107,8 +106,6 @@ static struct option long_options[] = {
 	{"leftjust",		no_argument, NULL, 'L'},
 	{"label-list",		no_argument, NULL, 'l'},
 	{"path",		no_argument, NULL, 'p'},
-	{"sort",		no_argument, NULL, 's'},
-	{"subdomain",		no_argument, NULL, 's'},
 	{"nohead",		no_argument, NULL, 'h'},
 	{"directory",		no_argument, NULL, 'd'},
 #if defined(COLOR_MODE) && COLOR_MODE
@@ -123,8 +120,8 @@ static struct option long_options[] = {
 };
 #endif
 
-static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before);
-static	void	parsefile (const char *file, dki_t **listp, int sub_before);
+static	int	parsedirectory (const char *dir, dki_t **listp);
+static	void	parsefile (const char *file, dki_t **listp);
 static	void    usage (char *mesg, zconf_t *cp);
 
 static	void	setglobalflags (zconf_t *config)
@@ -133,9 +130,6 @@ static	void	setglobalflags (zconf_t *config)
 	ageflag = config->printage;
 	timeflag = config->printtime;
 	ljustflag = config->ljust;
-	term = config->colorterm;
-	if ( term && *term == '\0' )
-		term = getenv ("TERM");
 }
 
 int	main (int argc, char *argv[])
@@ -184,7 +178,6 @@ int	main (int argc, char *argv[])
 #endif
 		case 'T':
 			trustedkeyflag = 1;
-			subdomain_before_parent = 0;
 			zskflag = pathflag = 0;
 			/* fall through */
 		case 'H':
@@ -240,9 +233,6 @@ int	main (int argc, char *argv[])
 		case 'r':		/* switch recursive flag */
 			recflag = !recflag;
 			break;
-		case 's':		/* switch subdomain sorting flag */
-			subdomain_before_parent = !subdomain_before_parent;
-			break;
 		case 't':		/* time */
 			timeflag = !timeflag;
 			break;
@@ -284,9 +274,9 @@ int	main (int argc, char *argv[])
 			file = argv[c++];
 
 		if ( is_directory (file) )
-			parsedirectory (file, &data, subdomain_before_parent);
+			parsedirectory (file, &data);
 		else
-			parsefile (file, &data, subdomain_before_parent);
+			parsefile (file, &data);
 
 	}  while ( c < argc );	/* for all arguments */
 
@@ -348,7 +338,6 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "\t\t turn color mode on \n");
         fprintf (stderr, "\t-p%s\t show path of keyfile / create key in current directory\n", loptstr (", --path", "\t"));
         fprintf (stderr, "\t-r%s\t recursive mode on/off (default: %s)\n", loptstr(", --recursive", "\t"), recflag ? "on": "off");
-        fprintf (stderr, "\t-s%s\t change sorting of subdomains\n", loptstr(", --subdomain", "\t"));
         fprintf (stderr, "\t-a%s\t print age of key (default: %s)\n", loptstr (", --age", "\t"), ageflag ? "on": "off");
         fprintf (stderr, "\t-t%s\t print key generation time (default: %s)\n", loptstr (", --time", "\t"),
 								timeflag ? "on": "off");
@@ -361,7 +350,7 @@ static	void    usage (char *mesg, zconf_t *cp)
         exit (1);
 }
 
-static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before)
+static	int	parsedirectory (const char *dir, dki_t **listp)
 {
 	dki_t	*dkp;
 	DIR	*dirp;
@@ -385,14 +374,14 @@ static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before)
 		if ( is_directory (path) && recflag )
 		{
 			dbg_val ("directory: recursive %s\n", path);
-			parsedirectory (path, listp, sub_before);
+			parsedirectory (path, listp);
 		}
 		else if ( is_keyfilename (dentp->d_name) )
 			if ( (dkp = dki_read (dir, dentp->d_name)) )
 			{
 				// fprintf (stderr, "parsedir: tssearch (%d %s)\n", dkp, dkp->name);
 #if defined (USE_TREE) && USE_TREE
-				dki_tadd (listp, dkp, sub_before);
+				dki_tadd (listp, dkp);
 #else
 				dki_add (listp, dkp);
 #endif
@@ -402,7 +391,7 @@ static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before)
 	return 1;
 }
 
-static	void	parsefile (const char *file, dki_t **listp, int sub_before)
+static	void	parsefile (const char *file, dki_t **listp)
 {
 	char	path[MAX_PATHSIZE+1];
 	dki_t	*dkp;
@@ -414,7 +403,7 @@ static	void	parsefile (const char *file, dki_t **listp, int sub_before)
 	{
 		if ( (dkp = dki_read (path, file)) )	/* read DNS key file ... */
 #if defined (USE_TREE) && USE_TREE
-			dki_tadd (listp, dkp, sub_before);		/* ... and add to tree */
+			dki_tadd (listp, dkp);		/* ... and add to tree */
 #else
 			dki_add (listp, dkp);		/* ... and add to list */
 #endif

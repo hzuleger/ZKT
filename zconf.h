@@ -87,7 +87,6 @@
 # define	PRINTTIME	1
 # define	PRINTAGE	0
 # define	LJUST		0
-# define	LSCOLORTERM	NULL	/* or "" */
 # define	KEYSETDIR	NULL	/* keysets */
 # define	LOGFILE		""
 # define	LOGLEVEL	"error"
@@ -143,7 +142,6 @@ typedef	struct zconf	{
 	int	printtime;
 	int	printage;
 	int	ljust;
-	char	*colorterm;
 	long	sigvalidity;	/* should be less than expire time */
 	long	max_ttl;	/* should be set to the maximum used ttl in the zone */
 	long	key_ttl;
@@ -198,6 +196,5 @@ extern	int	setconfigpar (zconf_t *conf, char *entry, const void *pval);
 extern	int	printconfig (const char *fname, const zconf_t *cp);
 extern	int	printconfigdiff (const char *fname, const zconf_t *ref, const zconf_t *z);
 extern	int	checkconfig (const zconf_t *z);
-extern	void	setconfigversion (int version);
 
 #endif

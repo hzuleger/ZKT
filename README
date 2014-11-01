@@ -12,17 +12,17 @@ have a look at "http://www.hznet.de/dns/zkt/"
 You can also subscribe to the zkt-users@sourceforge.net mailing list
 on the following website: https://lists.sourceforge.net/lists/listinfo/zkt-users
 
-The ZKT software is licenced under BSD (see LICENCE file)
+The complete software stands under BSD licence (see LICENCE file)
 
 To build the software:
 a) Get the current version of zkt
-	$ wget http://www.hznet.de/dns/zkt/zkt-1.0.tar.gz
+	$ wget http://www.hznet.de/dns/zkt/zkt-1.0rc1.tar.gz
 
 b) Unpack
-	$ tar xzvf zkt-1.0.tar.gz
+	$ tar xzvf zkt-1.0rc1.tar.gz
 
-c) Change to source directory
-	$ cd zkt-1.0
+c) Change to dir
+	$ cd zkt-1.0rc1
 
 d) Run configure script
 	$ ./configure
@@ -48,5 +48,4 @@ b) (optional) Change default parameters
 
 c) Prepare one of your zone for zkt
 	$ cd /var/name/zones/net/example.net	# change dir to zone directory
-	$ cp <zonefile> zone.db 		# copy and rename existing zone file to "zone.db"
 	$ zkt-conf -w zone.db			# create local dnssec.conf file and include dnskey.db into zone file

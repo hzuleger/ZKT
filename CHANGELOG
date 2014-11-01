@@ -1,15 +1,4 @@
-zkt 1.0 -- 15. June 2010
-
-* feat	"/dev/urandom" check added to checkconfig()
-
-* feat	Config compability switch (-C) added to zkt-conf
-
-* feat	zkt-ls has a new switch -s to change sorting of domains from
-	subdomain before parent to subdomain below the parent
-
-* feat	"zkt-ls -T" prints only parent trust anchor
-
-zkt 1.0rc1 -- 1. Apr 2010 (The 1.0 release was sponsored by DOMINIC(r) )
+zkt 1.0 -- 1. Apr 2010 (The 1.0 release is sponsored by DOMINIC(r) )
 
 * feat	Several config parameter are printed now in a more consistent and
 	user friendly form.

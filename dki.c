@@ -850,18 +850,6 @@ int	dki_namecmp (const dki_t *a, const dki_t *b)
 
 	return domaincmp (a->name, b->name);
 }
-
-/*****************************************************************
-**	dki_revnamecmp () 	return <0 | 0 | >0
-*****************************************************************/
-int	dki_revnamecmp (const dki_t *a, const dki_t *b)
-{
-	if ( a == NULL ) return -1;
-	if ( b == NULL ) return 1;
-
-	return domaincmp_dir (a->name, b->name, 0);
-}
-
 /*****************************************************************
 **	dki_tagcmp () 	return <0 | 0 | >0
 *****************************************************************/
@@ -1149,14 +1137,11 @@ const dki_t	*dki_search (const dki_t *list, int tag, const char *name)
 /*****************************************************************
 **	dki_tadd ()	add a key to the given tree
 *****************************************************************/
-dki_t	*dki_tadd (dki_t **tree, dki_t *new, int sub_before)
+dki_t	*dki_tadd (dki_t **tree, dki_t *new)
 {
 	dki_t	**p;
 
-	if ( sub_before )
-		p = tsearch (new, tree, dki_namecmp);
-	else
-		p = tsearch (new, tree, dki_revnamecmp);
+	p = tsearch (new, tree, dki_namecmp);
 	if ( *p == new )
 		dbg_val ("dki_tadd: New entry %s added\n", new->name);
 	else

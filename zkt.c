@@ -193,7 +193,6 @@ void	zkt_list_keys (const dki_t *data)
 }
 
 #if defined(USE_TREE) && USE_TREE
-# if 0
 static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
 {
 	const	dki_t	*dkp;
@@ -215,36 +214,6 @@ static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
 		}
 	}
 }
-# else
-const	dki_t	*parent;
-static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
-{
-	const	dki_t	*dkp;
-
-	if ( nodep == NULL )
-		return;
-
-	dkp = *nodep;
-	if ( which == INORDER || which == LEAF )
-	{
-// fprintf (stderr, "list_trustedkey order=%d(pre=0,in=1,post=2,leaf=3) depth=%d %s\n", which, depth, dkp->name);
-		if ( labellist && !isinlist (dkp->name, labellist) )
-			return;
-
-		if ( parent == NULL || !issubdomain (dkp->name, parent->name) )
-		{
-			parent = dkp;	
-			/* loop through list */
-			while ( dkp )
-			{
-				if ( (dki_isksk (dkp) || zskflag) )
-					dki_prt_trustedkey (dkp, stdout);
-				dkp = dkp->next;
-			}
-		}
-	}
-}
-# endif
 #endif
 
 void	zkt_list_trustedkeys (const dki_t *data)

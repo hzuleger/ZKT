@@ -141,10 +141,9 @@ dki_t	**tdelete (const dki_t *dkp, dki_t **tree, int(*compar)(const dki_t *, con
 void	twalk (const dki_t *root, void (*action)(const dki_t **nodep, VISIT which, int depth));
 
 extern	void	dki_tfree (dki_t **tree);
-extern	dki_t	*dki_tadd (dki_t **tree, dki_t *new, int sub_before);
+extern	dki_t	*dki_tadd (dki_t **tree, dki_t *new);
 extern	int	dki_tagcmp (const dki_t *a, const dki_t *b);
 extern	int	dki_namecmp (const dki_t *a, const dki_t *b);
-extern	int	dki_revnamecmp (const dki_t *a, const dki_t *b);
 extern	int	dki_allcmp (const dki_t *a, const dki_t *b);
 #endif
 
