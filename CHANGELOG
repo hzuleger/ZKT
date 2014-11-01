@@ -1,3 +1,76 @@
+zkt 0.96 -- 19. June 2008
+
+* func	Config file option "SIG_Parameter" added.
+
+* func	Function verbmesg() added and used for verbose logging
+	to stdout and/or to syslog resp. file.
+	Config file parameter VerboseLog added to config file.
+
+* bug 	Option -O wasn't recognized by dnssec-signer
+
+* func	Better support of initial setup of dynamic signed
+	zones (just create an empty "zone.db.dsigned" file
+	and run dnssec-signer with option -d).
+
+* func	Improved error logging; incr_soa() errors are written
+	as clear text message instead of error number
+
+* func	elog_mesg() function replaced by a more general
+	logging mechanism.
+	ErrorLog config parameter replaced by LogFile,
+	LogLevel and SyslogFacility, SyslogLevel parameter
+
+* func	New function filesize() added
+
+* func	dki_prt_trustedkey print out old key id if key
+	is revoked 
+
+* func	dki_new() writes gentime (GMT) and proposed key
+	lifetime (days) as comment into the *.key file
+
+* bug	Doing some housekeeping
+
+zkt 0.95 -- 19. April 2008
+
+* misc	This is not a public released version of zkt.
+
+* func	All config file option are now settable via
+	commandline option -O (--option or --config-option)
+
+* misc	Function fatal() now has an exit code of 127.
+	This is neccessary because values from 1 to 64 are
+	reflecting the number of errors occured.
+
+* func	Errorlog functionality added
+	All dnssec-signer errors will be logged in the file
+	specified by the Errorlog config file parameter or
+	specified by the command line option -L (--errorlog).
+	If a directory is given, then the logging will occur
+	in a file within this directory which is named
+	like "zkt-<current-date>.log".
+	The dnssec-signer command has an exit code of 0 if
+	no error occured, an exit code of 127 on fatal errors,
+	an exit code from 1 to 63 reflecting the number of errors
+	occured, or an exit code of 64 if more than 63 errors
+	occured.
+
+* func	dnssec-signer: Introducing long options
+
+* bug	New skript added to example/views directory to
+	read in the right config file
+
+* func	New option -f (--lifetime) and -F (--setlifetime)
+	added to dnssec-zkt.
+
+* func	New option -e (--expire) added to dnssec-zkt.
+	(Seems to be that the dnssec-zkt command is a little
+	bit overloaded with options.)
+
+* func	dki.c and zkt.c supports storage of key lifetime,
+	generation time and expiration time as a comment in the
+	.key file.  With this, it's possible to change the default
+	lifetime without any impact on already used keys.
+
 zkt 0.94 -- 6. Dec 2007
 
 * bug	Case mismatch of zone name and key file name prevent
@@ -17,7 +90,7 @@ zkt 0.94 -- 6. Dec 2007
 * bug	Uninitialized variable "len" in sign_zone().
 
 * func	Default config file is settable via environment
-	var ZKT_CONFFILE
+	variable ZKT_CONFFILE
 
 * func	Support of views added
 	Link dnssec-zkt to dnssec-zkt-<view> and

@@ -15,6 +15,7 @@
 # include <assert.h>
 # include "config.h"
 # include "debug.h"
+# include "domaincmp.h"
 # include "misc.h"
 # include "zconf.h"
 # include "dki.h"
@@ -27,9 +28,12 @@
 *****************************************************************/
 static	char	zone_estr[255+1];
 
+/*****************************************************************
+**	zone_alloc ()
+*****************************************************************/
 static	zone_t	*zone_alloc ()
 {
-	zone_t	*zp = malloc (sizeof (zone_t));
+	zone_t	*zp;
 
 	if ( (zp = malloc (sizeof (zone_t))) )
 	{
@@ -41,6 +45,18 @@ static	zone_t	*zone_alloc ()
 			"zone_alloc: Out of memory");
 	return NULL;
 }
+
+/*****************************************************************
+**	zone_cmp () 	return <0 | 0 | >0
+*****************************************************************/
+static	int	zone_cmp (const zone_t *a, const zone_t *b)
+{
+	if ( a == NULL ) return -1;
+	if ( b == NULL ) return 1;
+
+	return domaincmp (a->zone, b->zone);
+}
+
 
 /*****************************************************************
 **	public function definition
@@ -148,7 +164,6 @@ zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *fi
 int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf, int dyn_zone)
 {
 	char	*p;
-	zconf_t	*localconf;
 	char	path[MAX_PATHSIZE+1];
 	char	*signed_ext = ".signed";
 
@@ -156,10 +171,12 @@ int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t *
 	assert (conf != NULL);
 
 	if ( zone == NULL )	/* zone not given ? */
+	{
 		if ( (zone = strrchr (dir, '/')) )	/* try to extract zone name out of directory */
 			zone++;
 		else
 			zone = dir;
+	}
 	dbg_val4 ("zone_readdir: (dir: %s, zone: %s, zfile: %s zp, cp, dyn_zone = %d)\n",
 					dir, zone, zfile ? zfile: "NULL", dyn_zone);
 
@@ -178,8 +195,9 @@ int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t *
 	dbg_val1 ("zone_readdir: check local config file %s\n", path);
 	if ( fileexist (path) )			/* load local config file */
 	{
-		localconf = loadconfig (NULL, NULL);
-		memcpy (localconf, conf, sizeof (zconf_t));
+		zconf_t	*localconf;
+
+		localconf = dupconfig (conf);
 		conf = loadconfig (path, localconf);
 	}
 
@@ -222,17 +240,6 @@ const	char	*zone_geterrstr ()
 }
 
 /*****************************************************************
-**	zone_cmp () 	return <0 | 0 | >0
-*****************************************************************/
-int	zone_cmp (const zone_t *a, const zone_t *b)
-{
-	if ( a == NULL ) return -1;
-	if ( b == NULL ) return 1;
-
-	return domaincmp (a->zone, b->zone);
-}
-
-/*****************************************************************
 **	zone_add ()
 *****************************************************************/
 zone_t	*zone_add (zone_t **list, zone_t *new)
@@ -252,7 +259,7 @@ zone_t	*zone_add (zone_t **list, zone_t *new)
 		curr = curr->next;
 	}
 
-	if ( curr == *list )	/* add node at start of list */
+	if ( curr == *list )	/* add node at the beginning of the list */
 		*list = new;
 	else			/* add node at end or between two nodes */
 		last->next = new;

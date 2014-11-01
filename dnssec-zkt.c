@@ -13,6 +13,7 @@
 # include <dirent.h>
 # include <assert.h>
 # include <unistd.h>
+# include <ctype.h>
 
 # include "config.h"
 #if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
@@ -24,6 +25,7 @@
 # include "strlist.h"
 # include "zconf.h"
 # include "dki.h"
+# include "zkt.h"
 
 extern  int	optopt;
 extern  int	opterr;
@@ -35,7 +37,10 @@ char	*labellist = NULL;
 
 int	headerflag = 1;
 int	ageflag = 0;
+int	lifetime = 0;
+int	lifetimeflag = 0;
 int	timeflag = 1;
+int	exptimeflag = 0;
 int	pathflag = 0;
 int	kskflag = 1;
 int	zskflag = 1;
@@ -44,16 +49,15 @@ int	ljustflag = 0;
 static	int	dirflag = 0;
 static	int	recflag = RECURSIVE;
 static	int	trustedkeyflag = 0;
-static	int	kskrollover = 0;
 static	char	*kskdomain = "";
 static	const	char	*view = "";
 
-# define	short_options	":0:1:2:3:9A:C:D:P:S:R:HKTs:ZV:ac:dhkLl:prtz"
+# define	short_options	":0:1:2:3:9A:C:D:P:S:R:HKTs:ZV:afF:c:O:dhkLl:prtez"
 #if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
 static struct option long_options[] = {
 	{"ksk-rollover",	no_argument, NULL, '9'},
 	{"ksk-status",		required_argument, NULL, '0'},
-	{"ksk-roll-stat",	required_argument, NULL, '0'},
+	{"ksk-roll-status",	required_argument, NULL, '0'},
 	{"ksk-newkey",		required_argument, NULL, '1'},
 	{"ksk-publish",		required_argument, NULL, '2'},
 	{"ksk-delkey",		required_argument, NULL, '3'},
@@ -65,13 +69,18 @@ static struct option long_options[] = {
 	{"ksk",			no_argument, NULL, 'k'},
 	{"zsk",			no_argument, NULL, 'z'},
 	{"age",			no_argument, NULL, 'a'},
+	{"lifetime",		no_argument, NULL, 'f'},
 	{"time",		no_argument, NULL, 't'},
+	{"expire",		no_argument, NULL, 'e'},
 	{"recursive",		no_argument, NULL, 'r'},
 	{"zone-config",		no_argument, NULL, 'Z'},
 	{"leftjust",		no_argument, NULL, 'L'},
 	{"path",		no_argument, NULL, 'p'},
+	{"nohead",		no_argument, NULL, 'h'},
 	{"directory",		no_argument, NULL, 'd'},
 	{"config",		required_argument, NULL, 'c'},
+	{"option",		required_argument, NULL, 'O'},
+	{"config-option",	required_argument, NULL, 'O'},
 	{"pre-publish",		required_argument, NULL, 'P'},
 	{"standby",		required_argument, NULL, 'S'},
 	{"active",		required_argument, NULL, 'A'},
@@ -80,6 +89,7 @@ static struct option long_options[] = {
 	{"revoke",		required_argument, NULL, 'R'},
 	{"remove",		required_argument, NULL, 19 },
 	{"destroy",		required_argument, NULL, 20 },
+	{"setlifetime",		required_argument, NULL, 'F' },
 	{"view",		required_argument, NULL, 'V' },
 	{"help",		no_argument, NULL, 'H'},
 	{0, 0, 0, 0}
@@ -94,7 +104,15 @@ static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_
 static	void    usage (char *mesg, zconf_t *cp);
 static	const char *parsetag (const char *str, int *tagp);
 
-main (int argc, char *argv[])
+static	void	setglobalflags (zconf_t *config)
+{
+	recflag = config->recursive;
+	ageflag = config->printage;
+	timeflag = config->printtime;
+	ljustflag = config->ljust;
+}
+
+int	main (int argc, char *argv[])
 {
 	dki_t	*data = NULL;
 	dki_t	*dkp;
@@ -120,10 +138,7 @@ main (int argc, char *argv[])
 		config = loadconfig (defconfname, config);
 	if ( config == NULL )
 		fatal ("Out of memory\n");
-	recflag = config->recursive;
-	ageflag = config->printage;
-	timeflag = config->printtime;
-	ljustflag = config->ljust;
+	setglobalflags (config);
 
         opterr = 0;
 	opt_index = 0;
@@ -182,6 +197,16 @@ main (int argc, char *argv[])
 		case 'a':		/* age */
 			ageflag = !ageflag;
 			break;
+		case 'f':		/* key lifetime */
+			lifetimeflag = !lifetimeflag;
+			break;
+		case 'F':		/* set key lifetime */
+			lifetime = atoi (optarg);
+			lifetimeflag = 1;	/* set some flags for more informative output */
+			exptimeflag = 1;
+			timeflag = 1;
+			action = c;
+			break;
 		case 'V':		/* view name */
 			view = optarg;
 			defconfname = getdefconfname (view);
@@ -189,13 +214,16 @@ main (int argc, char *argv[])
 				config = loadconfig (defconfname, config);
 			if ( config == NULL )
 				fatal ("Out of memory\n");
+			setglobalflags (config);
 			break;
 		case 'c':
 			config = loadconfig (optarg, config);
-			recflag = config->recursive;
-			ageflag = config->printage;
-			timeflag = config->printtime;
-			ljustflag = config->ljust;
+			setglobalflags (config);
+			checkconfig (config);
+			break;
+		case 'O':		/* read option from comanndline */
+			config = loadconfig_fromstr (optarg, config);
+			setglobalflags (config);
 			checkconfig (config);
 			break;
 		case 'd':		/* ignore directory arg */
@@ -223,6 +251,9 @@ main (int argc, char *argv[])
 			break;
 		case 't':		/* time */
 			timeflag = !timeflag;
+			break;
+		case 'e':		/* expire time */
+			exptimeflag = !exptimeflag;
 			break;
 		case 'z':		/* zsk only */
 			kskflag = 0;
@@ -329,6 +360,9 @@ main (int argc, char *argv[])
 	case '0':	/* ksk rollover status */
 		ksk_rollover (kskdomain, action - '0', data, config);
 		break;
+	case 'F':
+		zkt_setkeylifetime (data);
+		/* fall through */
 	default:
 		zkt_list_keys (data);
 	}
@@ -369,17 +403,6 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "\t\tKSK (use -k):  %s %d bits\n", dki_algo2str (cp->k_algo), cp->k_bits);
         fprintf (stderr, "\t\tZSK (default): %s %d bits\n", dki_algo2str (cp->z_algo), cp->z_bits);
         fprintf (stderr, "\n");
-        fprintf (stderr, "Initiate a semi-automated KSK rollover");
-        fprintf (stderr, "('%s -9%s' prints out a short description)\n", progname, loptstr ("|--ksk-rollover", ""));
-        sopt_usage ("\tusage: %s {-1} do.ma.in.\n", progname);
-        lopt_usage ("\tusage: %s {--ksk-roll-phase1|--ksk-newkey} do.ma.in.\n", progname);
-        sopt_usage ("\tusage: %s {-2} do.ma.in.\n", progname);
-        lopt_usage ("\tusage: %s {--ksk-roll-phase2|--ksk-publish} do.ma.in.\n", progname);
-        sopt_usage ("\tusage: %s {-3} do.ma.in.\n", progname);
-        lopt_usage ("\tusage: %s {--ksk-roll-phase3|--ksk-delkey} do.ma.in.\n", progname);
-        sopt_usage ("\tusage: %s {-0} do.ma.in.\n", progname);
-        lopt_usage ("\tusage: %s {--ksk-roll-stat|--ksk-status} do.ma.in.\n", progname);
-        fprintf (stderr, "\n");
         fprintf (stderr, "Change key status of specified key to pre-publish, active or depreciated\n");
         fprintf (stderr, "\t(<keyspec> := tag | tag:name) \n");
         sopt_usage ("\tusage: %s -P|-A|-D <keyspec> [-dr] [-c config] [dir ...]\n", progname);
@@ -394,12 +417,26 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "Remove (rename) or destroy (delete) specified key (<keyspec> := tag | tag:name) \n");
         lopt_usage ("\tusage: %s --remove=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         lopt_usage ("\tusage: %s --destroy=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        fprintf (stderr, "\n");
+        fprintf (stderr, "Initiate a semi-automated KSK rollover");
+        fprintf (stderr, "('%s -9%s' prints out a short description)\n", progname, loptstr ("|--ksk-rollover", ""));
+        sopt_usage ("\tusage: %s {-1} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-phase1|--ksk-newkey} do.ma.in.\n", progname);
+        sopt_usage ("\tusage: %s {-2} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-phase2|--ksk-publish} do.ma.in.\n", progname);
+        sopt_usage ("\tusage: %s {-3} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-phase3|--ksk-delkey} do.ma.in.\n", progname);
+        sopt_usage ("\tusage: %s {-0} do.ma.in.\n", progname);
+        lopt_usage ("\tusage: %s {--ksk-roll-status|--ksk-status} do.ma.in.\n", progname);
+        fprintf (stderr, "\n");
 
         fprintf (stderr, "\n");
         fprintf (stderr, "General options \n");
         fprintf (stderr, "\t-c file%s", loptstr (", --config=file\n", ""));
 	fprintf (stderr, "\t\t read config from <file> instead of %s\n", CONFIG_FILE);
-        fprintf (stderr, "\t-h\t no headline or trusted-key section header/trailer in -T mode\n");
+        fprintf (stderr, "\t-O optstr%s", loptstr (", --config-option=\"optstr\"\n", ""));
+	fprintf (stderr, "\t\t read config options from commandline\n");
+        fprintf (stderr, "\t-h%s\t no headline or trusted-key section header/trailer in -T mode\n", loptstr (", --nohead", "\t"));
         fprintf (stderr, "\t-d%s\t skip directory arguments\n", loptstr (", --directory", "\t"));
         fprintf (stderr, "\t-L%s\t print the domain name left justified (default: %s)\n", loptstr (", --leftjust", "\t"), ljustflag ? "on": "off");
         fprintf (stderr, "\t-l list\t\t print out only zone keys out of the given domain list\n");
@@ -408,6 +445,9 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "\t-a%s\t print age of key (default: %s)\n", loptstr (", --age", "\t"), ageflag ? "on": "off");
         fprintf (stderr, "\t-t%s\t print key generation time (default: %s)\n", loptstr (", --time", "\t"),
 								timeflag ? "on": "off");
+        fprintf (stderr, "\t-e%s\t print key expiration time\n", loptstr (", --expire", "\t"));
+        fprintf (stderr, "\t-f%s\t print key lifetime\n", loptstr (", --lifetime", "\t"));
+        fprintf (stderr, "\t-F days%s=days\t set key lifetime\n", loptstr (", --setlifetime", "\t"));
         fprintf (stderr, "\t-k%s\t key signing keys only\n", loptstr (", --ksk", "\t"));
         fprintf (stderr, "\t-z%s\t zone signing keys only\n", loptstr (", --zsk", "\t"));
         if ( mesg && *mesg )
@@ -441,13 +481,14 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 	}
 	
 	if  ( zskflag )
-		dkp = dki_new (dir, keyname, 0, conf->z_algo, conf->z_bits, conf->z_random);
+		dkp = dki_new (dir, keyname, DKI_ZSK, conf->z_algo, conf->z_bits, conf->z_random, conf->z_life / DAYSEC);
 	else
-		dkp = dki_new (dir, keyname, 1, conf->k_algo, conf->k_bits, conf->k_random);
+		dkp = dki_new (dir, keyname, DKI_KSK, conf->k_algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);
 	if ( dkp == NULL )
 		fatal ("Can't create key %s: %s!\n", keyname, dki_geterrstr ());
-	if  ( zskflag )
-		dki_setstatus (dkp, DKI_PUB);
+
+	/* create a new key always in state pre-published, which means "standby" for ksk */
+	dki_setstatus (dkp, DKI_PUB);
 }
 
 static	int	get_parent_phase (const char *file)
@@ -548,10 +589,12 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 	standby = NULL;	/* find standby key if available */
 	for ( dkp = keylist; dkp; dkp = dkp->next )
 		if ( dki_isksk (dkp) )
+		 {
 			if ( dki_status (dkp) == DKI_ACT )
 				ksk++;
 			else if ( dki_status (dkp) == DKI_PUB )
 				standby = dkp;
+		}
 
 	switch ( phase )
 	{
@@ -577,7 +620,7 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 			fatal ("Can\'t create new ksk because there is already an ksk rollover in progress\n");
 
 		fprintf (stdout, "create new ksk \n");
-		dkp = dki_new (dir, keyname, 1, conf->k_algo, conf->k_bits, conf->k_random);
+		dkp = dki_new (dir, keyname, DKI_KSK, conf->k_algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);
 		if ( dkp == NULL )
 			fatal ("Can't create key %s: %s!\n", keyname, dki_geterrstr ());
 		if ( standby )
@@ -697,7 +740,6 @@ static	int	parsedirectory (const char *dir, dki_t **listp)
 			if ( (dkp = dki_read (dir, dentp->d_name)) )
 			{
 				// fprintf (stderr, "parsedir: tssearch (%d %s)\n", dkp, dkp->name);
-				dki_t	**p;
 #if defined (USE_TREE) && USE_TREE
 				dki_tadd (listp, dkp);
 #else

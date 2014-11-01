@@ -1,0 +1,36 @@
+TODO list as of zkt-0.96
+
+general:
+	Renaming of the tools to zkt-?? ? 
+
+dnssec-zkt:
+ feat	option to specify the key age as remaining lifetime
+	(Option -i inverse age ?) As of v0.95 the key lifetime
+	is stored at the key itself, so this could be possibly
+	implemented without big effort(?).
+
+dnssec-signer:
+ feat	The tool depends on a directory structure
+	
+ bug	There is no online checking of the key material by design.
+ 	So the signer command checks the status of the key as they
+	are represented in the file system and not in the zone.
+	The dnssec maintainer is responsible for the lifeliness of the
+	data in the hosted domain.
+	In other words: It's highly recommended to use the
+	option -r when you use dnssec-signer on a production zone.
+	Then the time of propagation is (more or less) equal to the timestamp
+	of the zone.db.signed file.
+
+ feat	For security reasons the signing process shouldn't be run
+ 	on the master name server, or the master should be a hidden one.
+	A mechanism for copying the signed zone to the production name
+	server and reload the zone would be helpful
+
+ bug	The max_TTL and Key_TTL parameter should be set to the value found
+ 	in the zone. A mechanism for setting up a dnssec.conf file for the
+	zone specific TTL values is needed.
+
+dki:
+ feat	Use dynamic memory for dname in dki_t
+

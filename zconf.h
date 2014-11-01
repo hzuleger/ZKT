@@ -39,11 +39,17 @@
 # define	ZONEDIR		"."
 # define	KEYSETDIR	NULL	/* keysets */
 # define	RECURSIVE	0
+# define	LOGFILE		""
+# define	LOGLEVEL	"error"
+# define	SYSLOGFACILITY	"none"
+# define	SYSLOGLEVEL	"notice"
+# define	VERBOSELOG	0
 # define	ZONEFILE	"zone.db"
 # define	DNSKEYFILE	"dnskey.db"
 # define	LOOKASIDEDOMAIN	""	/* "dlv.trusted-keys.de" */
 # define	SIG_RANDOM	NULL	/* "/dev/urandom" */
 # define	SIG_PSEUDO	1
+# define	SIG_PARAM	""
 
 #ifndef CONFIG_PATH
 # define	CONFIG_PATH	"/var/named/"
@@ -79,6 +85,7 @@ typedef	struct zconf	{
 #endif
 	serial_form_t	serialform;	/* format of serial no */
 	int	resign;		/* resign interval */
+
 	int	k_life;
 	int	k_algo;
 	int	k_bits;
@@ -87,15 +94,28 @@ typedef	struct zconf	{
 	int	z_algo;
 	int	z_bits;
 	char	*z_random;
+
+	char	*view;
+	// char	*errlog;
+	char	*logfile;
+	char	*loglevel;
+	char	*syslogfacility;
+	char	*sysloglevel;
+	int	verboselog;
+	int	verbosity;
 	char	*keyfile;
 	char	*zonefile;
 	char	*keysetdir;
 	char	*lookaside;
 	char	*sig_random;
 	int	sig_pseudo;
+	char	*sig_param;
 } zconf_t;
 
 extern	zconf_t	*loadconfig (const char *filename, zconf_t *z);
+extern	zconf_t	*loadconfig_fromstr (const char *str, zconf_t *z);
+extern	zconf_t	*dupconfig (const zconf_t *conf);
+extern	int	setconfigpar (zconf_t *conf, char *entry, const void *pval);
 extern	int	printconfig (const char *fname, const zconf_t *cp);
 extern	int	checkconfig (const zconf_t *z);
 

@@ -15,6 +15,7 @@
 # include <utime.h>
 # include <assert.h>
 # include <stdlib.h>
+# include <ctype.h>
 # include "config.h"
 
 static	const char *progname;
@@ -115,8 +116,6 @@ static	int	read_serial_fromfile (const char *fname, unsigned long *serial)
 *****************************************************************/
 static	void	printserial (const char *fname, unsigned long serial)
 {
-	int	y,	m,	d,	v;
-
 	if ( fname && *fname )
 		printf ("%-30s\t", fname);
 
@@ -160,7 +159,7 @@ static	void	usage (const char *msg)
 /*****************************************************************
 **	main()
 *****************************************************************/
-main (int argc, char *argv[])
+int	main (int argc, char *argv[])
 {
 	unsigned long	serial;
 

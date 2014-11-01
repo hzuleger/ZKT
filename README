@@ -1,7 +1,7 @@
 #
 #	README  dnssec zone key tool
 #
-#	(c) March 2005 - December 2007 by  Holger Zuleger  hznet
+#	(c) March 2005 - June 2008 by  Holger Zuleger  hznet
 #
 
 For more information about the DNSSEC Zone Key Tool please
@@ -10,16 +10,16 @@ have a look at "http://www.hznet.de/dns/zkt/"
 Build:
 
 a) Create a directory for the zkt source code
-	$ mkdir zkt-0.94
+	$ mkdir zkt-0.96
 
 b) Change to dir
-	$ cd zkt-0.94
+	$ cd zkt-0.96
 
 c) Get the current version of zkt
-	$ wget http://www.hznet.de/dns/zkt/zkt-0.94.tar 
+	$ wget http://www.hznet.de/dns/zkt/zkt-0.96.tar 
 
 d) Unpack
-	$ tar xvf zkt-0.94.tar
+	$ tar xvf zkt-0.96.tar
 
 e) (optional)  Change INSTALLDIR in Makefile (def: $HOME/bin/)
 
@@ -32,6 +32,10 @@ f) (optional) Edit config.h
 
 g) Compile
 	$ make
+   For MAC users:
+	$ make macos
+   For Solaris:
+	$ make solaris
 
 h) Install
 	$ make install

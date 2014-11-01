@@ -1,4 +1,4 @@
-.TH dnssec-zkt 8 "Dec 1, 2007" "ZKT 0.94" ""
+.TH dnssec-zkt 8 "Apr 19, 2008" "ZKT 0.95" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -14,7 +14,7 @@ dnssec-zkt \(em Secure DNS zone key tool
 .IR "file" ]
 .RB [ \-l
 .IR "list" ]
-.RB [ \-adhkLrptz ]
+.RB [ \-adefhkLrptz ]
 .RI [{ keyfile | dir }
 .RI "" ... ]
 
@@ -227,14 +227,19 @@ It allows key livetime monitoring and status change.
 Try to read the default configuration out of a file named
 .I dnssec-<view>.conf .
 Instead of specifying the \-V or --view option every time,
-it's also possible to create a hard or softlink pointing to the
-binary file with a second name like 
+it's also possible to create a hard or softlink to the
+executable file to give it an additional name like 
 .I dnssec-zkt-<view> .
 .TP
 .BI \-c " file" ", \-\-config=" file
 Read default values from the specified config file.
 Otherwise the default config file is read or build in defaults
 will be used.
+.TP
+.BI \-O " optstr" ", \-\-config-option=" optstr
+Set any config file option via the commandline.
+Several config file options could be specified at the argument string
+but have to be delimited by semicolon (or newline).
 .TP
 .BI \-l " list"
 Print out information solely about domains given in the comma or space separated
@@ -273,12 +278,22 @@ keys with the same label.
 .BR \-a ", " \-\-age
 Print age of key in weeks, days, hours, minutes and seconds (default is off).
 .br
-Also settable in the dnssec.conf file (Paremeter: PrintAge).
+Also settable in the dnssec.conf file (Parameter: PrintAge).
+.TP
+.BR \-f ", " \-\-lifetime
+Print the key lifetime.
+.TP
+.BR \-F ", " \-\-setlifetime
+Set the key lifetime of all the selected keys.
+Use option -k, -z, -l or the file and dir argument for key selection.
+.TP
+.BR \-e ", " \-\-exptime
+Print the key expiration time.
 .TP
 .BR \-t ", " \-\-time
-Print key generation time (default is on).
+Print the key generation time (default is on).
 .br
-Also settable in the dnssec.conf file (Paremeter: PrintTime).
+Also settable in the dnssec.conf file (Parameter: PrintTime).
 .TP
 .B \-h
 No header or trusted-key section header and trailer in -T mode

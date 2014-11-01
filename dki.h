@@ -36,31 +36,28 @@
 # define	DK_PROTO_DNS	3
 
 /* flag bits */
-typedef enum {				/*             11 1111 */
-					/* 0123 4567 8901 2345 */
+typedef enum {			/*             11 1111 */
+				/* 0123 4567 8901 2345 */
 	DK_FLAG_KSK=	01,	/* 0000 0000 0000 0001	Bit 15 RFC4034/RFC3757 */
 	DK_FLAG_REVOKE=	0200,	/* 0000 0000 1000 0000	Bit 8  RFC5011 */
 	DK_FLAG_ZONE=	0400,	/* 0000 0001 0000 0000	Bit 7  RFC4034 */
 } dk_flag_t;
 
-typedef	struct	dki {
-	char	dname[MAX_DNAMESIZE+1];	/* directory */
-	char	fname[MAX_FNAMESIZE+1];	/* file name without extension */
-	char	name[MAX_LABELSIZE+1];	/* domain name or label */
-	ushort	algo;			/* key algorithm */
-	ushort	proto;			/* must be 3 (DNSSEC) */
-	// ushort	flags;			/* ZONE, optional SEP or REVOKE Flag */
-	dk_flag_t	flags;		/* ZONE, optional SEP or REVOKE flag */
-	time_t	time;			/* key (file) creation time */
-	uint	tag;			/* key id */
-	char	status;			/* key exist (".key") and name of private */
-					/* key file is ".published", ".private" */
-					/* or ".depreciated" */
-	char	*pubkey;		/* base64 public key */
-	struct	dki	*next;		/* ptr to next entry in list */
-} dki_t;
-
 /* status types */
+#if 1
+typedef enum {
+	DKI_SEP=	'e',
+	DKI_SECUREENTRYPOINT=	'e',
+	DKI_PUB=	'p',
+	DKI_PUBLISHED=	'p',
+	DKI_ACT=	'a',
+	DKI_ACTIVE=	'a',
+	DKI_DEP=	'd',
+	DKI_DEPRECIATED=	'd',
+	DKI_REV=	'r',
+	DKI_REVOKED=	'r',
+} dk_status_t;
+#else
 # define	DKI_SEP	('e')
 # define	DKI_PUB	('p')
 # define	DKI_ACT	('a')
@@ -71,22 +68,45 @@ typedef	struct	dki {
 # define	DKI_ACTIVE	DKI_ACT
 # define	DKI_DEPRECIATED	DKI_DEP	
 # define	DKI_REVOKED	DKI_REV
+#endif
 
 # define	DKI_KEY_FILEEXT	".key"
 # define	DKI_PUB_FILEEXT	".published"
 # define	DKI_ACT_FILEEXT	".private"
 # define	DKI_DEP_FILEEXT	".depreciated"
 
-/* key type parameter */
 # define	DKI_KSK	1
 # define	DKI_ZSK	0
 
+typedef	struct	dki {
+	char	dname[MAX_DNAMESIZE+1];	/* directory */
+	char	fname[MAX_FNAMESIZE+1];	/* file name without extension */
+	char	name[MAX_LABELSIZE+1];	/* domain name or label */
+	ushort	algo;			/* key algorithm */
+	ushort	proto;			/* must be 3 (DNSSEC) */
+	dk_flag_t	flags;		/* ZONE, optional SEP or REVOKE flag */
+	time_t	time;			/* key file time */
+	time_t	gentime;		/* key generation time (will be set on key generation and never changed) */
+	time_t	exptime;		/* time the key was expired (0L if not) */
+	ulong	lifetime;		/* proposed key life time at time of generation */
+	uint	tag;			/* key id */
+#if 0
+	char	status;			/* key exist (".key") and name of private */
+#else
+	dk_status_t	status;			/* key exist (".key") and name of private */
+#endif
+					/* key file is ".published", ".private" */
+					/* or ".depreciated" */
+	char	*pubkey;		/* base64 public key */
+	struct	dki	*next;		/* ptr to next entry in list */
+} dki_t;
+
+#if defined(USE_TREE) && USE_TREE
 /*
  *	Instead of including <search.h>, which contains horrible false function
  *	declarations, we declared it for our usage (Yes, these functions return
  *	the adress of a pointer variable)
  */
-#if defined(USE_TREE) && USE_TREE
 typedef enum
 {
 	/* we change the naming to the new, and more predictive one, used by Knuth */
@@ -101,10 +121,7 @@ dki_t	**tsearch (const dki_t *dkp, dki_t **tree, int(*compar)(const dki_t *, con
 dki_t	**tfind (const dki_t *dkp, const dki_t **tree, int(*compar)(const dki_t *, const dki_t *));
 dki_t	**tdelete (const dki_t *dkp, dki_t **tree, int(*compar)(const dki_t *, const dki_t *));
 void	twalk (const dki_t *root, void (*action)(const dki_t **nodep, VISIT which, int depth));
-#endif
 
-
-#if defined(USE_TREE) && USE_TREE
 extern	void	dki_tfree (dki_t **tree);
 extern	dki_t	*dki_tadd (dki_t **tree, dki_t *new);
 extern	int	dki_tagcmp (const dki_t *a, const dki_t *b);
@@ -125,7 +142,7 @@ extern	int	dki_age (const dki_t *dkp, time_t curr);
 extern	dk_flag_t	dki_getflag (const dki_t *dkp, time_t curr);
 extern	dk_flag_t	dki_setflag (dki_t *dkp, dk_flag_t flag);
 extern	dk_flag_t	dki_unsetflag (dki_t *dkp, dk_flag_t flag);
-extern	int	dki_status (const dki_t *dkp);
+extern	dk_status_t	dki_status (const dki_t *dkp);
 extern	const	char	*dki_statusstr (const dki_t *dkp);
 extern	int	dki_isksk (const dki_t *dkp);
 extern	int	dki_isdepreciated (const dki_t *dkp);
@@ -133,7 +150,13 @@ extern	int	dki_isrevoked (const dki_t *dkp);
 extern	int	dki_isactive (const dki_t *dkp);
 extern	int	dki_ispublished (const dki_t *dkp);
 extern	time_t	dki_time (const dki_t *dkp);
-extern	dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsize, const char *rfile);
+extern	time_t	dki_exptime (const dki_t *dkp);
+extern	time_t	dki_gentime (const dki_t *dkp);
+extern	time_t	dki_lifetime (const dki_t *dkp);
+extern	ushort	dki_lifetimedays (const dki_t *dkp);
+extern	ushort	dki_setlifetime (dki_t *dkp, int days);
+extern	time_t	dki_setexptime (dki_t *dkp, time_t sec);
+extern	dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsize, const char *rfile, int lf_days);
 extern	dki_t	*dki_remove (dki_t *dkp);
 extern	dki_t	*dki_destroy (dki_t *dkp);
 extern	int	dki_setstatus (dki_t *dkp, int status);

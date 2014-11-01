@@ -7,12 +7,14 @@
 # include <sys/socket.h>	/* socket() ... */
 # include <sys/select.h>	/* select() ... */
 # include <netdb.h>		/* getaddrinfo(), getnameinfo(), etc. */
+# include <unistd.h>		/* close() */
 # include <stdio.h>
 # include <string.h>
 # include <time.h>
 # include <assert.h>
 # include "zktr.h"
 
+#if 0
 static	char	*cmd2buf (char cmd, char *buf, int *plen)
 {
 	if ( *plen < 4 )
@@ -24,6 +26,7 @@ static	char	*cmd2buf (char cmd, char *buf, int *plen)
 
 	return buf;
 }
+#endif
 
 static	char	*alg2buf (char alg, char *buf, int *plen)
 {
@@ -44,7 +47,7 @@ static	char	*tag2buf (ushort tag, char *buf, int *plen)
 	if ( *plen < 7 )
 		return NULL;
 
-	i = snprintf (buf, *plen, "t=%05.5d ", tag);
+	i = snprintf (buf, *plen, "t=%5.5d ", tag);
 	*plen -= i;
 
 	return buf + i;
@@ -104,6 +107,7 @@ int	zktr2buf (const zktr_t *z, char *buf, int len)
 		return n - len;
 	break;
 	}
+	return n - len;
 }
 
 int	zktr_socket (const char *host, const char *service, int af)
@@ -111,10 +115,12 @@ int	zktr_socket (const char *host, const char *service, int af)
 	struct	addrinfo	hints;
 	struct	addrinfo	*ai;	/* linked list of ai records */
 	struct	addrinfo	*ap;	/* ai pointer */
-	char	hbuf[NI_MAXHOST];
-	char	sbuf[NI_MAXSERV];
 	int	err;
 	int	sfd;
+#if 0
+	char	hbuf[NI_MAXHOST];
+	char	sbuf[NI_MAXSERV];
+#endif
 
 	assert (host != NULL);
 		assert (service != NULL);

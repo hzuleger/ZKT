@@ -10,6 +10,7 @@
 # include <stdio.h>
 # include <string.h>
 # include <stdlib.h>
+# include <unistd.h>	/* for link(), unlink() */
 # include <ctype.h>
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -20,16 +21,17 @@
 # include <fcntl.h>
 # include "config.h"
 # include "zconf.h"
+# include "log.h"
 # include "debug.h"
 #define extern
 # include "misc.h"
 #undef extern
 
-# define	TAINTEDCHARS	"$@;&<>|"
+# define	TAINTEDCHARS	"`$@;&<>|"
 
 extern	const	char	*progname;
 
-static	int	incr_soa_serial (FILE *fp, int use_unixtime);
+static	int	inc_soa_serial (FILE *fp, int use_unixtime);
 
 /*****************************************************************
 **	getnameappendix (progname, basename)
@@ -164,18 +166,18 @@ char	*str_untaint (char *str)
 }
 
 /*****************************************************************
-**	strchop (str, c)
+**	str_chop (str, c)
 **	delete all occurrences of char 'c' at the end of string 's'
 *****************************************************************/
-char	*strchop (char *str, char c)
+char	*str_chop (char *str, char c)
 {
 	int	len;
 
 	assert (str != NULL);
 
 	len = strlen (str) - 1;
-	if ( len >= 0 && str[len] == c )
-		str[len] = '\0';
+	while ( len >= 0 && str[len] == c )
+		str[len--] = '\0';
 
 	return str;
 }
@@ -325,13 +327,26 @@ int	is_directory (const char *name)
 int	fileexist (const char *name)
 {
 	struct	stat	st;
-	return ( stat (name, &st) == 0 && !!S_ISREG (st.st_mode) );
+	return ( stat (name, &st) == 0 && S_ISREG (st.st_mode) );
+}
+
+/*****************************************************************
+**	filesize (name)
+**	returns the size of the file with the given pathname 'name'.
+**	returns -1 if the file will not exist 
+*****************************************************************/
+size_t	filesize (const char *name)
+{
+	struct	stat	st;
+	if  ( stat (name, &st) == -1 )
+		return -1L;
+	return ( st.st_size );
 }
 
 /*****************************************************************
 **	is_keyfilename (name)
-**	Check if the given pathname 'name' looks like a dnssec
-**	(public) keyfile name. Returns 0 | 1
+**	Check if the given name looks like a dnssec (public)
+**	keyfile name. Returns 0 | 1
 *****************************************************************/
 int	is_keyfilename (const char *name)
 {
@@ -355,8 +370,8 @@ int	is_keyfilename (const char *name)
 int	is_dotfile (const char *name)
 {
 	if ( name && (
-	     name[0] == '.' && name[1] == '\0' || 
-	     name[0] == '.' && name[1] == '.' && name[2] == '\0') )
+	     (name[0] == '.' && name[1] == '\0') || 
+	     (name[0] == '.' && name[1] == '.' && name[2] == '\0')) )
 		return 1;
 
 	return 0;
@@ -391,9 +406,9 @@ int	linkfile (const char *fromfile, const char *tofile)
 }
 
 /*****************************************************************
-**	copyfile (fromfile, tofile)
+**	copyfile (fromfile, tofile, dnskeyfile)
 *****************************************************************/
-int	copyfile (const char *fromfile, const char *tofile)
+int	copyfile (const char *fromfile, const char *tofile, const char *dnskeyfile)
 {
 	FILE	*infp;
 	FILE	*outfp;
@@ -411,17 +426,23 @@ int	copyfile (const char *fromfile, const char *tofile)
 		putc (c, outfp);
 
 	fclose (infp);
+	if ( dnskeyfile && *dnskeyfile && (infp = fopen (dnskeyfile, "r")) != NULL )
+	{
+		while ( (c = getc (infp)) != EOF ) 
+			putc (c, outfp);
+		fclose (infp);
+	}
 	fclose (outfp);
 
 	return 0;
 }
 
 /*****************************************************************
-**	copyzonefile (fromfile, tofile)
+**	copyzonefile (fromfile, tofile, dnskeyfile)
 **	copy a already signed zonefile and replace all zone DNSKEY
 **	resource records by one "$INCLUDE dnskey.db" line
 *****************************************************************/
-int	copyzonefile (const char *fromfile, const char *tofile)
+int	copyzonefile (const char *fromfile, const char *tofile, const char *dnskeyfile)
 {
 	FILE	*infp;
 	FILE	*outfp;
@@ -487,7 +508,7 @@ int	copyzonefile (const char *fromfile, const char *tofile)
 					p++;
 				}
 				if ( dnskeys == 1 )
-					fputs ("$INCLUDE dnskey.db\n", outfp);	
+					fprintf (outfp, "$INCLUDE %s\n", dnskeyfile);	
 			}
 			else 
 				fputs (buf, outfp);	
@@ -521,6 +542,8 @@ int	copyzonefile (const char *fromfile, const char *tofile)
 
 /*****************************************************************
 **	cmpfile (file1, file2)
+**	returns -1 on error, 1 if the files differ and 0 if they
+**	are identical.
 *****************************************************************/
 int	cmpfile (const char *file1, const char *file2)
 {
@@ -586,7 +609,7 @@ void fatal (char *fmt, ...)
 		fprintf (stderr, "%s: ", progname);
         vfprintf (stderr, fmt, ap);
         va_end(ap);
-        exit (1);
+        exit (127);
 }
 
 /*****************************************************************
@@ -617,6 +640,29 @@ void logmesg (char *fmt, ...)
 }
 
 /*****************************************************************
+**	verbmesg (verblvl, conf, fmt, ...)
+*****************************************************************/
+void	verbmesg (int verblvl, const zconf_t *conf, char *fmt, ...)
+{
+	char	str[511+1];
+        va_list ap;
+
+	str[0] = '\0';
+	va_start(ap, fmt);
+	vsnprintf (str, sizeof (str), fmt, ap);
+	va_end(ap);
+
+	//fprintf (stderr, "verbmesg (%d stdout=%d filelog=%d str = :%s:\n", verblvl, conf->verbosity, conf->verboselog, str);
+	if ( verblvl <= conf->verbosity )	/* check if we have to print this to stdout */
+		logmesg (str);
+
+	str_chop (str, '\n');
+	if ( verblvl <= conf->verboselog )	/* check logging to syslog and/or file */
+		lg_mesg (LG_DEBUG, str);
+}
+
+
+/*****************************************************************
 **	logflush ()
 *****************************************************************/
 void logflush ()
@@ -625,42 +671,110 @@ void logflush ()
 }
 
 /*****************************************************************
-**	time2str (sec)
+**	timestr2time (timestr)
+**	timestr should look like "20071211223901" for 12 dec 2007 22:39:01
 *****************************************************************/
-char	*time2str (time_t sec)
+time_t	timestr2time (const char *timestr)
+{
+	struct	tm	t;
+	time_t	sec;
+
+	// fprintf (stderr, "timestr = \"%s\"\n", timestr);
+	if ( sscanf (timestr, "%4d%2d%2d%2d%2d%2d", 
+			&t.tm_year, &t.tm_mon, &t.tm_mday, 
+			&t.tm_hour, &t.tm_min, &t.tm_sec) != 6 )
+		return 0L;
+	t.tm_year -= 1900;
+	t.tm_mon -= 1;
+	t.tm_isdst = 0;
+
+#if defined(HAS_TIMEGM) && HAS_TIMEGM
+	sec = timegm (&t);
+#else
+	{
+	time_t ret;
+	char *tz;
+
+	tz = getenv("TZ");
+	// setenv("TZ", "", 1);
+	setenv("TZ", "UTC", 1);
+	tzset();
+	sec = mktime(&t);
+	if (tz)
+		setenv("TZ", tz, 1);
+	else
+		unsetenv("TZ");
+	tzset();
+	}
+#endif
+	
+	return sec < 0L ? 0L : sec;
+}
+
+/*****************************************************************
+**	time2str (sec, precison)
+**	sec is seconds since 1.1.1970
+**	precison is currently either 's' (for seconds) or 'm' (minutes)
+*****************************************************************/
+char	*time2str (time_t sec, int precision)
 {
 	struct	tm	*t;
 	static	char	timestr[31+1];	/* 27+1 should be enough */
-
 #if defined(HAS_STRFTIME) && HAS_STRFTIME
+	char	tformat[127+1];
+
+	timestr[0] = '\0';
+	if ( sec <= 0L )
+		return timestr;
 	t = localtime (&sec);
+	if ( precision == 's' )
+		strcpy (tformat, "%b %d %Y %T");
+	else
+		strcpy (tformat, "%b %d %Y %R");
 # if PRINT_TIMEZONE
-	strftime (timestr, sizeof (timestr), "%b %d %Y %T %z", t);
-# else
-	strftime (timestr, sizeof (timestr), "%b %d %Y %T", t);
+	strcat (tformat, " %z");
 # endif
-#else
+	strftime (timestr, sizeof (timestr), tformat, t);
+
+#else	/* no strftime available */
 	static	char	*mstr[] = {
 			"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
+
+	timestr[0] = '\0';
+	if ( sec <= 0L )
+		return timestr;
+	t = localtime (&sec);
 # if PRINT_TIMEZONE
+	{
 	int	h,	s;
 
-	t = localtime (&sec);
 	s = abs (t->tm_gmtoff);
 	h = t->tm_gmtoff / 3600;
 	s = t->tm_gmtoff % 3600;
-	snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d %c%02d%02d", 
-		mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
-		t->tm_hour, t->tm_min, t->tm_sec,
-		t->tm_gmtoff < 0 ? '-': '+',
-		h, s);
+	if ( precision == 's' )
+		snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d %c%02d%02d",
+			mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
+			t->tm_hour, t->tm_min, t->tm_sec,
+			t->tm_gmtoff < 0 ? '-': '+',
+			h, s);
+	else
+		snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d %c%02d%02d",
+			mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
+			t->tm_hour, t->tm_min, 
+			t->tm_gmtoff < 0 ? '-': '+',
+			h, s);
+	}
 # else
-	t = localtime (&sec);
-	snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d", 
-		mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
-		t->tm_hour, t->tm_min, t->tm_sec);
+	if ( precision == 's' )
+		snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d",
+			mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
+			t->tm_hour, t->tm_min, t->tm_sec);
+	else
+		snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d",
+			mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
+			t->tm_hour, t->tm_min);
 # endif
 #endif
 
@@ -668,8 +782,35 @@ char	*time2str (time_t sec)
 }
 
 /*****************************************************************
+**	time2isostr (sec, precison)
+**	sec is seconds since 1.1.1970
+**	precison is currently either 's' (for seconds) or 'm' (minutes)
+*****************************************************************/
+char	*time2isostr (time_t sec, int precision)
+{
+	struct	tm	*t;
+	static	char	timestr[31+1];	/* 27+1 should be enough */
+
+	timestr[0] = '\0';
+	if ( sec <= 0L )
+		return timestr;
+
+	t = gmtime (&sec);
+	if ( precision == 's' )
+		snprintf (timestr, sizeof (timestr), "%4d%02d%02d%02d%02d%02d",
+			t->tm_year + 1900, t->tm_mon+1, t->tm_mday,
+			t->tm_hour, t->tm_min, t->tm_sec);
+	else
+		snprintf (timestr, sizeof (timestr), "%4d%02d%02d%02d%02d",
+			t->tm_year + 1900, t->tm_mon+1, t->tm_mday,
+			t->tm_hour, t->tm_min);
+
+	return timestr;
+}
+
+/*****************************************************************
 **	age2str (sec)
-**	!!Attention: This is function is not reentrant 
+**	!!Attention: This function is not reentrant 
 *****************************************************************/
 char	*age2str (time_t sec)
 {
@@ -678,7 +819,6 @@ char	*age2str (time_t sec)
 	int	strsize = sizeof (str);
 
 	len = 0;
-#if 1
 # if PRINT_AGE_WITH_YEAR
 	if ( sec / (YEARSEC) > 0 )
 	{
@@ -720,37 +860,7 @@ char	*age2str (time_t sec)
 		snprintf (str+len, strsize - len, "%2lus", sec);
 	else
 		len += snprintf (str+len, strsize - len, "   ");
-#else
-# if PRINT_AGE_WITH_YEAR
-	if ( sec / (YEARSEC) > 0 )
-	{
-		len += snprintf (str+len, strsize - len, "%luy", sec / YEARSEC );
-		sec %= (YEARSEC);
-	}
-# endif
-	if ( sec / WEEKSEC > 0 )
-	{
-		len += snprintf (str+len, strsize - len, "%2luw", sec / WEEKSEC );
-		sec %= WEEKSEC;
-	}
-	if ( sec / DAYSEC > 0 )
-	{
-		len += snprintf (str+len, strsize - len, "%2lud", sec / (ulong)DAYSEC);
-		sec %= DAYSEC;
-	}
-	if ( sec / HOURSEC > 0 )
-	{
-		len += snprintf (str+len, strsize - len, "%2luh", sec / (ulong)HOURSEC);
-		sec %= HOURSEC;
-	}
-	if ( sec / MINSEC > 0 )
-	{
-		len += snprintf (str+len, strsize - len, "%2lum", sec / (ulong)MINSEC);
-		sec %= MINSEC;
-	}
-	if ( sec > 0 )
-		snprintf (str+len, strsize - len, "%2lus", sec);
-#endif
+
 	return str;
 }
 
@@ -774,7 +884,7 @@ time_t	stop_timer (time_t start)
 
 /****************************************************************
 **
-**	int	incr_serial (filename, use_unixtime)
+**	int	inc_serial (filename, use_unixtime)
 **
 **	This function depends on a special syntax formating the
 **	SOA record in the zone file!!
@@ -793,12 +903,11 @@ time_t	stop_timer (time_t start)
 **	<SPACEes or TABs>      1         ; Serial 
 **
 ****************************************************************/
-int	incr_serial (const char *fname, int use_unixtime)
+int	inc_serial (const char *fname, int use_unixtime)
 {
 	FILE	*fp;
 	char	buf[4095+1];
 	char	master[254+1];
-	int	ttl;
 	int	error;
 
 	/**
@@ -821,10 +930,10 @@ int	incr_serial (const char *fname, int use_unixtime)
 	if ( feof (fp) )
 	{
 		fclose (fp);
-		return-2;
+		return -2;
 	}
 
-	error = incr_soa_serial (fp, use_unixtime);	/* .. incr soa serial no ... */
+	error = inc_soa_serial (fp, use_unixtime);	/* .. inc soa serial no ... */
 
 	if ( fclose (fp) != 0 )
 		return -5;
@@ -852,11 +961,11 @@ static	ulong	today_serialtime ()
 }
 
 /*****************************************************************
-**	incr_soa_serial (fp, use_unixtime)
+**	inc_soa_serial (fp, use_unixtime)
 **	increment the soa serial number of the file 'fp'
 **	'fp' must be opened "r+"
 *****************************************************************/
-static	int	incr_soa_serial (FILE *fp, int use_unixtime)
+static	int	inc_soa_serial (FILE *fp, int use_unixtime)
 {
 	int	c;
 	long	pos,	eos;
@@ -897,6 +1006,22 @@ static	int	incr_soa_serial (FILE *fp, int use_unixtime)
 	return 1;	/* yep! */
 }
 
+/*****************************************************************
+**	return the error text of the inc_serial return coode
+*****************************************************************/
+const	char	*inc_errstr (int err)
+{
+	switch ( err )
+	{
+	case -1:	return "couldn't open zone file for modifying";
+	case -2:	return "unexpected end of file";
+	case -3:	return "no serial number found in zone file";
+	case -4:	return "not enough space left for serialno";
+	case -5:	return "error on closing zone file";
+	}
+	return "";
+}
+
 #ifdef SOA_TEST
 const char *progname;
 main (int argc, char *argv[])
@@ -910,7 +1035,7 @@ main (int argc, char *argv[])
 	now = today_serialtime ();
 	printf ("now = %lu\n", now);
 
-	if ( (err = incr_serial (argv[1]), 0) < 0 )
+	if ( (err = inc_serial (argv[1]), 0) < 0 )
 		error ("can't change serial errno=%d\n", err);
 
 	snprintf (cmd, sizeof(cmd), "head -15 %s", argv[1]);

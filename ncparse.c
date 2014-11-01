@@ -11,6 +11,7 @@
 # include <assert.h>
 # include "debug.h"
 # include "misc.h"
+# include "log.h"
 #define extern
 # include "ncparse.h"
 #undef extern
@@ -56,6 +57,7 @@ static struct KeyWords {
 	{ NULL,		TOK_UNKNOWN },
 };
 
+#ifdef DBG
 static	const char	*tok2str (int  tok)
 {
 	int	i;
@@ -66,6 +68,7 @@ static	const char	*tok2str (int  tok)
 
 	return kw[i].name;
 }
+#endif
 
 static	int	searchkw (const char *keyword)
 {
@@ -152,7 +155,6 @@ static	int	gettok (FILE *fp, char *val, size_t valsize)
 **	parse_namedconf (const char *filename, int (*func) ())
 **
 **	Very dumb named.conf parser.
-**	- Possibliy no view support (currently not checked)
 **	- In a zone declaration the _first_ keyword MUST be "type"
 **	- For every master zone "func (directory, zone, filename)" will be called
 **
@@ -161,9 +163,8 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 {
 	FILE	*fp;
 	int	tok;
-	const	char	*file;
 	char	path[511+1];
-#if 1	/* this is possibly too small for key data, but we don't need the keys... */
+#if 1	/* this is potentialy too small for key data, but we don't need the keys... */
 	char	strval[255+1];		
 #else
 	char	strval[4095+1];
@@ -180,15 +181,15 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 
 	view[0] = '\0';
 	if ( (fp = fopen (filename, "r")) == NULL )
-	{
-		logmesg ("parse_namedconf: can't open %s for reading\n", filename);
 		return 0;
-	}
 
 	while ( (tok = gettok (fp, strval, sizeof strval)) != EOF )
 	{
 		if ( tok > 0 && tok < 256 )
+		{
 			error ("parse_namedconf: token found with value %-10d: %c\n", tok, tok);
+			lg_mesg (LG_ERROR, "parse_namedconf: token found with value %-10d: %c", tok, tok);
+		}
 		else if ( tok == TOK_DIR )
 		{
 			if ( gettok (fp, strval, sizeof (strval)) == TOK_STRING )
@@ -215,7 +216,10 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 					return 0;
 			}
 			else
+			{
 				error ("parse_namedconf: need a filename after \"include\"!\n");
+				lg_mesg (LG_ERROR, "parse_namedconf: need a filename after \"include\"!");
+			}
 		}
 		else if ( tok == TOK_VIEW )
 		{

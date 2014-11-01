@@ -19,9 +19,12 @@
 # include <stdarg.h>
 # include <string.h>
 # include <strings.h>
+# include <assert.h>
 # include <ctype.h>
 
 # include "config.h"
+# include "debug.h"
+# include "misc.h"
 #define extern
 # include "zconf.h"
 #undef extern
@@ -34,15 +37,31 @@
 # define	ISDELIM(c)	( isspace (c) || (c) == ':' || (c) == '=' )
 
 
-#define CONF_END	0
-#define CONF_STRING	1
-#define CONF_INT	2
-#define CONF_TIMEINT	3
-#define CONF_BOOL	4
-#define CONF_ALGO	5
-#define CONF_SERIAL	6
-#define CONF_COMMENT	7
+#if 0
+# define CONF_END	0
+# define CONF_STRING	1
+# define CONF_INT	2
+# define CONF_TIMEINT	3
+# define CONF_BOOL	4
+# define CONF_ALGO	5
+# define CONF_SERIAL	6
+# define CONF_COMMENT	7
+#else
+typedef enum {
+	CONF_END = 0,
+	CONF_STRING,
+	CONF_INT,
+	CONF_TIMEINT,
+	CONF_BOOL,
+	CONF_ALGO,
+	CONF_SERIAL,
+	CONF_COMMENT,
+} ctype_t;
+#endif
 
+/*****************************************************************
+**	private (static) variables
+*****************************************************************/
 static	zconf_t	def = {
 	ZONEDIR, RECURSIVE, 
 	1, 0, 0,
@@ -50,64 +69,80 @@ static	zconf_t	def = {
 	RESIGN_INT,
 	KSK_LIFETIME, KSK_ALGO, KSK_BITS, KSK_RANDOM,
 	ZSK_LIFETIME, ZSK_ALGO, ZSK_BITS, ZSK_RANDOM,
+	NULL, /* viewname cmdline paramter */
+	LOGFILE, LOGLEVEL, SYSLOGFACILITY, SYSLOGLEVEL, VERBOSELOG, 0,
 	DNSKEYFILE, ZONEFILE, KEYSETDIR,
-	LOOKASIDEDOMAIN, SIG_RANDOM, SIG_PSEUDO,
+	LOOKASIDEDOMAIN,
+	SIG_RANDOM, SIG_PSEUDO, SIG_PARAM
 };
 
 typedef	struct {
-	char	*label;
-	int	type;
-	void	*var;
+	char	*label;		/* the name of the paramter */
+	int	cmdline;	/* is this a command line parameter ? */
+	ctype_t	type;		/* the parameter type */
+	void	*var;		/* pointer to the parameter variable */
 } zconf_para_t;
 
-static	zconf_para_t	conf[] = {
-	{ "",			CONF_COMMENT,	""},
-	{ "",			CONF_COMMENT,	"\t@(#) dnssec.conf " ZKT_VERSION },
-	{ "",			CONF_COMMENT,	""},
-	{ "",			CONF_COMMENT,	NULL },
+static	zconf_para_t	confpara[] = {
+	{ "",			0,	CONF_COMMENT,	""},
+	{ "",			0,	CONF_COMMENT,	"\t@(#) dnssec.conf " ZKT_VERSION },
+	{ "",			0,	CONF_COMMENT,	""},
+	{ "",			0,	CONF_COMMENT,	NULL },
 
-	{ "",			CONF_COMMENT,	"dnssec-zkt options" },
-	{ "Zonedir",		CONF_STRING,	&def.zonedir },
-	{ "Recursive",		CONF_BOOL,	&def.recursive },
-	{ "PrintTime",		CONF_BOOL,	&def.printtime },
-	{ "PrintAge",		CONF_BOOL,	&def.printage },
-	{ "LeftJustify",	CONF_BOOL,	&def.ljust },
+	{ "",			0,	CONF_COMMENT,	"dnssec-zkt options" },
+	{ "Zonedir",		0,	CONF_STRING,	&def.zonedir },
+	{ "Recursive",		0,	CONF_BOOL,	&def.recursive },
+	{ "PrintTime",		0,	CONF_BOOL,	&def.printtime },
+	{ "PrintAge",		0,	CONF_BOOL,	&def.printage },
+	{ "LeftJustify",	0,	CONF_BOOL,	&def.ljust },
 
-	{ "",			CONF_COMMENT,	NULL },
-	{ "",			CONF_COMMENT,	"zone specific values" },
-	{ "ResignInterval",	CONF_TIMEINT,	&def.resign },
-	{ "Sigvalidity",	CONF_TIMEINT,	&def.sigvalidity },
-	{ "Max_TTL",		CONF_TIMEINT,	&def.max_ttl },
-	{ "Propagation",	CONF_TIMEINT,	&def.proptime },
-	{ "KEY_TTL",		CONF_TIMEINT,	&def.key_ttl },
+	{ "",			0,	CONF_COMMENT,	NULL },
+	{ "",			0,	CONF_COMMENT,	"zone specific values" },
+	{ "ResignInterval",	0,	CONF_TIMEINT,	&def.resign },
+	{ "Sigvalidity",	0,	CONF_TIMEINT,	&def.sigvalidity },
+	{ "Max_TTL",		0,	CONF_TIMEINT,	&def.max_ttl },
+	{ "Propagation",	0,	CONF_TIMEINT,	&def.proptime },
+	{ "KEY_TTL",		0,	CONF_TIMEINT,	&def.key_ttl },
 #if defined (DEF_TTL)
-	{ "def_ttl",		CONF_TIMEINT,	&def.def_ttl },
+	{ "def_ttl",		0,	CONF_TIMEINT,	&def.def_ttl },
 #endif
-	{ "Serialformat",	CONF_SERIAL,	&def.serialform },
+	{ "Serialformat",	0,	CONF_SERIAL,	&def.serialform },
 
-	{ "",			CONF_COMMENT,	NULL },
-	{ "",			CONF_COMMENT,	"signing key parameters"},
-	{ "KSK_lifetime",	CONF_TIMEINT,	&def.k_life },
-	{ "KSK_algo",		CONF_ALGO,	&def.k_algo },
-	{ "KSK_bits",		CONF_INT,	&def.k_bits },
-	{ "KSK_randfile",	CONF_STRING,	&def.k_random },
-	{ "ZSK_lifetime",	CONF_TIMEINT,	&def.z_life },
-	{ "ZSK_algo",		CONF_ALGO,	&def.z_algo },
-	{ "ZSK_bits",		CONF_INT,	&def.z_bits },
-	{ "ZSK_randfile",	CONF_STRING,	&def.z_random },
+	{ "",			0,	CONF_COMMENT,	NULL },
+	{ "",			0,	CONF_COMMENT,	"signing key parameters"},
+	{ "KSK_lifetime",	0,	CONF_TIMEINT,	&def.k_life },
+	{ "KSK_algo",		0,	CONF_ALGO,	&def.k_algo },
+	{ "KSK_bits",		0,	CONF_INT,	&def.k_bits },
+	{ "KSK_randfile",	0,	CONF_STRING,	&def.k_random },
+	{ "ZSK_lifetime",	0,	CONF_TIMEINT,	&def.z_life },
+	{ "ZSK_algo",		0,	CONF_ALGO,	&def.z_algo },
+	{ "ZSK_bits",		0,	CONF_INT,	&def.z_bits },
+	{ "ZSK_randfile",	0,	CONF_STRING,	&def.z_random },
 
-	{ "",			CONF_COMMENT,	NULL },
-	{ "",			CONF_COMMENT,	"dnssec-signer options"},
-	{ "Keyfile",		CONF_STRING,	&def.keyfile },
-	{ "Zonefile",		CONF_STRING,	&def.zonefile },
-	{ "KeySetDir",		CONF_STRING,	&def.keysetdir },
-	{ "DLV_Domain",		CONF_STRING,	&def.lookaside },
-	{ "Sig_randfile",	CONF_STRING,	&def.sig_random },
-	{ "Sig_Pseudorand",	CONF_BOOL,	&def.sig_pseudo },
+	{ "",			0,	CONF_COMMENT,	NULL },
+	{ "",			0,	CONF_COMMENT,	"dnssec-signer options"},
+	{ "--view",		1,	CONF_STRING,	&def.view },
+	// { "ErrorLog",	0,	CONF_STRING,	&def.errlog },
+	{ "LogFile",		0,	CONF_STRING,	&def.logfile },
+	{ "LogLevel",		0,	CONF_STRING,	&def.loglevel },
+	{ "SyslogFacility",	0,	CONF_STRING,	&def.syslogfacility },
+	{ "SyslogLevel",	0,	CONF_STRING,	&def.sysloglevel },
+	{ "VerboseLog",		0,	CONF_INT,	&def.verboselog },
+	{ "-v",			1,	CONF_INT,	&def.verbosity },
+	{ "Keyfile",		0,	CONF_STRING,	&def.keyfile },
+	{ "Zonefile",		0,	CONF_STRING,	&def.zonefile },
+	{ "KeySetDir",		0,	CONF_STRING,	&def.keysetdir },
+	{ "DLV_Domain",		0,	CONF_STRING,	&def.lookaside },
+	{ "Sig_Randfile",	0,	CONF_STRING,	&def.sig_random },
+	{ "Sig_Pseudorand",	0,	CONF_BOOL,	&def.sig_pseudo },
+	{ "Sig_Parameter",	0,	CONF_STRING,	&def.sig_param },
 
-	{ NULL,			CONF_END,	NULL},
+	{ NULL,			0,	CONF_END,	NULL},
 };
 
+/*****************************************************************
+**	private (static) function deklaration and definition
+*****************************************************************/
 static	const char	*bool2str (int val)
 {
 	return val ? "True" : "False";
@@ -139,7 +174,7 @@ static	int set_varptr (char *entry, void *ptr)
 {
 	zconf_para_t	*c;
 
-	for ( c = conf; c->label; c++ )
+	for ( c = confpara; c->label; c++ )
 		if ( strcasecmp (entry, c->label) == 0 )
 		{
 			c->var = ptr;
@@ -148,7 +183,7 @@ static	int set_varptr (char *entry, void *ptr)
 	return 0;
 }
 
-static	int set_all_varptr (zconf_t *cp)
+static	void set_all_varptr (zconf_t *cp)
 {
 	set_varptr ("zonedir", &cp->zonedir);
 	set_varptr ("recursive", &cp->recursive);
@@ -176,35 +211,185 @@ static	int set_all_varptr (zconf_t *cp)
 	set_varptr ("zsk_bits", &cp->z_bits);
 	set_varptr ("zsk_randfile", &cp->z_random);
 
+	set_varptr ("--view", &cp->view);
+	// set_varptr ("errorlog", &cp->errlog);
+	set_varptr ("logfile", &cp->logfile);
+	set_varptr ("loglevel", &cp->loglevel);
+	set_varptr ("syslogfacility", &cp->syslogfacility);
+	set_varptr ("sysloglevel", &cp->sysloglevel);
+	set_varptr ("verboselog", &cp->verboselog);
+	set_varptr ("-v", &cp->verbosity);
 	set_varptr ("keyfile", &cp->keyfile);
 	set_varptr ("zonefile", &cp->zonefile);
 	set_varptr ("keysetdir", &cp->keysetdir);
 	set_varptr ("dlv_domain", &cp->lookaside);
 	set_varptr ("sig_randfile", &cp->sig_random);
 	set_varptr ("sig_pseudorand", &cp->sig_pseudo);
+	set_varptr ("sig_parameter", &cp->sig_param);
 }
 
+static	void	parseconfigline (char *buf, zconf_t *z)
+{
+	char		*end, *val, *p;
+	char		*tag;
+	unsigned int	line, len, found;
+	zconf_para_t	*c;
+
+	p = &buf[strlen(buf)-1];        /* Chop off white space at eol */
+	while ( p >= buf && isspace (*p) )
+		*p-- = '\0';
+
+	for (p = buf; isspace (*p); p++ )	/* Ignore leading white space */
+		;
+	
+	/* Ignore comments and emtpy lines */
+	if ( *p == '\0' || ISCOMMENT (p) )
+		return;
+
+	tag = p;
+	/* Get the end of the first argument */
+	end = &buf[strlen(buf)-1];
+	while ( p < end && !ISDELIM (*p) )      /* Skip until delim */
+		p++;
+	*p++ = '\0';    /* Terminate this argument */
+	dbg_val1 ("Parsing \"%s\"\n", tag);
+
+
+	while ( p < end && ISDELIM (*p) )	/* Skip delim chars */
+		p++;
+
+	val = p;	/* Start of the value */
+	dbg_val1 ("\tgot value \"%s\"\n", val);
+
+	/* If starting with quote, skip until next quote */
+	if ( *p == '"' || *p == '\'' )
+	{
+		p++;    /* Find next quote */
+		while ( p <= end && *p && *p != *val )
+			p++;
+		*p = '\0';
+		val++;          /* Skip the first quote */
+	}
+	else    /* Otherwise check if there is any comment char at the end */
+	{
+		while ( p < end && *p && !ISCOMMENT(p) )
+			p++;
+		if ( ISCOMMENT (p) )
+		{
+			do      /* Chop off white space before comment */
+				*p-- = '\0';
+			while ( p >= val && isspace (*p) );
+		}
+	}
+
+	/* Otherwise it is already terminated above */
+
+	found = 0;
+	c = confpara;
+	while ( !found && c->type != CONF_END )
+	{
+		len = strlen (c->label);
+		if ( strcasecmp (tag, c->label) == 0 )
+		{
+			char	**str;
+			char	quantity;
+			int	ival;
+
+			found = 1;
+			switch ( c->type )
+			{
+			case CONF_STRING:
+				str = (char **)c->var;
+				*str = strdup (val);
+				str_untaint (*str);	/* remove "bad" characters */
+				break;
+			case CONF_INT:
+				sscanf (val, "%d", (int *)c->var);
+				break;
+			case CONF_TIMEINT:
+				quantity = 'd';
+				sscanf (val, "%d%c", &ival, &quantity);
+				if  ( quantity == 'm' )
+					ival *= MINSEC;
+				else if  ( quantity == 'h' )
+					ival *= HOURSEC;
+				else if  ( quantity == 'd' )
+					ival *= DAYSEC;
+				else if  ( quantity == 'w' )
+					ival *= WEEKSEC;
+				else if  ( quantity == 'y' )
+					ival *= YEARSEC;
+				(*(int *)c->var) = ival;
+				break;
+			case CONF_ALGO:
+				if ( strcasecmp (val, "rsa") == 0 || strcasecmp (val, "rsamd5") == 0 )
+					*((int *)c->var) = DK_ALGO_RSA;
+				else if ( strcasecmp (val, "dsa") == 0 )
+					*((int *)c->var) = DK_ALGO_DSA;
+				else if ( strcasecmp (val, "rsasha1") == 0 )
+					*((int *)c->var) = DK_ALGO_RSASHA1;
+				else
+					error ("Illegal algorithm \"%s\" "
+						"in line %d.\n" , val, line);
+				break;
+			case CONF_SERIAL:
+				if ( strcasecmp (val, "unixtime") == 0 )
+					*((serial_form_t *)c->var) = Unixtime;
+				else if ( strcasecmp (val, "incremental") == 0 )
+					*((serial_form_t *)c->var) = Incremental;
+				else
+					error ("Illegal serial no format \"%s\" "
+						"in line %d.\n" , val, line);
+				break;
+			case CONF_BOOL:
+				*((int *)c->var) = ISTRUE (val);
+				break;
+			default:
+				fatal ("Illegal configuration type in line %d.\n", line);
+			}
+		}
+		c++;
+	}
+	if ( !found )
+		error ("Unknown configuration statement: %s \"%s\"\n", tag, val);
+	return;
+}
+
+/*****************************************************************
+**	public function definition
+*****************************************************************/
+
+/*****************************************************************
+**	loadconfig (file, conf)
+**	Loads a config file into the "conf" structure
+**	If conf is NULL then a new conf struct will be dynamically
+**	allocated.
+**	If no filename is given the conf struct will be initialized
+**	by the builtin default config
+*****************************************************************/
 zconf_t	*loadconfig (const char *filename, zconf_t *z)
 {
 	FILE		*fp;
 	char		buf[1023+1];
-	char		*end, *val, *p;
-	unsigned int	line, i, len, found;
-	zconf_para_t	*c;
+	unsigned int	line;
 
-	if ( z == NULL )
+	if ( z == NULL )	/* allocate new memory for zconf_t */
 	{
 		if ( (z = calloc (1, sizeof (zconf_t))) == NULL )
 			return NULL;
-		memcpy (z, &def, sizeof (*z));		/* init with defaults */
+
+		if ( filename && *filename )
+			memcpy (z, &def, sizeof (*z));	/* init new struct with defaults */
 	}
 
-	if ( filename == NULL || *filename == '\0' )
+	if ( filename == NULL || *filename == '\0' )	/* no file name given... */
 	{
-		memcpy (z, &def, sizeof (*z));		/* init with defaults */
+		dbg_val0("loadconfig (NULL)\n");
+		memcpy (z, &def, sizeof (*z));		/* ..then init with defaults */
 		return z;
 	}
 
+	dbg_val1 ("loadconfig (%s)\n", filename);
 	set_all_varptr (z);
 
 	if ( (fp = fopen(filename, "r")) == NULL )
@@ -215,133 +400,128 @@ zconf_t	*loadconfig (const char *filename, zconf_t *z)
 	{
 		line++;
 
-		p = &buf[strlen(buf)-1];        /* Chop off white space at eol */
-		while ( p >= buf && isspace (*p) )
-			*p-- = '\0';
-
-		/* Ignore comments and emtpy lines */
-		if ( buf[0] == '\0' || ISCOMMENT (buf) )
-			continue;
-
-		/* Get the end of the first argument */
-		p = buf;
-		end = &buf[strlen(buf)-1];
-		while ( p < end && !ISDELIM (*p) )      /* Skip until delim */
-			p++;
-		*p++ = '\0';    /* Terminate this argument */
-
-
-		while ( p < end && ISDELIM (*p) )	/* Skip delim chars */
-			p++;
-
-		val = p;	/* Start of the value */
-
-		/* If starting with quotes, skip until next quotes */
-		if ( *p == '"' || *p == '\'' )
-		{
-			p++;    /* Find next quote */
-			while ( p <= end && *p && *p != *val )
-				p++;
-			*p = '\0';
-			val++;          /* Skip the first quote */
-		}
-		else    /* Otherwise check if there is any comment char at end */
-		{
-			while ( p < end && *p && !ISCOMMENT(p) )
-				p++;
-			if ( ISCOMMENT (p) )
-			{
-				do      /* Chop off white space before comment */
-					*p-- = '\0';
-				while ( p >= val && isspace (*p) );
-			}
-		}
-
-		/* Otherwise it is already terminated above */
-
-                found = 0;
-                c = conf;
-                while ( !found && c->type != CONF_END )
-		{
-			len = strlen (c->label);
-			if ( strcasecmp (buf, c->label) == 0 )
-			{
-				char	**str;
-				char	quantity;
-				int	ival;
-
-				found = 1;
-				switch ( c->type )
-				{
-				case CONF_STRING:
-					str = (char **)c->var;
-					*str = strdup (val);
-					str_untaint (*str);	/* remove "bad" characters */
-					break;
-				case CONF_INT:
-					sscanf (val, "%d", (int *)c->var);
-					break;
-				case CONF_TIMEINT:
-					quantity = 'd';
-					sscanf (val, "%d%c", &ival, &quantity);
-					if  ( quantity == 'm' )
-						ival *= MINSEC;
-					else if  ( quantity == 'h' )
-						ival *= HOURSEC;
-					else if  ( quantity == 'd' )
-						ival *= DAYSEC;
-					else if  ( quantity == 'w' )
-						ival *= WEEKSEC;
-					else if  ( quantity == 'y' )
-						ival *= YEARSEC;
-					(*(int *)c->var) = ival;
-					break;
-				case CONF_ALGO:
-					if ( strcasecmp (val, "rsa") == 0 || strcasecmp (val, "rsamd5") == 0 )
-						*((int *)c->var) = DK_ALGO_RSA;
-					else if ( strcasecmp (val, "dsa") == 0 )
-						*((int *)c->var) = DK_ALGO_DSA;
-					else if ( strcasecmp (val, "rsasha1") == 0 )
-						*((int *)c->var) = DK_ALGO_RSASHA1;
-					else
-						error ("Illegal algorithm \"%s\" "
-							"in line %d.\n" , val, line);
-					break;
-				case CONF_SERIAL:
-					if ( strcasecmp (val, "unixtime") == 0 )
-						*((serial_form_t *)c->var) = Unixtime;
-					else if ( strcasecmp (val, "incremental") == 0 )
-						*((serial_form_t *)c->var) = Incremental;
-					else
-						error ("Illegal serial no format \"%s\" "
-							"in line %d.\n" , val, line);
-					break;
-				case CONF_BOOL:
-					*((int *)c->var) = ISTRUE (val);
-					break;
-				default:
-					fatal ("Illegal configuration type in line %d.\n", line);
-				}
-			}
-			c++;
-		}
-                if ( !found )
-			error ("Unknown configuration statement: %s \"%s\"\n", buf, val);
+		parseconfigline (buf, z);
 	}
 	fclose(fp);
 	return z;
 }
 
+# define	STRCONFIG_DELIMITER	";\r\n"
+zconf_t	*loadconfig_fromstr (const char *str, zconf_t *z)
+{
+	char		*buf;
+	char		*tok,	*toksave;
+
+	if ( z == NULL )
+	{
+		if ( (z = calloc (1, sizeof (zconf_t))) == NULL )
+			return NULL;
+		memcpy (z, &def, sizeof (*z));		/* init with defaults */
+	}
+
+	if ( str == NULL || *str == '\0' )
+	{
+		dbg_val0("loadconfig_fromstr (NULL)\n");
+		memcpy (z, &def, sizeof (*z));		/* init with defaults */
+		return z;
+	}
+
+	dbg_val1 ("loadconfig_fromstr (\"%s\")\n", str);
+	set_all_varptr (z);
+
+	/* str is const, so we have to copy it into a new buffer */
+	if ( (buf = strdup (str)) == NULL )
+		fatal ("loadconfig_fromstr: Out of memory");
+
+	tok = strtok_r (buf, STRCONFIG_DELIMITER, &toksave);
+	while ( tok )
+	{
+		parseconfigline (tok, z);
+		tok = strtok_r (NULL, STRCONFIG_DELIMITER, &toksave);
+	}
+	free (buf);
+	return z;
+}
+
+/*****************************************************************
+**	dupconfig (config)
+**	duplicate config struct and return a ptr to the new struct
+*****************************************************************/
+zconf_t	*dupconfig (const zconf_t *conf)
+{
+	zconf_t	*z;
+
+	assert (conf != NULL);
+
+	if ( (z = calloc (1, sizeof (zconf_t))) == NULL )
+		return NULL;
+
+	memcpy (z, conf, sizeof (*conf));
+
+	return z;
+}
+
+/*****************************************************************
+**	setconfigpar (entry, pval)
+*****************************************************************/
+int	setconfigpar (zconf_t *config, char *entry, const void *pval)
+{
+	char	*str;
+	zconf_para_t	*c;
+
+	set_all_varptr (config);
+
+	for ( c = confpara; c->type != CONF_END; c++ )
+		if ( strcasecmp (entry, c->label) == 0 )
+		{
+			switch ( c->type )
+			{
+			case CONF_STRING:
+				if ( pval )
+				{
+					str = strdup ((char *)pval);
+					str_untaint (str);	/* remove "bad" characters */
+				}
+				else
+					str = NULL;
+				*((char **)c->var) = str;
+				break;
+			case CONF_BOOL:
+				/* fall through */
+			case CONF_ALGO:
+				/* fall through */
+			case CONF_TIMEINT:
+				/* fall through */
+			case CONF_INT:
+				*((int *)c->var) = *((int *)pval);
+				break;
+			case CONF_SERIAL:
+				*((serial_form_t *)c->var) = *((serial_form_t *)pval);
+				break;
+			case CONF_COMMENT:
+			case CONF_END:
+				/* NOTREACHED */
+				break;
+			}
+			return 1;
+		}
+	return 0;
+}
+
+/*****************************************************************
+**	printconfig (fname, config)
+*****************************************************************/
 int	printconfig (const char *fname, const zconf_t *z)
 {
 	zconf_para_t	*cp;
 	FILE	*fp;
 
 	if ( z == NULL )
-		return;
+		return 0;
 
 	fp = stdout;
 	if ( fname && *fname )
+	{
 		if ( strcmp (fname, "stdout") == 0 )
 			fp = stdout;
 		else if ( strcmp (fname, "stderr") == 0 )
@@ -351,11 +531,15 @@ int	printconfig (const char *fname, const zconf_t *z)
 			error ("Could not open config file \"%s\" for writing\n", fname);
 			return -1;
 		}
+	}
 		
 	set_all_varptr ((zconf_t *)z);
 
-	for ( cp = conf; cp->label; cp++ )
+	for ( cp = confpara; cp->type != CONF_END; cp++ )
 	{
+		if ( cp->cmdline )	/* if this is a command line parameter ? */
+			continue;	/* don't print it out */
+
 		switch ( cp->type )
 		{
 		int	i;
@@ -395,8 +579,12 @@ int	printconfig (const char *fname, const zconf_t *z)
 		case CONF_INT:
 			fprintf (fp, "%s:\t%d\n", cp->label, *(int *)cp->var);
 			break;
+		case CONF_END:
+			/* NOTREACHED */
+			break;
 		}
 	}
+	return 1;
 }
 
 int	checkconfig (const zconf_t *z)
@@ -447,3 +635,35 @@ int	checkconfig (const zconf_t *z)
 
 	return 1;
 }
+
+#ifdef CONF_TEST
+const char *progname;
+static	zconf_t	*config;
+
+main (int argc, char *argv[])
+{
+	char	*optstr;
+	int	val;
+
+	progname = *argv;
+
+	config = loadconfig ("", (zconf_t *) NULL);	/* load built in defaults */
+
+	while ( --argc >= 1 )
+	{
+		optstr = *++argv;
+		config = loadconfig_fromstr (optstr, config);
+	}
+
+	val = 1;
+	setconfigpar (config, "-v", &val);
+	val = 2;
+	setconfigpar (config, "verboselog", &val);
+	val = 1;
+	setconfigpar (config, "recursive", &val);
+	val = 1200;
+	setconfigpar (config, "propagation", &val);
+	
+	printconfig ("stdout", config);
+}
+#endif

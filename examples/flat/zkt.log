@@ -1,0 +1,324 @@
+2008-06-10 00:36:45.086: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-10 00:37:09.073: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-10 00:37:09.074: error: zone "example.net.": couldn't increment serialno in file ./example.net./zone.db: not enough space left for serialno
+2008-06-10 00:37:24.586: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-10 00:37:24.588: error: zone "example.net.": couldn't increment serialno in file ./example.net./zone.db: not enough space left for serialno
+2008-06-10 00:38:02.499: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-10 00:38:14.016: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-10 00:38:14.018: error: zone "example.net.": couldn't increment serialno in file ./example.net./zone.db: couldn't find serialnumber in zone file
+2008-06-10 00:38:40.235: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-10 00:38:40.236: error: zone "example.net.": couldn't increment serialno in file ./example.net./zone.db: unexpected end of file
+2008-06-10 00:38:49.975: warning: zone "sub.example.net.": lifetime of key signing key 54876 exceeded
+2008-06-11 13:47:16.909: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded ()
+2008-06-11 13:51:06.959: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded -16781202()
+2008-06-11 13:54:29.680: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded (27w5d5h30m5s)
+2008-06-11 13:56:36.990: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d5h32m12s
+2008-06-11 22:39:48.053: notice: running as ../../dnssec-signer -v -v
+2008-06-11 22:39:48.056: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d14h15m24s
+2008-06-11 22:39:48.056: notice: "sub.example.net.": lifetime of zone signing key 44833 exceeded since 2h30m54s: ZSK rollover done
+2008-06-11 22:39:48.143: notice: "sub.example.net.": re-signing triggered: New zone key
+2008-06-11 22:39:48.617: notice: end of run: 0 errors occured
+2008-06-11 22:41:14.103: notice: running as ../../dnssec-signer -v -v
+2008-06-11 22:41:14.106: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d14h16m50s
+2008-06-11 22:41:14.106: notice: end of run: 0 errors occured
+2008-06-11 22:48:18.445: notice: running as ../../dnssec-signer -v -v
+2008-06-11 22:48:18.448: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d14h23m54s
+2008-06-11 22:48:18.448: notice: "sub.example.net.": re-signing triggered: New zone key
+2008-06-11 22:48:19.087: notice: end of run: 0 errors occured
+2008-06-11 22:56:53.295: notice: running as ../../dnssec-signer -v -v
+2008-06-11 22:56:53.297: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d14h32m29s
+2008-06-11 22:56:53.297: notice: end of run: 0 errors occured
+2008-06-11 23:01:41.451: notice: running as ../../dnssec-signer -v -v
+2008-06-11 23:01:41.454: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d14h37m17s
+2008-06-11 23:01:41.454: notice: end of run: 0 errors occured
+2008-06-11 23:04:25.909: notice: running as ../../dnssec-signer -c dnssec.conf -v -v
+2008-06-11 23:04:25.911: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w5d14h40m1s
+2008-06-11 23:04:25.911: notice: end of run: 0 errors occured
+2008-06-12 13:06:54.007: notice: running as ../../dnssec-signer -v -v
+2008-06-12 13:06:54.055: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d4h42m30s
+2008-06-12 13:06:54.056: notice: end of run: 0 errors occured
+2008-06-12 13:07:45.126: notice: running as ../../dnssec-signer -v -v
+2008-06-12 13:07:45.129: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+
+2008-06-12 13:07:45.129: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d4h43m21s
+2008-06-12 13:07:45.130: debug: parsing zone "example.net." in dir "./example.net."
+
+2008-06-12 13:07:45.130: notice: end of run: 0 errors occured
+2008-06-12 13:22:02.251: notice: running as ../../dnssec-signer -v -v
+2008-06-12 13:22:02.253: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+
+2008-06-12 13:22:02.253: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d4h57m38s
+2008-06-12 13:22:02.253: debug: parsing zone "example.net." in dir "./example.net."
+
+2008-06-12 13:22:02.253: notice: end of run: 0 errors occured
+2008-06-12 13:24:37.956: notice: running as ../../dnssec-signer -v -v
+2008-06-12 13:24:37.958: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 13:24:37.958: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d5h13s
+2008-06-12 13:24:37.958: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 13:24:37.958: notice: end of run: 0 errors occured
+2008-06-12 13:25:32.993: notice: running as ../../dnssec-signer --config-option verboselog: 0; -v -v
+2008-06-12 13:25:32.997: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d5h1m8s
+2008-06-12 13:25:32.997: notice: end of run: 0 errors occured
+2008-06-12 13:26:49.861: notice: running as ../../dnssec-signer -O verboselog: 0; -v -v
+2008-06-12 13:26:49.864: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d5h2m25s
+2008-06-12 13:26:49.864: notice: end of run: 0 errors occured
+2008-06-12 16:28:01.977: notice: running as ../../dnssec-signer --config-option verboselog: 0; -v -v
+2008-06-12 16:28:01.979: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h3m37s
+2008-06-12 16:28:01.979: notice: end of run: 0 errors occured
+2008-06-12 16:28:13.626: notice: running as ../../dnssec-signer --config-option verboselog: 0; -v
+2008-06-12 16:28:13.629: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h3m49s
+2008-06-12 16:28:13.630: notice: end of run: 0 errors occured
+2008-06-12 16:28:30.318: notice: running as ../../dnssec-signer --config-option verboselog: 0; -v -v
+2008-06-12 16:28:30.320: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h4m6s
+2008-06-12 16:28:30.320: notice: end of run: 0 errors occured
+2008-06-12 16:34:06.968: notice: running as ../../dnssec-signer -v -v
+2008-06-12 16:34:06.971: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 16:34:06.971: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h9m42s
+2008-06-12 16:34:06.972: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 16:34:06.972: notice: end of run: 0 errors occured
+2008-06-12 16:34:15.816: notice: running as ../../dnssec-signer
+2008-06-12 16:34:15.818: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 16:34:15.818: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h9m51s
+2008-06-12 16:34:15.818: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 16:34:15.818: notice: end of run: 0 errors occured
+2008-06-12 16:35:27.777: notice: running as ../../dnssec-signer --config-option verboselog: 0; -v -v
+2008-06-12 16:35:27.780: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h11m3s
+2008-06-12 16:35:27.780: notice: end of run: 0 errors occured
+2008-06-12 16:44:56.266: notice: running as ../../dnssec-signer -v -v
+2008-06-12 16:44:56.269: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 16:44:56.269: debug: 		->ksk5011status returns 0
+2008-06-12 16:44:56.269: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h20m32s
+2008-06-12 16:44:56.269: debug: 	Re-signing not necessary!
+2008-06-12 16:44:56.269: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 16:44:56.269: debug: 		->ksk5011status returns 2
+2008-06-12 16:44:56.269: debug: 	Re-signing not necessary!
+2008-06-12 16:44:56.270: notice: end of run: 0 errors occured
+2008-06-12 16:49:23.380: notice: running as ../../dnssec-signer -v -v
+2008-06-12 16:49:23.385: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 16:49:23.385: debug: 		->ksk5011status returns 0
+2008-06-12 16:49:23.386: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h24m59s
+2008-06-12 16:49:23.386: debug: 	Re-signing not necessary!
+2008-06-12 16:49:23.386: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 16:49:23.386: debug: 		->ksk5011status returns 2
+2008-06-12 16:49:23.386: debug: 	Re-signing not necessary!
+2008-06-12 16:49:23.386: notice: end of run: 0 errors occured
+2008-06-12 16:49:28.284: notice: running as ../../dnssec-signer -r -v -v
+2008-06-12 16:49:28.288: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 16:49:28.288: debug: 		->ksk5011status returns 0
+2008-06-12 16:49:28.288: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h25m4s
+2008-06-12 16:49:28.288: debug: 	Re-signing not necessary!
+2008-06-12 16:49:28.288: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 16:49:28.288: debug: 		->ksk5011status returns 2
+2008-06-12 16:49:28.288: debug: 	Re-signing not necessary!
+2008-06-12 16:49:28.288: notice: end of run: 0 errors occured
+2008-06-12 16:49:32.079: notice: running as ../../dnssec-signer -f -v -v
+2008-06-12 16:49:32.081: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 16:49:32.081: debug: 		->ksk5011status returns 0
+2008-06-12 16:49:32.081: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h25m8s
+2008-06-12 16:49:32.082: debug: 	Re-signing necessary: Option -f
+2008-06-12 16:49:32.082: notice: "sub.example.net.": re-signing triggered: Option -f
+2008-06-12 16:49:32.082: debug: 	Writing key file "./sub.example.net./dnskey.db"
+2008-06-12 16:49:32.082: debug: 	Signing zone "sub.example.net."
+2008-06-12 16:49:32.082: debug: 	  Run cmd "cd ./sub.example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o sub.example.net. -e +172800 -g -l dlv.trusted-keys.de -N unixtime zone.db K*.private"
+2008-06-12 16:49:32.222: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-12 16:49:32.222: debug: 	Signing completed after 0s.
+2008-06-12 16:49:32.222: debug: 
+2008-06-12 16:49:32.222: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 16:49:32.222: debug: 		->ksk5011status returns 2
+2008-06-12 16:49:32.223: debug: 	Re-signing necessary: Option -f
+2008-06-12 16:49:32.223: notice: "example.net.": re-signing triggered: Option -f
+2008-06-12 16:49:32.223: debug: 	Writing key file "./example.net./dnskey.db"
+2008-06-12 16:49:32.223: debug: 	Incrementing serial number in file "./example.net./zone.db"
+2008-06-12 16:49:32.223: debug: 	Signing zone "example.net."
+2008-06-12 16:49:32.223: debug: 	  Run cmd "cd ./example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o example.net. -e +518400 -g  zone.db K*.private"
+2008-06-12 16:49:32.335: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-12 16:49:32.335: debug: 	Signing completed after 0s.
+2008-06-12 16:49:32.335: debug: 
+2008-06-12 16:49:32.335: notice: end of run: 0 errors occured
+2008-06-12 17:02:15.076: notice: running as ../../dnssec-signer -f -v -v
+2008-06-12 17:02:15.078: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 17:02:15.078: debug: 	Check RFC5011 status
+2008-06-12 17:02:15.078: debug: 		->ksk5011status returns 0
+2008-06-12 17:02:15.078: debug: 	Check ksk status
+2008-06-12 17:02:15.078: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d8h37m51s
+2008-06-12 17:02:15.078: debug: 	Re-signing necessary: Option -f
+2008-06-12 17:02:15.078: notice: "sub.example.net.": re-signing triggered: Option -f
+2008-06-12 17:02:15.078: debug: 	Writing key file "./sub.example.net./dnskey.db"
+2008-06-12 17:02:15.079: debug: 	Signing zone "sub.example.net."
+2008-06-12 17:02:15.079: debug: 	  Run cmd "cd ./sub.example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o sub.example.net. -e +172800 -g -l dlv.trusted-keys.de -N unixtime zone.db K*.private"
+2008-06-12 17:02:15.254: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-12 17:02:15.254: debug: 	Signing completed after 0s.
+2008-06-12 17:02:15.254: debug: 
+2008-06-12 17:02:15.254: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 17:02:15.255: debug: 	Check RFC5011 status
+2008-06-12 17:02:15.255: debug: 		->ksk5011status returns 2
+2008-06-12 17:02:15.255: debug: 	Re-signing necessary: Option -f
+2008-06-12 17:02:15.255: notice: "example.net.": re-signing triggered: Option -f
+2008-06-12 17:02:15.255: debug: 	Writing key file "./example.net./dnskey.db"
+2008-06-12 17:02:15.255: debug: 	Incrementing serial number in file "./example.net./zone.db"
+2008-06-12 17:02:15.255: debug: 	Signing zone "example.net."
+2008-06-12 17:02:15.255: debug: 	  Run cmd "cd ./example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o example.net. -e +518400 -g  zone.db K*.private"
+2008-06-12 17:02:15.368: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-12 17:02:15.368: debug: 	Signing completed after 0s.
+2008-06-12 17:02:15.368: debug: 
+2008-06-12 17:02:15.368: notice: end of run: 0 errors occured
+2008-06-12 17:43:50.388: notice: running as ../../dnssec-signer -f -f
+2008-06-12 17:43:50.390: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 17:43:50.390: debug: 	Check RFC5011 status
+2008-06-12 17:43:50.390: debug: 		->ksk5011status returns 0
+2008-06-12 17:43:50.390: debug: 	Check ksk status
+2008-06-12 17:43:50.390: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d9h19m26s
+2008-06-12 17:43:50.390: debug: 	Re-signing necessary: Option -f
+2008-06-12 17:43:50.390: notice: "sub.example.net.": re-signing triggered: Option -f
+2008-06-12 17:43:50.390: debug: 	Writing key file "./sub.example.net./dnskey.db"
+2008-06-12 17:43:50.390: debug: 	Signing zone "sub.example.net."
+2008-06-12 17:43:50.390: debug: 	  Run cmd "cd ./sub.example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o sub.example.net. -e +172800 -g -l dlv.trusted-keys.de -N unixtime zone.db K*.private"
+2008-06-12 17:43:50.533: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-12 17:43:50.533: debug: 	Signing completed after 0s.
+2008-06-12 17:43:50.533: debug: 
+2008-06-12 17:43:50.533: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 17:43:50.533: debug: 	Check RFC5011 status
+2008-06-12 17:43:50.533: debug: 		->ksk5011status returns 2
+2008-06-12 17:43:50.533: debug: 	Re-signing necessary: Option -f
+2008-06-12 17:43:50.533: notice: "example.net.": re-signing triggered: Option -f
+2008-06-12 17:43:50.533: debug: 	Writing key file "./example.net./dnskey.db"
+2008-06-12 17:43:50.534: debug: 	Incrementing serial number in file "./example.net./zone.db"
+2008-06-12 17:43:50.534: debug: 	Signing zone "example.net."
+2008-06-12 17:43:50.534: debug: 	  Run cmd "cd ./example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o example.net. -e +518400 -g  zone.db K*.private"
+2008-06-12 17:43:50.645: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-12 17:43:50.645: debug: 	Signing completed after 0s.
+2008-06-12 17:43:50.645: debug: 
+2008-06-12 17:43:50.645: notice: end of run: 0 errors occured
+2008-06-12 17:49:43.188: notice: running as ../../dnssec-signer -O verboselog: 2 -v -v
+2008-06-12 17:49:43.190: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 17:49:43.190: debug: 	Check RFC5011 status
+2008-06-12 17:49:43.190: debug: 		->ksk5011status returns 0
+2008-06-12 17:49:43.190: debug: 	Check ksk status
+2008-06-12 17:49:43.190: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d9h25m19s
+2008-06-12 17:49:43.190: debug: 	Re-signing not necessary!
+2008-06-12 17:49:43.190: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 17:49:43.190: debug: 	Check RFC5011 status
+2008-06-12 17:49:43.190: debug: 		->ksk5011status returns 2
+2008-06-12 17:49:43.190: debug: 	Re-signing not necessary!
+2008-06-12 17:49:43.190: notice: end of run: 0 errors occured
+2008-06-12 17:50:09.325: notice: running as ../../dnssec-signer -v -v
+2008-06-12 17:50:09.327: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 17:50:09.327: debug: 	Check RFC5011 status
+2008-06-12 17:50:09.327: debug: 		->ksk5011status returns 0
+2008-06-12 17:50:09.327: debug: 	Check ksk status
+2008-06-12 17:50:09.327: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d9h25m45s
+2008-06-12 17:50:09.327: debug: 	Re-signing not necessary!
+2008-06-12 17:50:09.327: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 17:50:09.327: debug: 	Check RFC5011 status
+2008-06-12 17:50:09.327: debug: 		->ksk5011status returns 2
+2008-06-12 17:50:09.327: debug: 	Re-signing not necessary!
+2008-06-12 17:50:09.327: notice: end of run: 0 errors occured
+2008-06-12 17:52:29.309: notice: running as ../../dnssec-signer -v -v
+2008-06-12 17:52:29.311: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 17:52:29.312: debug: 	Check RFC5011 status
+2008-06-12 17:52:29.312: debug: 		->ksk5011status returns 0
+2008-06-12 17:52:29.312: debug: 	Check ksk status
+2008-06-12 17:52:29.312: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d9h28m5s
+2008-06-12 17:52:29.312: debug: 	Re-signing not necessary!
+2008-06-12 17:52:29.312: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 17:52:29.313: debug: 	Check RFC5011 status
+2008-06-12 17:52:29.313: debug: 		->ksk5011status returns 2
+2008-06-12 17:52:29.313: debug: 	Re-signing not necessary!
+2008-06-12 17:52:29.313: notice: end of run: 0 errors occured
+2008-06-12 18:24:57.405: notice: running as ../../dnssec-signer -v -v
+2008-06-12 18:24:57.409: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-12 18:24:57.409: debug: 	Check RFC5011 status
+2008-06-12 18:24:57.409: debug: 		->ksk5011status returns 0
+2008-06-12 18:24:57.409: debug: 	Check ksk status
+2008-06-12 18:24:57.409: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 27w6d10h33s
+2008-06-12 18:24:57.409: debug: 	Re-signing not necessary!
+2008-06-12 18:24:57.409: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-12 18:24:57.409: debug: 	Check RFC5011 status
+2008-06-12 18:24:57.409: debug: 		->ksk5011status returns 2
+2008-06-12 18:24:57.410: debug: 	Re-signing not necessary!
+2008-06-12 18:24:57.410: notice: end of run: 0 errors occured
+2008-06-16 23:12:32.309: notice: 
+2008-06-16 23:12:32.309: notice:  running as ../../dnssec-signer -v -v 
+2008-06-16 23:12:32.654: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-16 23:12:32.654: debug: 	Check RFC5011 status
+2008-06-16 23:12:32.654: debug: 		->ksk5011status returns 0
+2008-06-16 23:12:32.654: debug: 	Check ksk status
+2008-06-16 23:12:32.654: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 28w3d14h48m8s
+2008-06-16 23:12:32.654: debug: 	Lifetime(259200 +/-150 sec) of active key 44833 exceeded (433964 sec)
+2008-06-16 23:12:32.654: debug: 		->depreciate it
+2008-06-16 23:12:32.654: debug: 		->activate pre-publish key 55267
+2008-06-16 23:12:32.654: notice: "sub.example.net.": lifetime of zone signing key 55267 exceeded since 2d32m44s: ZSK rollover done
+2008-06-16 23:12:32.654: debug: 	New pre-publish key needed
+2008-06-16 23:12:32.790: debug: 		->creating new pre-publish key 56149
+2008-06-16 23:12:32.791: debug: 	Re-signing necessary: New zone key
+2008-06-16 23:12:32.791: notice: "sub.example.net.": re-signing triggered: New zone key
+2008-06-16 23:12:32.791: debug: 	Writing key file "./sub.example.net./dnskey.db"
+2008-06-16 23:12:32.792: debug: 	Signing zone "sub.example.net."
+2008-06-16 23:12:32.792: debug: 	  Run cmd "cd ./sub.example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o sub.example.net. -e +172800 -g -l dlv.trusted-keys.de -N unixtime zone.db K*.private"
+2008-06-16 23:12:33.022: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-16 23:12:33.022: debug: 	Signing completed after 1s.
+2008-06-16 23:12:33.022: debug: 
+2008-06-16 23:12:33.023: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-16 23:12:33.023: debug: 	Check RFC5011 status
+2008-06-16 23:12:33.023: debug: 		->ksk5011status returns 2
+2008-06-16 23:12:33.023: debug: 	Re-signing necessary: re-signing interval (2d) reached
+2008-06-16 23:12:33.023: notice: "example.net.": re-signing triggered: re-signing interval (2d) reached
+2008-06-16 23:12:33.023: debug: 	Writing key file "./example.net./dnskey.db"
+2008-06-16 23:12:33.024: debug: 	Incrementing serial number in file "./example.net./zone.db"
+2008-06-16 23:12:33.024: debug: 	Signing zone "example.net."
+2008-06-16 23:12:33.024: debug: 	  Run cmd "cd ./example.net.; /usr/local/sbin/dnssec-signzone -p -d ../keysets -o example.net. -e +518400 -g  zone.db K*.private"
+2008-06-16 23:12:33.169: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2008-06-16 23:12:33.170: debug: 	Signing completed after 0s.
+2008-06-16 23:12:33.170: debug: 
+2008-06-16 23:12:33.170: notice: end of run: 0 errors occured
+2008-06-16 23:13:24.119: notice: ===> running as ../../dnssec-signer -v -v <===
+2008-06-16 23:13:24.121: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-16 23:13:24.121: debug: 	Check RFC5011 status
+2008-06-16 23:13:24.121: debug: 		->ksk5011status returns 0
+2008-06-16 23:13:24.121: debug: 	Check ksk status
+2008-06-16 23:13:24.121: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 28w3d14h49m
+2008-06-16 23:13:24.121: debug: 	Re-signing not necessary!
+2008-06-16 23:13:24.121: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-16 23:13:24.121: debug: 	Check RFC5011 status
+2008-06-16 23:13:24.121: debug: 		->ksk5011status returns 2
+2008-06-16 23:13:24.121: debug: 	Re-signing not necessary!
+2008-06-16 23:13:24.121: notice: end of run: 0 errors occured
+2008-06-16 23:13:56.970: notice: =====> running as ../../dnssec-signer -v -v <=====
+2008-06-16 23:13:56.972: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-16 23:13:56.972: debug: 	Check RFC5011 status
+2008-06-16 23:13:56.972: debug: 		->ksk5011status returns 0
+2008-06-16 23:13:56.972: debug: 	Check ksk status
+2008-06-16 23:13:56.973: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 28w3d14h49m32s
+2008-06-16 23:13:56.973: debug: 	Re-signing not necessary!
+2008-06-16 23:13:56.973: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-16 23:13:56.973: debug: 	Check RFC5011 status
+2008-06-16 23:13:56.973: debug: 		->ksk5011status returns 2
+2008-06-16 23:13:56.973: debug: 	Re-signing not necessary!
+2008-06-16 23:13:56.973: notice: end of run: 0 errors occured
+2008-06-16 23:15:16.980: notice: ------------------------------------------------------------
+2008-06-16 23:15:16.982: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-16 23:15:16.982: debug: 	Check RFC5011 status
+2008-06-16 23:15:16.982: debug: 		->ksk5011status returns 0
+2008-06-16 23:15:16.982: debug: 	Check ksk status
+2008-06-16 23:15:16.982: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 28w3d14h50m52s
+2008-06-16 23:15:16.982: debug: 	Re-signing not necessary!
+2008-06-16 23:15:16.982: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-16 23:15:16.982: debug: 	Check RFC5011 status
+2008-06-16 23:15:16.982: debug: 		->ksk5011status returns 2
+2008-06-16 23:15:16.982: debug: 	Re-signing not necessary!
+2008-06-16 23:15:16.983: notice: end of run: 0 errors occured
+2008-06-16 23:18:48.101: notice: ------------------------------------------------------------
+2008-06-16 23:18:48.101: notice:  running as ../../dnssec-signer -v -v 
+2008-06-16 23:18:48.103: debug: parsing zone "sub.example.net." in dir "./sub.example.net."
+2008-06-16 23:18:48.103: debug: 	Check RFC5011 status
+2008-06-16 23:18:48.103: debug: 		->ksk5011status returns 0
+2008-06-16 23:18:48.103: debug: 	Check ksk status
+2008-06-16 23:18:48.103: warning: "sub.example.net.": lifetime of key signing key 54876 exceeded since 28w3d14h54m24s
+2008-06-16 23:18:48.103: debug: 	Re-signing not necessary!
+2008-06-16 23:18:48.103: debug: 
+2008-06-16 23:18:48.103: debug: parsing zone "example.net." in dir "./example.net."
+2008-06-16 23:18:48.104: debug: 	Check RFC5011 status
+2008-06-16 23:18:48.104: debug: 		->ksk5011status returns 2
+2008-06-16 23:18:48.104: debug: 	Re-signing not necessary!
+2008-06-16 23:18:48.104: debug: 
+2008-06-16 23:18:48.104: notice: end of run: 0 errors occured

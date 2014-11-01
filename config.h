@@ -14,6 +14,10 @@
 # define	HAS_STRFTIME	1
 #endif
 
+#ifndef HAS_TIMEGM
+# define	HAS_TIMEGM	1
+#endif
+
 #ifndef HAS_UTYPES
 # define	HAS_UTYPES	1
 #endif
@@ -42,8 +46,24 @@
 //# define	REG_URL		"register.trusted-keys.de:5327"
 #endif
 
+#ifndef LOG_WITH_TIMESTAMP
+# define	LOG_WITH_TIMESTAMP	1
+#endif
+
+#ifndef LOG_WITH_LEVEL
+# define	LOG_WITH_LEVEL		1
+#endif
+
+#ifndef LOG_FNAMETMPL
+#if 1
+#  define	LOG_FNAMETMPL	"/zkt-%04d-%02d-%02dT%02d%02d%02dZ.log"
+# else
+#  define	LOG_FNAMETMPL	"/zkt-%04d-%02d-%02dT%02d:%02d:%02dZ.log"
+# endif
+#endif
+
 #ifndef BIND_VERSION
-# define	BIND_VERSION	941
+# define	BIND_VERSION	942
 #endif
 
 #ifndef BIND_UTIL_PATH
@@ -56,9 +76,9 @@
 
 #ifndef ZKT_VERSION
 # if defined(USE_TREE) && USE_TREE
-#  define	ZKT_VERSION	"vT0.94 (c) Feb 2005 - Dec 2007 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"vT0.96 (c) Feb 2005 - Jun 2008 Holger Zuleger hznet.de"
 # else
-#  define	ZKT_VERSION	"v0.94 (c) Feb 2005 - Dec 2007 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"v0.96 (c) Feb 2005 - Jun 2008 Holger Zuleger hznet.de"
 # endif
 #endif
 

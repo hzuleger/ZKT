@@ -1,15 +1,8 @@
 $ORIGIN .
 sub.example.de		7200	IN DNSKEY 257 3 5 (
-					AwEAAcqYWRKUBaY7wAo99sDcDavgMt85icEh
-					iNK5ls699iqQHjBq8LNlcMlnts2uoGHT/6yy
-					dyzTiau0NdtFEtM9eqq5lGWcvz+SK74/N+Ki
-					ayhbBy4290kDT1w28rkvfoqO+kBRQY6PcyCX
-					j8HkU+SdgqXuckI/48hBqV7FVoSXK7N1
-					) ; key id = 6736
-			7200	IN DNSKEY 257 3 5 (
-					BQEAAAABv64v2IySqm36jeN5wYkeAZitFEdp
-					1OmapEqPdN6XP2C09gNPJmV082z+O3slrFPf
-					O4yawOKn3K/C/URkZ29Ozapog/4WQJ0bwgbD
-					JeE8nWLl1ZbwA8duz4GZPFg05g5TsXDFnxnc
-					NXfhN/xOYs7NfaZdbbzLxd1NYXHiC2na3xU=
-					) ; key id = 64524
+					BQEAAAAB3miECNDouFyyYlud/Gv1Q8GI7RZw
+					H/vJdJ8+++mPlRSU0WNnPpwNvNOnvcjUlJbL
+					YuMT3bcAGnq1AOgo/7kNzg3Vffird5w2wjKT
+					B4wFAmL4yxK+plUCy+61tH7N6zWIMpKGThLI
+					Abv5W1ks8g8u2EDv7yyTFuLQazAU9TzdPuc=
+					) ; key id = 27321

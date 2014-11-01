@@ -28,7 +28,6 @@ extern	void	zone_free (zone_t *zp);
 extern	void	zone_freelist (zone_t **listp);
 extern	zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *file, const char *signed_ext, const zconf_t *cp);
 extern	const	char	*zone_geterrstr ();
-extern	int	zone_cmp (const zone_t *a, const zone_t *b);
 extern	zone_t	*zone_add (zone_t **list, zone_t *new);
 extern	const zone_t	*zone_search (const zone_t *list, const char *name);
 extern	int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf, int dyn_zone);

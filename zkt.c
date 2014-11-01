@@ -1,6 +1,10 @@
 # include <stdio.h>
+# include <string.h>
 # include "config.h"
 # include "dki.h"
+# include "misc.h"
+# include "strlist.h"
+# include "zconf.h"
 #define extern
 # include "zkt.h"
 #undef extern
@@ -8,7 +12,10 @@
 extern	char	*labellist;
 extern	int	headerflag;
 extern	int	timeflag;
+extern	int	exptimeflag;
+extern	int	lifetime;
 extern	int	ageflag;
+extern	int	lifetimeflag;
 extern	int	kskflag;
 extern	int	zskflag;
 extern	int	pathflag;
@@ -24,24 +31,28 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 	{
 		if ( headerflag )
 		{
-			printf ("%-33.33s %5s %3s %3.3s %-7s ", "Keyname",
+			printf ("%-33.33s %5s %3s %3.3s %-7s", "Keyname",
 				"Tag", "Typ", "Status", "Algorit");
 			if ( timeflag )
-				printf ("%-20s ", "Generation Time");
+				printf (" %-20s", "Generation Time");
+			if ( exptimeflag )
+				printf (" %-20s", "Expiration Time");
 			if ( ageflag  )
-				printf ("%16s ", "  Age");
+				printf (" %16s", "Age");
+			if ( lifetimeflag  )
+				printf (" %4s", "LfTm");
 			putchar ('\n');
 		}
 		return;
 	}
 	time (&currtime);
 
-	/* TODO: use if dname is dynamically allocated */
+	/* TODO: use next line if dname is dynamically allocated */
 	/* if ( pathflag && dkp->dname && strcmp (oldpath, dkp->dname) != 0 ) */
 	if ( pathflag && strcmp (oldpath, dkp->dname) != 0 )
 		printf ("%s/\n", dkp->dname);
 
-	if ( kskflag && dki_isksk (dkp) || zskflag && !dki_isksk (dkp) )
+	if ( (kskflag && dki_isksk (dkp)) || (zskflag && !dki_isksk (dkp)) )
 	{
 		if ( ljustflag )
 			printf ("%-33.33s ", dkp->name);
@@ -50,11 +61,21 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 		printf ("%05d ", dkp->tag);
 		printf ("%3s ", dki_isksk (dkp) ? "KSK" : "ZSK");
 		printf ("%-3.3s ", dki_statusstr (dkp) );
-		printf ("%-7s ", dki_algo2str(dkp->algo));
+		printf ("%-7s", dki_algo2str(dkp->algo));
 		if ( timeflag )
-			printf ("%-20s ", time2str (dkp->time)); 
+			printf (" %-20s", time2str (dkp->gentime ? dkp->gentime: dkp->time, 's')); 
+		if ( exptimeflag )
+			printf (" %-20s", time2str (dkp->exptime, 's')); 
 		if ( ageflag )
-			printf ("%16s ", age2str (dki_age (dkp, currtime))); 
+			printf (" %16s", age2str (dki_age (dkp, currtime))); 
+		if ( lifetimeflag && dkp->lifetime )
+		{
+			if ( dkp->status == 'a' )
+				printf ("%c", (currtime < dkp->time + dkp->lifetime) ? '<' : '!'); 
+			else
+				putchar (' ');
+			printf ("%hdd", dki_lifetimedays (dkp)); 
+		}
 		putchar ('\n');
 	}
 }
@@ -85,8 +106,10 @@ static	void	list_key (const dki_t **nodep, const VISIT which, int depth)
 
 void	zkt_list_keys (const dki_t *data)
 {
+#if ! defined(USE_TREE) || !USE_TREE
 	const   dki_t   *dkp;
-	const   char    *oldpath;
+	const   char   *oldpath;
+#endif
 
 	if ( data )    /* print headline if list is not empty */
 		printkeyinfo (NULL, "");
@@ -162,7 +185,7 @@ static	void	list_dnskey (const dki_t **nodep, const VISIT which, int depth)
 		for ( dkp = *nodep; dkp; dkp = dkp->next )
 		{
 			ksk = dki_isksk (dkp);
-			if ( ksk && !kskflag || !ksk && !zskflag )
+			if ( (ksk && !kskflag) || (!ksk && !zskflag) )
 				continue;
 
 			if ( labellist == NULL || isinlist (dkp->name, labellist) )
@@ -186,7 +209,7 @@ void	zkt_list_dnskeys (const dki_t *data)
 	for ( dkp = data; dkp; dkp = dkp->next )
 	{
 		ksk = dki_isksk (dkp);
-		if ( ksk && !kskflag || !ksk && !zskflag )
+		if ( (ksk && !kskflag) || (!ksk && !zskflag) )
 			continue;
 
 		if ( labellist == NULL || isinlist (dkp->name, labellist) )
@@ -194,6 +217,50 @@ void	zkt_list_dnskeys (const dki_t *data)
 			if ( headerflag )
 				dki_prt_comment (dkp, stdout);
 			dki_prt_dnskey (dkp, stdout);
+		}
+	}
+#endif
+}
+
+#if defined(USE_TREE) && USE_TREE
+static	void	set_keylifetime (const dki_t **nodep, const VISIT which, int depth)
+{
+	const	dki_t	*dkp;
+	int	ksk;
+
+	if ( nodep == NULL )
+		return;
+
+	if ( which == INORDER || which == LEAF )
+		for ( dkp = *nodep; dkp; dkp = dkp->next )
+		{
+			ksk = dki_isksk (dkp);
+			if ( (ksk && !kskflag) || (!ksk && !zskflag) )
+				continue;
+
+			if ( labellist == NULL || isinlist (dkp->name, labellist) )
+				dki_setlifetime ((dki_t *)dkp, lifetime);
+		}
+}
+#endif
+
+void	zkt_setkeylifetime (dki_t *data)
+{
+#if defined(USE_TREE) && USE_TREE
+	twalk (data, set_keylifetime);
+#else
+	dki_t	*dkp;
+	int	ksk;
+
+	for ( dkp = data; dkp; dkp = dkp->next )
+	{
+		ksk = dki_isksk (dkp);
+		if ( (ksk && !kskflag) || (!ksk && !zskflag) )
+			continue;
+
+		if ( labellist == NULL || isinlist (dkp->name, labellist) )
+		{
+			dki_setlifetime (dkp, lifetime);
 		}
 	}
 #endif
@@ -214,10 +281,12 @@ static	void	tag_search (const dki_t **nodep, const VISIT which, int depth)
 		for ( dkp = *nodep; dkp; dkp = dkp->next )
 		{
 			if ( dkp->tag == searchitem )
+			{
 				if ( searchresult == NULL )
 					searchresult = dkp;
 				else
 					searchitem = 0;
+			}
 		}
 }
 #endif
