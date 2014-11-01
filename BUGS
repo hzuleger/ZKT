@@ -1,0 +1,39 @@
+BUG and TODO list as of zkt-0.5
+
+dnssec-zkt:
+ *	option to specify the key age as remaining lifetime
+	(Option -i inverse age ?)
+
+dnssec-signer:
+ *	The dnssec-signer tool is in highly experimental status
+	and may not work as expected. Use it only in testing environments.
+
+ *	The tool depends on a special directory structure
+	
+ *	Key generation will be done on information gathered in
+	the filesystem, not in the zone. So the complete system will only
+	work if we propagate all information immediately in the domain name system.
+	In other words: It's highly reecommended to use the
+	option -r if you use dnssec-signer on a live zone.
+	Thus the propagation time is (more or less) equal the timestamp
+	of the zone.db.signed file.
+
+ *	Manpage for dnssec-signer missing
+
+ *	dnssec-signer should be able to read the (secure) zone names and directories
+	out of named.conf
+
+ *	Currently the resigning interval and the dnssec-signer running interval
+	has to be the same. Maybe it will be useful to call dnssec-signer more
+	often (especially for pre-pulish key announcement).
+	Then we have to make that interval known to the algorithm (Parameter
+	running-interval in dnssec.conf?).
+
+dki:
+ *	Use of dynamic memory for dname in dki_t
+
+zconf:
+ *	Memory leak in load_config (strdup in CONF_STRING)
+	(The memory will never be free'ed.)
+
+

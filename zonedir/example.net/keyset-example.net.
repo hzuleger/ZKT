@@ -1,0 +1,18 @@
+$ORIGIN .
+example.net		7200	IN DNSKEY 257 3 3 (
+					CPQGtqBzC2QQM6f6dPPnBxKp83Ob/9TkvTB/
+					bFlovXatcBtwBojnqtdNF6YIG9keXo8SYmX1
+					HXMkQVSZQ6rBW7Nejh8emuHTdms8emOwDaKK
+					KNV9Drc7ue/WzQ32YQYPQ7zGouZEP+OQGk2t
+					XQ/wVGTxGUSJIDFhiz8zXPUH8EgWRlcA/md4
+					ZWw6BoN3ejq17MO8Z4FKg8R6B7jAbGfjgFrL
+					ZLNFdlJ0kzkfdttM/0p7XvwuRKe2kBZl/15G
+					5WzeOthfagy5JDW88dqw0IuhW4c44bszSn/2
+					VTPFS1LVuFMFV5qYGlWHR2+Z2PPij1t0HE9A
+					PCV4oNiQohea6mVkugorr3g/nr5+TTD9wTt2
+					MCyNQ1Di1eEkAZ/HMG3kRksfgCxwhM9i9oMs
+					hZ3BhTdd2EUUa+Nrd1soerdL6LgNLklez66X
+					sn/uAYqjSY0AA4MbmJ8fm615vHtWznvkqArW
+					kEDOIPI5sHGLXnFFDw8Om0WLM6LpJzagkmO2
+					gexzhyacZmtRWIK41kWYr+i3kA9djRpC/HCF
+					) ; key id = 8333
