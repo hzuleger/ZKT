@@ -122,7 +122,7 @@ int	inc_serial (const char *fname, int use_unixtime)
 	error = inc_soa_serial (fp, use_unixtime);	/* .. inc soa serial no ... */
 	dbg_val ("inc_soa_serial() returns %d\n", error);
 
-	if ( error == 0 && fclose (fp) != 0 )
+	if ( fclose (fp) != 0 )		/* close the zone file in any case */
 		return -5;
 	return error;
 }
@@ -246,6 +246,7 @@ static	ulong	serialtime (time_t sec)
 **	inc_soa_serial (fp, use_unixtime)
 **	increment the soa serial number of the file 'fp'
 **	'fp' must be opened "r+"
+**	returns 0 on success or a negative value in case of an error
 *****************************************************************/
 static	int	inc_soa_serial (FILE *fp, int use_unixtime)
 {
@@ -284,7 +285,7 @@ static	int	inc_soa_serial (FILE *fp, int use_unixtime)
 	fseek (fp, pos, SEEK_SET);	/* go back to the beginning */
 	fprintf (fp, "%-*lu", digits, serial);	/* write as many chars as before */
 
-	return 1;	/* yep! */
+	return 0;	/* yep! */
 }
 
 /*****************************************************************
@@ -317,7 +318,7 @@ main (int argc, char *argv[])
 	now = serialtime (now);
 	printf ("now = %lu\n", now);
 
-	if ( (err = inc_serial (argv[1], 0)) <= 0 )
+	if ( (err = inc_serial (argv[1], 0)) < 0 )
 	{
 		fprintf (stderr, "can't change serial no: errno=%d %s\n",
 					err, inc_errstr (err));

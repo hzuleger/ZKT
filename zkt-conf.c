@@ -164,7 +164,7 @@ int	main (int argc, char *argv[])
 			config = loadconfig_fromstr (optarg, config);
 			break;
 		case 'C':
-			switch ( sscanf (optarg, "%d.%d.&d", &major, &minor, &revision) )
+			switch ( sscanf (optarg, "%d.%d.%d", &major, &minor, &revision) )
 			{
 			case 3:	major = (major * 100) + (minor * 10) + revision;	break;
 			case 2:	major = (major * 100) + (minor * 10);	break;

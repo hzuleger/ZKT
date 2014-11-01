@@ -19,7 +19,7 @@
 dnl AC_PREREQ(2.59)
 
 ### Package name and current version
-AC_INIT(ZKT, 1.1.0, Holger Zuleger hznet.de)
+AC_INIT(ZKT, 1.1.2, Holger Zuleger hznet.de)
 dnl AC_REVISION($Revision: 1.397 $)
 
 ### Files to test to check if src dir contains the package
@@ -140,7 +140,7 @@ fi
 AC_DEFINE_UNQUOTED(USE_TREE, $usetree, Use TREE data structure for dnssec-zkt)
 
 AC_DEFINE_UNQUOTED(ZKT_VERSION, "$t$PACKAGE_VERSION", ZKT version string)
-AC_DEFINE_UNQUOTED(ZKT_COPYRIGHT, "(c) Feb 2005 - Mar 2010 Holger Zuleger hznet.de", ZKT copyright string)
+AC_DEFINE_UNQUOTED(ZKT_COPYRIGHT, "(c) Feb 2005 - Nov 2012 Holger Zuleger hznet.de", ZKT copyright string)
 
 ### Checks for libraries.
 

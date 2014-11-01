@@ -1,3 +1,17 @@
+zkt 1.1.2 -- 05. Dec 2012
+
+* bug	Fixed bug introduced by changes on inc_soa_serial()
+
+zkt 1.1.1 -- 27. Nov 2012
+
+* bug	Error fixed in zkt-conf in parsing the version number
+
+* misc	inc_soa_serial() now returns 0 on success
+
+* bug	Fixed bug in inc_serial()
+	The zone file wasn't closed on succesful change of the soa record.
+	Many thanks to Frederik Soderblom for fixing this.
+
 zkt 1.1 -- 30. Jan 2012
 
 * misc	Release numbering changed to three level "major.minor.revison" scheme
@@ -6,7 +20,7 @@ zkt 1.1 -- 30. Jan 2012
 
 * doc	Improved README file (Thanks to Jan-Piet Mens)
 
-* misc	Fix of some typos in log messages
+* misc	Fixed some typos in log messages
 
 * bug	Fixed error in rollover.c (return code of genfirstkey() wasn't checked)
 

@@ -627,7 +627,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	}
 
 	/* at last, sign the zone file */
-	if ( err > 0 )
+	if ( err >= 0 )
 	{
 		time_t	timer;
 
