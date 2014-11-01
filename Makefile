@@ -17,7 +17,7 @@ CFLAGS	+=	$(PROFILE) $(OPTIM)
 LDFLAGS	+=	$(PROFILE)
 
 PROJECT =	zkt
-VERSION =	0.90
+VERSION =	0.91
 
 HEADER	=	dki.h misc.h domaincmp.h zconf.h config.h strlist.h \
 		zone.h zkt.h debug.h ncparse.h zktr.h

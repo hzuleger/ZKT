@@ -14,9 +14,11 @@ CONF_TIMEINT	zconf.c	40;"	d	file:
 ISCOMMENT	zconf.c	32;"	d	file:
 ISDELIM	zconf.c	34;"	d	file:
 ISTRUE	zconf.c	30;"	d	file:
-KEYSET_FILE_PFX	dnssec-signer.c	575;"	d	file:
+KEYSET_FILE_PFX	dnssec-signer.c	616;"	d	file:
 KeyWords	ncparse.c	/^static struct KeyWords {$/;"	s	file:
 OFFSET	dnssec-signer.c	25;"	d	file:
+OPTSTR	dnssec-signer.c	28;"	d	file:
+OPTSTR	dnssec-signer.c	30;"	d	file:
 TAINTEDCHARS	misc.c	27;"	d	file:
 TOK_DELEGATION	ncparse.c	31;"	d	file:
 TOK_DIR	ncparse.c	21;"	d	file:
@@ -45,6 +47,7 @@ cmpfile	misc.c	/^int	cmpfile (const char *file1, const char *file2)$/;"	f
 conf	zconf.c	/^static	zconf_para_t	conf[] = {$/;"	v	file:
 config	dnssec-signer.c	/^static	zconf_t	*config;$/;"	v	file:
 copyfile	misc.c	/^int	copyfile (const char *fromfile, const char *tofile)$/;"	f
+copyzonefile	misc.c	/^int	copyzonefile (const char *fromfile, const char *tofile)$/;"	f
 create_parent_file	dnssec-zkt.c	/^static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_t *dkp)$/;"	f	file:
 createkey	dnssec-zkt.c	/^static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *conf)$/;"	f	file:
 def	zconf.c	/^static	zconf_t	def = {$/;"	v	file:
@@ -90,6 +93,8 @@ dki_tsearch	dki.c	/^const dki_t	*dki_tsearch (const dki_t *tree, int tag, const 
 domain2buf	zktr.c	/^static	char	*domain2buf (const char *domain, char *buf, int *plen)$/;"	f	file:
 domaincmp	domaincmp.c	/^int     domaincmp (const char *a, const char *b)$/;"	f
 dosigning	dnssec-signer.c	/^static	int	dosigning (zone_t *zp)$/;"	f	file:
+dyn_update_freeze	dnssec-signer.c	/^static	int	dyn_update_freeze (const char *domain, int freeze)$/;"	f	file:
+dynamic_zone	dnssec-signer.c	/^static	int	dynamic_zone = 0;	\/* dynamic zone ? *\/$/;"	v	file:
 error	misc.c	/^void error (char *fmt, ...)$/;"	f
 ex	domaincmp.c	/^} ex[] = {$/;"	v	file:
 extern	dki.c	20;"	d	file:
@@ -218,9 +223,9 @@ zone_estr	zone.c	/^static	char	zone_estr[255+1];$/;"	v	file:
 zone_free	zone.c	/^void	zone_free (zone_t *zp)$/;"	f
 zone_freelist	zone.c	/^void	zone_freelist (zone_t **listp)$/;"	f
 zone_geterrstr	zone.c	/^const	char	*zone_geterrstr ()$/;"	f
-zone_new	zone.c	/^zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *file, const zconf_t *cp)$/;"	f
+zone_new	zone.c	/^zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *file, const char *signed_ext, const zconf_t *cp)$/;"	f
 zone_print	zone.c	/^int	zone_print (const char *mesg, const zone_t *z)$/;"	f
-zone_readdir	zone.c	/^int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf)$/;"	f
+zone_readdir	zone.c	/^int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf, int dyn_zone)$/;"	f
 zone_search	zone.c	/^const zone_t	*zone_search (const zone_t *list, const char *zone)$/;"	f
 zonelist	dnssec-signer.c	/^static	zone_t	*zonelist = NULL;	\/* must be static global because add2zonelist use it *\/$/;"	v	file:
 zskflag	dnssec-zkt.c	/^int	zskflag = 1;$/;"	v

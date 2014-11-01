@@ -14,16 +14,20 @@
 #  define	dbg_line()	fprintf (stderr, "DBG: %s(%d) reached\n", __FILE__, __LINE__)
 #  define	dbg_msg(msg)	fprintf (stderr, "DBG: %s(%d) %s\n", __FILE__, __LINE__, msg)
 #  define	dbg_val0(text)	fprintf (stderr, "%s", text)
+#  define	dbg_val1(fmt, var)	dbg_val (fmt, var)
 #  define	dbg_val(fmt, var)	fprintf (stderr, "DBG: %s(%d) " fmt, __FILE__, __LINE__, var)
 #  define	dbg_val2(fmt, v1, v2)	fprintf (stderr, "DBG: %s(%d) " fmt, __FILE__, __LINE__, v1, v2)
 #  define	dbg_val3(fmt, v1, v2, v3)	fprintf (stderr, "DBG: %s(%d) " fmt, __FILE__, __LINE__, v1, v2, v3)
+#  define	dbg_val4(fmt, v1, v2, v3, v4)	fprintf (stderr, "DBG: %s(%d) " fmt, __FILE__, __LINE__, v1, v2, v3, v4)
 # else
 #  define	dbg_line()
 #  define	dbg_msg(msg)
 #  define	dbg_val0(text)
+#  define	dbg_val1(fmt, var)
 #  define	dbg_val(fmt, str)
 #  define	dbg_val2(fmt, v1, v2)
 #  define	dbg_val3(fmt, v1, v2, v3)
+#  define	dbg_val4(fmt, v1, v2, v3, v4)
 # endif
 
 #endif

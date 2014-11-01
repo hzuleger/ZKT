@@ -12,6 +12,7 @@ extern	int	file_age (const char *fname);
 extern	int	touch (const char *fname, time_t sec);
 extern	int	linkfile (const char *fromfile, const char *tofile);
 extern	int	copyfile (const char *fromfile, const char *tofile);
+extern	int	copyzonefile (const char *fromfile, const char *tofile);
 extern	int	cmpfile (const char *file1, const char *file2);
 extern	char	*str_delspace (char *s);
 extern	int	in_strarr (const char *str, char *const arr[], int cnt);

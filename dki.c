@@ -442,7 +442,6 @@ dki_t	*dki_remove (dki_t *dkp)
 		{
 			pathname (newpath, sizeof (newpath), dkp->dname, newfile, *pext);
 			
-fprintf (stderr, "dki_remove: %s ==> %s \n", path, newpath);
 			dbg_val2 ("dki_remove: %s ==> %s \n", path, newpath);
 			rename (path, newpath);
 		}

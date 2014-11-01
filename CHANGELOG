@@ -1,3 +1,11 @@
+zkt 0.91 -- 1. Apr 2007
+
+* doc	--ksk-rollover option added to usage()
+
+* func	some experimental code for dynamic zones added.
+	new functions added: copyzonefile(), dyn_update_freeze()
+	New option "-d" added. 
+
 zkt 0.90 -- 6. Dec 2006
 
 * func 	CHECK_RESIGN interval added to config.h

@@ -90,7 +90,7 @@ void	zone_freelist (zone_t **listp)
 **	zone_new ()
 **	allocate memory for new zone structure and initialize it
 *****************************************************************/
-zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *file, const zconf_t *cp)
+zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *file, const char *signed_ext, const zconf_t *cp)
 {
 	char	path[MAX_PATHSIZE+1];
 	zone_t	*new;
@@ -123,14 +123,14 @@ zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *fi
 		new->dir = strdup (dir);
 		new->file = strdup (file);
 		/* check if file ends with ".signed" ? */
-		if ( (p = strrchr (new->file, '.')) != NULL && strcmp (p, ".signed") == 0 )
+		if ( (p = strrchr (new->file, '.')) != NULL && strcmp (p, signed_ext) == 0 )
 		{
 			new->sfile = strdup (new->file);
 			*p = '\0';
 		}
 		else
 		{
-			snprintf (path, sizeof (path), "%s.signed", file);
+			snprintf (path, sizeof (path), "%s%s", file, signed_ext);
 			new->sfile = strdup (path);
 		}
 		new->conf = cp;
@@ -145,21 +145,26 @@ zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *fi
 /*****************************************************************
 **	zone_readdir ()
 *****************************************************************/
-int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf)
+int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf, int dyn_zone)
 {
 	char	*p;
 	zconf_t	*localconf;
 	char	path[MAX_PATHSIZE+1];
+	char	*signed_ext = ".signed";
 
 	assert (dir != NULL && *dir != '\0');
 	assert (conf != NULL);
 
 	if ( zone == NULL )	/* zone not given ? */
-		if ( (zone = strrchr (dir, '/')) )	/* try to extract out of directory */
+		if ( (zone = strrchr (dir, '/')) )	/* try to extract zone name out of directory */
 			zone++;
 		else
 			zone = dir;
-	dbg_val3 ("zone_readdir: (dir: %s, zone: %s, zfile: %s zp, cp)\n", dir, zone, zfile ? zfile: "NULL");
+	dbg_val4 ("zone_readdir: (dir: %s, zone: %s, zfile: %s zp, cp, dyn_zone = %d)\n",
+					dir, zone, zfile ? zfile: "NULL", dyn_zone);
+
+	if ( dyn_zone )
+		signed_ext = ".dsigned";
 
 	if ( zfile && (p = strrchr (zfile, '/')) )	/* check if zfile contains a directory */
 	{	
@@ -170,7 +175,7 @@ int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t *
 	}
 	else
 		pathname (path, sizeof (path), dir, LOCALCONF_FILE, NULL);
-	dbg_val ("zone_readdir: check local config file %s\n", path);
+	dbg_val1 ("zone_readdir: check local config file %s\n", path);
 	if ( fileexist (path) )			/* load local config file */
 	{
 		localconf = loadconfig (NULL, NULL);
@@ -181,18 +186,18 @@ int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t *
 	if ( zfile == NULL )
 	{
 		zfile = conf->zonefile;
-		pathname (path, sizeof (path), dir, zfile, ".signed");
+		pathname (path, sizeof (path), dir, zfile, signed_ext);
 	}
 	else
 	{
-		dbg_val("zone_readdir: add .signed to zonefile if not already there ? (%s)\n", zfile);
-		if ( (p = strrchr (zfile, '.')) == NULL || strcmp (p, ".signed") != 0 )
-			pathname (path, sizeof (path), dir, zfile, ".signed");
+		dbg_val2("zone_readdir: add %s to zonefile if not already there ? (%s)\n", signed_ext, zfile);
+		if ( (p = strrchr (zfile, '.')) == NULL || strcmp (p, signed_ext) != 0 )
+			pathname (path, sizeof (path), dir, zfile, signed_ext);
 		else
 			pathname (path, sizeof (path), dir, zfile, NULL);
 	}
 
-	dbg_val("zone_readdir: fileexist (%s): ", path);
+	dbg_val1("zone_readdir: fileexist (%s): ", path);
 	if ( !fileexist (path) )	/* no .signed file found ? ... */
 	{
 		dbg_val0("no!\n");
@@ -201,7 +206,7 @@ int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t *
 	dbg_val0("yes!\n");
 
 	dbg_val("zone_readdir: add zone (%s)\n", zone);
-	zone_new (listp, zone, dir, zfile, conf);
+	zone_new (listp, zone, dir, zfile, signed_ext, conf);
 
 	return 1;
 }

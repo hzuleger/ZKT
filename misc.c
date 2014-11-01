@@ -342,6 +342,109 @@ int	copyfile (const char *fromfile, const char *tofile)
 }
 
 /*****************************************************************
+**	copyzonefile (fromfile, tofile)
+**	copy a already signed zonefile and replace all zone DNSKEY
+**	resource records by one "$INCLUDE dnskey.db" line
+*****************************************************************/
+int	copyzonefile (const char *fromfile, const char *tofile)
+{
+	FILE	*infp;
+	FILE	*outfp;
+	int	len;
+	int	dnskeys;
+	int	multi_line_dnskey;
+	int	bufoverflow;
+	char	buf[1024];
+	char	*p;
+
+	if ( fromfile == NULL )
+		infp = stdin;
+	else
+		if ( (infp = fopen (fromfile, "r")) == NULL )
+			return -1;
+	if ( tofile == NULL )
+		outfp = stdout;
+	else
+		if ( (outfp = fopen (tofile, "w")) == NULL )
+		{
+			if ( fromfile )
+				fclose (infp);
+			return -2;
+		}
+
+	multi_line_dnskey = 0;
+	dnskeys = 0;
+	bufoverflow = 0;
+	while ( fgets (buf, sizeof buf, infp) != NULL ) 
+	{
+		p = buf;
+		if ( !bufoverflow && !multi_line_dnskey && (*p == '@' || isspace (*p)) )	/* check if DNSKEY RR */
+		{
+			do
+				p++;
+			while ( isspace (*p) ) ;
+
+			/* skip TTL */
+			while ( isdigit (*p) )
+				p++;
+
+			while ( isspace (*p) )
+				p++;
+
+			/* skip Class */
+			if ( strncasecmp (p, "IN", 2) == 0 )
+			{
+				p += 2;
+				while ( isspace (*p) )
+					p++;
+			}
+
+			if ( strncasecmp (p, "DNSKEY", 6) == 0 )	/* bingo! */
+			{
+				dnskeys++;
+				p += 6;
+				while ( *p )
+				{
+					if ( *p == '(' )
+						multi_line_dnskey = 1;
+					if ( *p == ')' )
+						multi_line_dnskey = 0;
+					p++;
+				}
+				if ( dnskeys == 1 )
+					fputs ("$INCLUDE dnskey.db\n", outfp);	
+			}
+			else 
+				fputs (buf, outfp);	
+		}
+		else
+		{
+if ( bufoverflow )
+	fprintf (stderr, "buffer overflow\n");
+			if ( !multi_line_dnskey )
+				fputs (buf, outfp);	
+			else
+			{
+				while ( *p && *p != ')' )
+					p++;
+				if ( *p == ')' )
+					multi_line_dnskey = 0;
+			}
+		}
+		
+		len = strlen (buf);
+		bufoverflow = buf[len-1] != '\n';	/* line too long ? */
+	}
+
+	if ( fromfile )
+		fclose (infp);
+	if ( tofile )
+		fclose (outfp);
+
+	return 0;
+}
+
+/*****************************************************************
 **	cmpfile (file1, file2)
 *****************************************************************/
 int	cmpfile (const char *file1, const char *file2)
@@ -723,6 +826,17 @@ main (int argc, char *argv[])
 
 	snprintf (cmd, sizeof(cmd), "head -15 %s", argv[1]);
 	system (cmd);
+}
+#endif
+
+#ifdef COPYZONE_TEST
+const char *progname;
+main (int argc, char *argv[])
+{
+	progname = *argv;
+
+	if ( copyzonefile (argv[1], NULL) < 0 )
+		error ("can't copy zone file %s\n", argv[1]);
 }
 #endif
 

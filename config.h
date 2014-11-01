@@ -41,6 +41,10 @@
 # define	REG_URL		"register.trusted-keys.de:5327"
 //# define	REG_URL		"regkey://trusted-keys.de"
 
+#ifndef BIND_VERSION
+# define	BIND_VERSION	940
+#endif
+
 #ifndef BIND_UTIL_PATH
 # define	BIND_UTIL_PATH	"/usr/local/sbin/"
 #endif
@@ -51,9 +55,9 @@
 
 #ifndef ZKT_VERSION
 # if defined(USE_TREE) && USE_TREE
-#  define	ZKT_VERSION	"vT0.90 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"vT0.91 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
 # else
-#  define	ZKT_VERSION	"v0.90 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"v0.91 (c) Feb 2005 - Dec 2006 Holger Zuleger hznet.de"
 # endif
 #endif
 
