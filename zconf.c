@@ -8,7 +8,37 @@
 **	New config types and some slightly code changes
 **	by Holger Zuleger
 **
-**	See LICENCE file for licence
+**	Copyright (c) Aug 2005, Jeroen Massar, Holger Zuleger.
+**	All rights reserved.
+**	
+**	This software is open source.
+**	
+**	Redistribution and use in source and binary forms, with or without
+**	modification, are permitted provided that the following conditions
+**	are met:
+**	
+**	Redistributions of source code must retain the above copyright notice,
+**	this list of conditions and the following disclaimer.
+**	
+**	Redistributions in binary form must reproduce the above copyright notice,
+**	this list of conditions and the following disclaimer in the documentation
+**	and/or other materials provided with the distribution.
+**	
+**	Neither the name of Jeroen Masar or Holger Zuleger nor the
+**	names of its contributors may be used to endorse or promote products
+**	derived from this software without specific prior written permission.
+**	
+**	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+**	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+**	TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+**	PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+**	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+**	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+**	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+**	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+**	POSSIBILITY OF SUCH DAMAGE.
 **
 ****************************************************************/
 # include <sys/types.h>
@@ -22,7 +52,10 @@
 # include <assert.h>
 # include <ctype.h>
 
+#ifdef HAVE_CONFIG_H
 # include "config.h"
+#endif
+# include "config_zkt.h"
 # include "debug.h"
 # include "misc.h"
 #define extern
@@ -37,16 +70,6 @@
 # define	ISDELIM(c)	( isspace (c) || (c) == ':' || (c) == '=' )
 
 
-#if 0
-# define CONF_END	0
-# define CONF_STRING	1
-# define CONF_INT	2
-# define CONF_TIMEINT	3
-# define CONF_BOOL	4
-# define CONF_ALGO	5
-# define CONF_SERIAL	6
-# define CONF_COMMENT	7
-#else
 typedef enum {
 	CONF_END = 0,
 	CONF_STRING,
@@ -55,16 +78,17 @@ typedef enum {
 	CONF_BOOL,
 	CONF_ALGO,
 	CONF_SERIAL,
+	CONF_FACILITY,
+	CONF_LEVEL,
 	CONF_COMMENT,
 } ctype_t;
-#endif
 
 /*****************************************************************
 **	private (static) variables
 *****************************************************************/
 static	zconf_t	def = {
 	ZONEDIR, RECURSIVE, 
-	1, 0, 0,
+	PRINTTIME, PRINTAGE, LJUST,
 	SIG_VALIDITY, MAX_TTL, KEY_TTL, PROPTIME, Incremental,
 	RESIGN_INT,
 	KSK_LIFETIME, KSK_ALGO, KSK_BITS, KSK_RANDOM,
@@ -73,7 +97,8 @@ static	zconf_t	def = {
 	LOGFILE, LOGLEVEL, SYSLOGFACILITY, SYSLOGLEVEL, VERBOSELOG, 0,
 	DNSKEYFILE, ZONEFILE, KEYSETDIR,
 	LOOKASIDEDOMAIN,
-	SIG_RANDOM, SIG_PSEUDO, SIG_PARAM
+	SIG_RANDOM, SIG_PSEUDO, SIG_GENDS, SIG_PARAM,
+	DIST_CMD	/* deafults to NULL which means to run "rndc reload" */
 };
 
 typedef	struct {
@@ -122,11 +147,10 @@ static	zconf_para_t	confpara[] = {
 	{ "",			0,	CONF_COMMENT,	NULL },
 	{ "",			0,	CONF_COMMENT,	"dnssec-signer options"},
 	{ "--view",		1,	CONF_STRING,	&def.view },
-	// { "ErrorLog",	0,	CONF_STRING,	&def.errlog },
 	{ "LogFile",		0,	CONF_STRING,	&def.logfile },
-	{ "LogLevel",		0,	CONF_STRING,	&def.loglevel },
-	{ "SyslogFacility",	0,	CONF_STRING,	&def.syslogfacility },
-	{ "SyslogLevel",	0,	CONF_STRING,	&def.sysloglevel },
+	{ "LogLevel",		0,	CONF_LEVEL,	&def.loglevel },
+	{ "SyslogFacility",	0,	CONF_FACILITY,	&def.syslogfacility },
+	{ "SyslogLevel",	0,	CONF_LEVEL,	&def.sysloglevel },
 	{ "VerboseLog",		0,	CONF_INT,	&def.verboselog },
 	{ "-v",			1,	CONF_INT,	&def.verbosity },
 	{ "Keyfile",		0,	CONF_STRING,	&def.keyfile },
@@ -135,7 +159,9 @@ static	zconf_para_t	confpara[] = {
 	{ "DLV_Domain",		0,	CONF_STRING,	&def.lookaside },
 	{ "Sig_Randfile",	0,	CONF_STRING,	&def.sig_random },
 	{ "Sig_Pseudorand",	0,	CONF_BOOL,	&def.sig_pseudo },
+	{ "Sig_GenerateDS",	1,	CONF_BOOL,	&def.sig_gends },
 	{ "Sig_Parameter",	0,	CONF_STRING,	&def.sig_param },
+	{ "Distribute_Cmd",	0,	CONF_STRING,	&def.dist_cmd },
 
 	{ NULL,			0,	CONF_END,	NULL},
 };
@@ -212,7 +238,6 @@ static	void set_all_varptr (zconf_t *cp)
 	set_varptr ("zsk_randfile", &cp->z_random);
 
 	set_varptr ("--view", &cp->view);
-	// set_varptr ("errorlog", &cp->errlog);
 	set_varptr ("logfile", &cp->logfile);
 	set_varptr ("loglevel", &cp->loglevel);
 	set_varptr ("syslogfacility", &cp->syslogfacility);
@@ -225,14 +250,16 @@ static	void set_all_varptr (zconf_t *cp)
 	set_varptr ("dlv_domain", &cp->lookaside);
 	set_varptr ("sig_randfile", &cp->sig_random);
 	set_varptr ("sig_pseudorand", &cp->sig_pseudo);
+	set_varptr ("sig_generateds", &cp->sig_gends);
 	set_varptr ("sig_parameter", &cp->sig_param);
+	set_varptr ("distribute_cmd", &cp->dist_cmd);
 }
 
-static	void	parseconfigline (char *buf, zconf_t *z)
+static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 {
 	char		*end, *val, *p;
 	char		*tag;
-	unsigned int	line, len, found;
+	unsigned int	len, found;
 	zconf_para_t	*c;
 
 	p = &buf[strlen(buf)-1];        /* Chop off white space at eol */
@@ -298,6 +325,8 @@ static	void	parseconfigline (char *buf, zconf_t *z)
 			found = 1;
 			switch ( c->type )
 			{
+			case CONF_LEVEL:
+			case CONF_FACILITY:
 			case CONF_STRING:
 				str = (char **)c->var;
 				*str = strdup (val);
@@ -355,14 +384,81 @@ static	void	parseconfigline (char *buf, zconf_t *z)
 	return;
 }
 
+static	void	printconfigline (FILE *fp, zconf_para_t *cp)
+{
+	int	i;
+
+	assert (fp != NULL);
+	assert (cp != NULL);
+
+	switch ( cp->type )
+	{
+	case CONF_COMMENT:
+		if ( cp->var )
+			fprintf (fp, "#   %s\n", (char *)cp->var);
+		else
+			fprintf (fp, "\n");
+		break;
+	case CONF_LEVEL:
+	case CONF_FACILITY:
+		if ( *(char **)cp->var != NULL )
+		{
+			if ( **(char **)cp->var != '\0' )
+			{
+				char	*p;
+
+				fprintf (fp, "%s:\t", cp->label);
+				for ( p = *(char **)cp->var; *p; p++ )
+					putc (toupper (*p), fp);
+				fprintf (fp, "\n");
+			}
+			else
+				fprintf (fp, "%s:\tNONE", cp->label);
+		}
+		break;
+	case CONF_STRING:
+		if ( *(char **)cp->var )
+			fprintf (fp, "%s:\t\"%s\"\n", cp->label, *(char **)cp->var);
+		break;
+	case CONF_BOOL:
+		fprintf (fp, "%s:\t%s\n", cp->label, bool2str ( *(int*)cp->var ));
+		break;
+	case CONF_TIMEINT:
+		i = *(ulong*)cp->var;
+		fprintf (fp, "%s:\t%s", cp->label, timeint2str (i));
+		if ( i )
+			fprintf (fp, "\t# (%d seconds)", i);
+		putc ('\n', fp);
+		break;
+	case CONF_ALGO:
+		i = *(int*)cp->var;
+		fprintf (fp, "%s:\t%s", cp->label, dki_algo2str (i));
+		fprintf (fp, "\t# (Algorithm ID %d)\n", i);
+		break;
+	case CONF_SERIAL:
+		fprintf (fp, "%s:\t", cp->label);
+		if ( *(serial_form_t*)cp->var == Unixtime )
+			fprintf (fp, "unixtime\n");
+		else
+			fprintf (fp, "incremental\n");
+		break;
+	case CONF_INT:
+		fprintf (fp, "%s:\t%d\n", cp->label, *(int *)cp->var);
+		break;
+	case CONF_END:
+		/* NOTREACHED */
+		break;
+	}
+}
+
 /*****************************************************************
 **	public function definition
 *****************************************************************/
 
 /*****************************************************************
 **	loadconfig (file, conf)
-**	Loads a config file into the "conf" structure
-**	If conf is NULL then a new conf struct will be dynamically
+**	Loads a config file into the "conf" structure pointed to by "z".
+**	If "z" is NULL then a new conf struct will be dynamically
 **	allocated.
 **	If no filename is given the conf struct will be initialized
 **	by the builtin default config
@@ -400,7 +496,7 @@ zconf_t	*loadconfig (const char *filename, zconf_t *z)
 	{
 		line++;
 
-		parseconfigline (buf, z);
+		parseconfigline (buf, line, z);
 	}
 	fclose(fp);
 	return z;
@@ -411,6 +507,7 @@ zconf_t	*loadconfig_fromstr (const char *str, zconf_t *z)
 {
 	char		*buf;
 	char		*tok,	*toksave;
+	unsigned int	line;
 
 	if ( z == NULL )
 	{
@@ -433,10 +530,12 @@ zconf_t	*loadconfig_fromstr (const char *str, zconf_t *z)
 	if ( (buf = strdup (str)) == NULL )
 		fatal ("loadconfig_fromstr: Out of memory");
 
+	line = 0;
 	tok = strtok_r (buf, STRCONFIG_DELIMITER, &toksave);
 	while ( tok )
 	{
-		parseconfigline (tok, z);
+		line++;
+		parseconfigline (tok, line, z);
 		tok = strtok_r (NULL, STRCONFIG_DELIMITER, &toksave);
 	}
 	free (buf);
@@ -476,6 +575,8 @@ int	setconfigpar (zconf_t *config, char *entry, const void *pval)
 		{
 			switch ( c->type )
 			{
+			case CONF_LEVEL:
+			case CONF_FACILITY:
 			case CONF_STRING:
 				if ( pval )
 				{
@@ -535,58 +636,63 @@ int	printconfig (const char *fname, const zconf_t *z)
 		
 	set_all_varptr ((zconf_t *)z);
 
-	for ( cp = confpara; cp->type != CONF_END; cp++ )
-	{
-		if ( cp->cmdline )	/* if this is a command line parameter ? */
-			continue;	/* don't print it out */
+	for ( cp = confpara; cp->type != CONF_END; cp++ )	/* loop through all parameter */
+		if ( !cp->cmdline )		/* if this is not a command line parameter ? */
+			printconfigline (fp, cp);	/* print it out */
 
-		switch ( cp->type )
-		{
-		int	i;
+	if ( fp && fp != stdout && fp != stderr )
+		fclose (fp);
 
-		case CONF_COMMENT:
-			if ( cp->var )
-				fprintf (fp, "#   %s\n", (char *)cp->var);
-			else
-				fprintf (fp, "\n");
-			break;
-		case CONF_STRING:
-			if ( *(char **)cp->var )
-				fprintf (fp, "%s:\t\"%s\"\n", cp->label, *(char **)cp->var);
-			break;
-		case CONF_BOOL:
-			fprintf (fp, "%s:\t%s\n", cp->label, bool2str ( *(int*)cp->var ));
-			break;
-		case CONF_TIMEINT:
-			i = *(ulong*)cp->var;
-			fprintf (fp, "%s:\t%s", cp->label, timeint2str (i));
-			if ( i )
-				fprintf (fp, "\t# (%d seconds)", i);
-			putc ('\n', fp);
-			break;
-		case CONF_ALGO:
-			i = *(int*)cp->var;
-			fprintf (fp, "%s:\t%s", cp->label, dki_algo2str (i));
-			fprintf (fp, "\t# (Algorithm ID %d)\n", i);
-			break;
-		case CONF_SERIAL:
-			fprintf (fp, "%s:\t", cp->label);
-			if ( *(serial_form_t*)cp->var == Unixtime )
-				fprintf (fp, "unixtime\n");
-			else
-				fprintf (fp, "incremental\n");
-			break;
-		case CONF_INT:
-			fprintf (fp, "%s:\t%d\n", cp->label, *(int *)cp->var);
-			break;
-		case CONF_END:
-			/* NOTREACHED */
-			break;
-		}
-	}
 	return 1;
 }
 
+#if 0
+/*****************************************************************
+**	printconfigdiff (fname, conf_a, conf_b)
+*****************************************************************/
+int	printconfigdiff (const char *fname, const zconf_t *ref, const zconf_t *z)
+{
+	zconf_para_t	*cp;
+	FILE	*fp;
+
+	if ( ref == NULL || z == NULL )
+		return 0;
+
+	fp = NULL;
+	if ( fname && *fname )
+	{
+		if ( strcmp (fname, "stdout") == 0 )
+			fp = stdout;
+		else if ( strcmp (fname, "stderr") == 0 )
+			fp = stderr;
+		else if ( (fp = fopen(fname, "w")) == NULL )
+		{
+			error ("Could not open config file \"%s\" for writing\n", fname);
+			return -1;
+		}
+	}
+		
+	set_all_varptr ((zconf_t *)z);
+
+	for ( cp = confpara; cp->type != CONF_END; cp++ )	/* loop through all parameter */
+	{
+		if ( cp->cmdline )
+			continue;
+
+		
+			printconfigline (fp, cp);	/* print it out */
+	}
+
+	if ( fp && fp != stdout && fp != stderr )
+		fclose (fp);
+
+	return 1;
+}
+#endif
+
+/*****************************************************************
+**	checkconfig (config)
+*****************************************************************/
 int	checkconfig (const zconf_t *z)
 {
 	if ( z == NULL )
@@ -594,7 +700,7 @@ int	checkconfig (const zconf_t *z)
 
 	if ( z->sigvalidity < (1 * DAYSEC) || z->sigvalidity > (12 * WEEKSEC) )
 	{
-		fprintf (stderr, "Signature should be valid for at least 1 day and not longer than 3 month (12 weeks)\n");
+		fprintf (stderr, "Signature should be valid for at least 1 day and no longer than 3 month (12 weeks)\n");
 		fprintf (stderr, "The current value is %s\n", timeint2str (z->sigvalidity));
 	}
 

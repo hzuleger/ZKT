@@ -17,12 +17,3 @@ example.net		7200	IN DNSKEY 257 3 5 (
 					AbJRycXDYEF1hCNmTK3KsR1JS9dXMKI3WidH
 					+B9rLlBU8w==
 					) ; key id = 1764
-			7200	IN DNSKEY 385 3 5 (
-					BQEAAAABCrDt76ODmeteohszxggclH3vAXO/
-					NXOnXjOzIivP5LaUL4/UuAtafg5JXypl/nCU
-					Vap9FG0K1ebCCBCMJaPCoi7pIgD5EgFzHPnx
-					Zo2wGvtmWYwK3MaBP4U8YzwpVbGpJIBAW+IZ
-					yM89LD6b2cvkJL5YEviPNfMprMTLo7BOMVjM
-					BpG2IuULOHq7dzyIe/ym/RXKuuYc5AVtHCBB
-					fGKU/Wzn0Q==
-					) ; key id = 14957

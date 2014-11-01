@@ -1,3 +1,76 @@
+zkt 0.97 -- 
+
+* bug	LG_* logging level wasn't mapped to syslog level in lg_mesg().
+	gettock() in ncparse.c did not recognize C single line comments "//"
+	(Thanks to Frank Behrens for finding this out)
+
+* misc	dist_and_reload () now calls the "Distribute_Cmd" twice:
+	First with argument "distribute" for signed zone file distribution,
+	second with argument "reload" to initiate a reload.
+	Again see example/flat/dist.sh for an example script.
+
+* bug	full KSK rollover will (mostly) also work for dynamic zones
+	This is a hack and requires further investigation. Currently
+	it will not work if someone is using non standard zone file
+	names.
+
+* misc	default ZSK lifetime set to 3 month
+
+* misc	get_mtime() renamed to file_mtime()
+
+* func	is_exec_ok() added and called in dist_and_reload ()
+
+* func	New parameter "Distribute_Cmd" added for specifing a user
+	defined distribution (and reload) command (See example/flat/dist.sh).
+
+* misc	Changed wording to be a bit more consistent to
+	draft-gudmundsson-life-of-dnskey-00.txt
+	- State of published key will be print as "pub" instead of "pre"
+	  by dnssec-zkt.
+	- Option --pre-publish of dnssec-zkt changed to --published.
+	- Changed wording in all comments and log message from "pre-publish"
+	  to "published".
+
+* func	Highly experimental code to do a full automatic ksk rollover
+	in hierachical mode.
+	ksk_rollover() added in rollover.c; parameter change for ksk_status()
+
+* misc	Changed name of "dnssec-soaserial" to "zkt-soaserial"
+
+* bug	Fixed verbose logging error if -N or -D option was used
+
+* func	Some LG_INFO messages added about key status change
+
+* func	Remove of function to register a new ksk (zktr.[ch])
+
+* misc	Changed licence from GNU GPLv2 to BSD licence
+
+* bug	Fixed bug in logging of ZSK rollover
+
+* misc	Changed tar file to zipped one and archive the files with
+	toplevel directory
+
+* bug	Fixed use of uninitialized vars in zconf.c (line)
+
+* port	Preparation for use of autoconf
+	- config.h renamed to config_zkt.h and change of include directives
+	- conditional include of config.h 
+	- ./configure script is able to determine BIND utility path
+	  (BIND_UTIL_PATH) and version (BIND_VERSION)
+	- compile time options are settable via configure script (--enable-xxx)
+	- For now, the configure script is not able to set the install dir.
+
+* bug	ksk rollover phase2 did not trigger resigning of parent
+	(the parent file was copied to the parent directory only
+	after child zone resigning)
+
+* bug	fixed bad notice message in zskstatus ()
+
+* func	dnssec-zkt -Z print out syslog facility & level with
+	upper case letter and without quotation marks
+
+* func	Syslog facility DAEMON added
+
 zkt 0.96 -- 19. June 2008
 
 * func	Config file option "SIG_Parameter" added.

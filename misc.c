@@ -2,9 +2,36 @@
 **
 **	@(#) misc.c -- helper functions for the dnssec zone key tools
 **
-**	(c) Jan 2005  Holger Zuleger  hznet.de
+**	Copyright (c) Jan 2005, Holger Zuleger HZnet. All rights reserved.
 **
-**	See LICENCE file for licence
+**	This software is open source.
+**
+**	Redistribution and use in source and binary forms, with or without
+**	modification, are permitted provided that the following conditions
+**	are met:
+**
+**	Redistributions of source code must retain the above copyright notice,
+**	this list of conditions and the following disclaimer.
+**
+**	Redistributions in binary form must reproduce the above copyright notice,
+**	this list of conditions and the following disclaimer in the documentation
+**	and/or other materials provided with the distribution.
+**
+**	Neither the name of Holger Zuleger HZnet nor the names of its contributors may
+**	be used to endorse or promote products derived from this software without
+**	specific prior written permission.
+**
+**	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+**	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+**	TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+**	PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+**	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+**	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+**	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+**	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+**	POSSIBILITY OF SUCH DAMAGE.
 **
 *****************************************************************/
 # include <stdio.h>
@@ -19,7 +46,10 @@
 # include <assert.h>
 # include <errno.h>
 # include <fcntl.h>
-# include "config.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+# include "config_zkt.h"
 # include "zconf.h"
 # include "log.h"
 # include "debug.h"
@@ -131,8 +161,9 @@ char	*str_delspace (char *s)
 }
 
 /*****************************************************************
-**	in_strarr (s, arr, cnt)
-**	check if string array 'arr' contains the string 's'
+**	in_strarr (str, arr, cnt)
+**	check if string array 'arr' contains the string 'str'
+**	return 1 if true or 'arr' or 'str' is empty, otherwise 0
 *****************************************************************/
 int	in_strarr (const char *str, char *const arr[], int cnt)
 {
@@ -332,8 +363,8 @@ int	fileexist (const char *name)
 
 /*****************************************************************
 **	filesize (name)
-**	returns the size of the file with the given pathname 'name'.
-**	returns -1 if the file will not exist 
+**	return the size of the file with the given pathname 'name'.
+**	returns -1 if the file not exist 
 *****************************************************************/
 size_t	filesize (const char *name)
 {
@@ -580,21 +611,55 @@ int	cmpfile (const char *file1, const char *file2)
 int	file_age (const char *fname)
 {
 	time_t	curr = time (NULL);
-	time_t	mtime = get_mtime (fname);
+	time_t	mtime = file_mtime (fname);
 
 	return curr - mtime;
 }
 
 /*****************************************************************
-**	get_mtime (fname)
+**	file_mtime (fname)
 *****************************************************************/
-time_t	get_mtime (const char *fname)
+time_t	file_mtime (const char *fname)
 {
 	struct	stat	st;
 
 	if ( stat (fname, &st) < 0 )
 		return 0;
 	return st.st_mtime;
+}
+
+/*****************************************************************
+**	is_exec_ok (prog)
+**	Check if we are running as root or if the file owner of
+**	"prog" do not match the current user or the file permissions
+**	allows file modification for others then the owner.
+**	The same condition will be checked for the group ownership.
+**	return 1 if the execution of the command "prog" will not
+**	open a big security whole, 0 otherwise
+*****************************************************************/
+int	is_exec_ok (const char *prog)
+{
+	uid_t	curr_uid;
+	struct	stat	st;
+
+	if ( stat (prog, &st) < 0 )
+		return 0;
+
+	curr_uid = getuid ();
+	if ( curr_uid == 0 )			/* don't run the cmd if we are root */
+		return 0;
+
+	/* if the file owner and the current user matches and */
+	/* the file mode is not writable except for the owner, we are save */
+	if ( curr_uid == st.st_uid && (st.st_mode & (S_IWGRP | S_IWOTH)) == 0 )
+		return 1;
+
+	/* if the file group and the current group matches and */
+	/* the file mode is not writable except for the group, we are also save */
+	if ( getgid() != st.st_gid && (st.st_mode & (S_IWUSR | S_IWOTH)) == 0 )
+		return 1;
+
+	return 0;
 }
 
 /*****************************************************************
@@ -720,7 +785,7 @@ char	*time2str (time_t sec, int precision)
 {
 	struct	tm	*t;
 	static	char	timestr[31+1];	/* 27+1 should be enough */
-#if defined(HAS_STRFTIME) && HAS_STRFTIME
+#if defined(HAVE_STRFTIME) && HAVE_STRFTIME
 	char	tformat[127+1];
 
 	timestr[0] = '\0';
@@ -830,7 +895,7 @@ char	*age2str (time_t sec)
 # endif
 	if ( sec / WEEKSEC > 0 )
 	{
-		len += snprintf (str+len, strsize - len, "%2luw", sec / WEEKSEC );
+		len += snprintf (str+len, strsize - len, "%2luw", (ulong) sec / WEEKSEC );
 		sec %= WEEKSEC;
 	}
 	else
@@ -857,7 +922,7 @@ char	*age2str (time_t sec)
 	else
 		len += snprintf (str+len, strsize - len, "   ");
 	if ( sec > 0 )
-		snprintf (str+len, strsize - len, "%2lus", sec);
+		snprintf (str+len, strsize - len, "%2lus", (ulong) sec);
 	else
 		len += snprintf (str+len, strsize - len, "   ");
 

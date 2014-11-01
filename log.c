@@ -2,9 +2,37 @@
 **
 **	@(#) log.c -- The ZKT error logging module
 **
-**	(c) June 2008  Holger Zuleger  hznet.de
+**	Copyright (c) June 2008, Holger Zuleger HZnet. All rights reserved.
 **
-**	See LICENCE file for licence
+**	This software is open source.
+**
+**	Redistribution and use in source and binary forms, with or without
+**	modification, are permitted provided that the following conditions
+**	are met:
+**
+**	Redistributions of source code must retain the above copyright notice,
+**	this list of conditions and the following disclaimer.
+**
+**	Redistributions in binary form must reproduce the above copyright notice,
+**	this list of conditions and the following disclaimer in the documentation
+**	and/or other materials provided with the distribution.
+**
+**	Neither the name of Holger Zuleger HZnet nor the names of its contributors may
+**	be used to endorse or promote products derived from this software without
+**	specific prior written permission.
+**
+**	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+**	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+**	TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+**	PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+**	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+**	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+**	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+**	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+**	POSSIBILITY OF SUCH DAMAGE.
+**
 **
 *****************************************************************/
 # include <stdio.h>
@@ -18,7 +46,10 @@
 # include <assert.h>
 # include <errno.h>
 # include <syslog.h>
-# include "config.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+# include "config_zkt.h"
 # include "misc.h"
 # include "debug.h"
 #define extern
@@ -38,7 +69,7 @@ static	const char	*lg_progname;
 typedef	struct {
 	lg_lvl_t	level;
 	const	char	*str;
-	int		syslog_fac;
+	int		syslog_level;
 } lg_symtbl_t;
 
 static	lg_symtbl_t	symtbl[] = {
@@ -51,6 +82,7 @@ static	lg_symtbl_t	symtbl[] = {
 	{ LG_FATAL,	"fatal",	LOG_CRIT },
 
 	{ LG_NONE,	"user",		LOG_USER },
+	{ LG_NONE,	"daemon",	LOG_DAEMON },
 	{ LG_NONE,	"local0",	LOG_LOCAL0 },
 	{ LG_NONE,	"local1",	LOG_LOCAL1 },
 	{ LG_NONE,	"local2",	LOG_LOCAL2 },
@@ -134,6 +166,22 @@ lg_lvl_t	lg_str2lvl (const char *name)
 }
 
 /*****************************************************************
+**	lg_lvl2syslog (level)
+*****************************************************************/
+lg_lvl_t	lg_lvl2syslog (lg_lvl_t level)
+{
+	lg_symtbl_t	*p;
+
+	for ( p = symtbl; p->str; p++ )
+		if ( level == p->level )
+			return p->syslog_level;
+
+	assert ( p->str != NULL );	/* we assume not to reach this! */
+
+	return LOG_DEBUG;	/* if not found, return DEBUG as default */
+}
+
+/*****************************************************************
 **	lg_str2syslog (facility_name)
 *****************************************************************/
 int	lg_str2syslog (const char *facility)
@@ -146,7 +194,7 @@ int	lg_str2syslog (const char *facility)
 
 	for ( p = symtbl; p->str; p++ )
 		if ( strcasecmp (facility, p->str) == 0 )
-			return p->syslog_fac;
+			return p->syslog_level;
 
 	return LG_NONE;
 }
@@ -310,7 +358,7 @@ void	lg_mesg (int priority, char *fmt, ...)
 		fmt = format;
 #endif
 		va_start(ap, fmt);
-		vsyslog (priority, fmt, ap);
+		vsyslog (lg_lvl2syslog (priority), fmt, ap);
 		va_end(ap);
 	}
 
@@ -319,7 +367,7 @@ void	lg_mesg (int priority, char *fmt, ...)
 	{
 #if defined (LOG_WITH_TIMESTAMP) && LOG_WITH_TIMESTAMP
 		gettimeofday (&tv, NULL);
-		t = localtime (&tv.tv_sec);
+		t = localtime ((time_t *) &tv.tv_sec);
 		fprintf (lg_fp, "%04d-%02d-%02d ",
 			t->tm_year+1900, t->tm_mon+1, t->tm_mday);
 		fprintf (lg_fp, "%02d:%02d:%02d.%03ld: ",

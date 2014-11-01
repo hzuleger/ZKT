@@ -1,4 +1,4 @@
-.TH dnssec-zkt 8 "Apr 19, 2008" "ZKT 0.95" ""
+.TH dnssec-zkt 8 "July 27, 2008" "ZKT 0.97" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -49,7 +49,7 @@ dnssec-zkt \(em Secure DNS zone key tool
 .RI "" ... ]
 .br
 .B dnssec-zkt
-.BR \-\-pre-publish= <keytag>
+.BR \-\-published= <keytag>
 .RB [ \-V|--view
 .IR "view" ]
 .RB [ \-c
@@ -349,9 +349,9 @@ The keyid is the numeric keytag with an optionally added zone name separated by 
 Beware that this deletes both private and public keyfiles, thus the key is
 unrecoverable lost.
 .TP
-.BI \-P|A|D " keyid," " \-\-pre-publish=" keyid, " \-\-active=" keyid, " \-\-depreciated=" keyid
+.BI \-P|A|D " keyid," " \-\-published=" keyid, " \-\-active=" keyid, " \-\-depreciated=" keyid
 Change the status of the given dnssec key to
-pre-published
+published
 .RB ( \-P ),
 active
 .RB ( \-A )
@@ -360,7 +360,7 @@ or depreciated
 The
 .I keyid
 is the numeric keytag with an optionally added zone name separated by a colon.
-Setting the status to "pre-publish" or "depreciate" will change the filename
+Setting the status to "published" or "depreciate" will change the filename
 of the private key file to ".published" or ".depreciated" respectivly.
 This prevents the usage of the key as a signing key by the use of
 .IR dnssec-signzone(8) .

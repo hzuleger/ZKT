@@ -2,7 +2,38 @@
 **
 **	@(#) dnssec-signer.c  (c) Jan 2005  Holger Zuleger hznet.de
 **
-**	See LICENCE file for licence
+**	A wrapper around the BIND dnssec-signzone command which is able
+**	to resign a zone if neccessary and doing a zone or key signing key rollover.
+**
+**	Copyright (c) 2005 - 2008, Holger Zuleger HZnet. All rights reserved.
+**	This software is open source.
+**
+**	Redistribution and use in source and binary forms, with or without
+**	modification, are permitted provided that the following conditions
+**	are met:
+**
+**	Redistributions of source code must retain the above copyright notice,
+**	this list of conditions and the following disclaimer.
+**
+**	Redistributions in binary form must reproduce the above copyright notice,
+**	this list of conditions and the following disclaimer in the documentation
+**	and/or other materials provided with the distribution.
+**
+**	Neither the name of Holger Zuleger HZnet nor the names of its contributors may
+**	be used to endorse or promote products derived from this software without
+**	specific prior written permission.
+**
+**	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+**	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+**	TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+**	PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+**	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+**	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+**	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+**	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+**	POSSIBILITY OF SUCH DAMAGE.
 **
 *****************************************************************/
 
@@ -15,8 +46,11 @@
 # include <unistd.h>	
 # include <ctype.h>	
 
-# include "config.h"
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+# include "config_zkt.h"
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 # include <getopt.h>
 #endif
 # include "zconf.h"
@@ -25,7 +59,6 @@
 # include "ncparse.h"
 # include "zone.h"
 # include "dki.h"
-# include "zktr.h"
 # include "rollover.h"
 # include "log.h"
 
@@ -34,7 +67,7 @@
 #else
 # define	short_options	"c:L:V:D:N:o:O:fHhnrv"
 #endif
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{"reload",		no_argument, NULL, 'r'},
 	{"force",		no_argument, NULL, 'f'},
@@ -62,14 +95,16 @@ static struct option long_options[] = {
 static	void	usage (char *mesg, zconf_t *conf);
 static	int	add2zonelist (const char *dir, const char *view, const char *zone, const char *file);
 static	int	parsedir (const char *dir, zone_t **zp, const zconf_t *conf);
-static	int	dosigning (zone_t *zp);
+static	int	dosigning (zone_t *zonelist, zone_t *zp);
 static	int	check_keydb_timestamp (dki_t *keylist, time_t reftime);
 static	int	new_keysetfiles (const char *dir, time_t zone_signing_time);
 static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl);
 static	int	sign_zone (const char *dir, const char *domain, const char *file, const zconf_t *conf);
 static	int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze);
 static	int	reload_zone (const char *domain, const zconf_t *z);
+static	int	dist_and_reload (const zone_t *zp);
 static	void	register_key (dki_t *listp, const zconf_t *z);
+static	void	copy_keyset (const char *dir, const char *domain, const zconf_t *conf);
 
 /**	global command line options	**/
 extern  int	optopt;
@@ -80,6 +115,8 @@ const	char	*progname;
 const	char	*viewname = NULL;
 const	char	*logfile = NULL;
 const	char	*origin = NULL;
+const	char	*namedconf = NULL;
+const	char	*dirname = NULL;
 static	int	verbose = 0;
 static	int	force = 0;
 static	int	reloadflag = 0;
@@ -94,7 +131,6 @@ int	main (int argc, char *const argv[])
 	int	errcnt;
 	int	opt_index;
 	char	errstr[255+1];
-	char	dir[255+1];
 	char	*p;
 	const	char	*defconfname;
 	zone_t	*zp;
@@ -113,7 +149,7 @@ int	main (int argc, char *const argv[])
 
 	zonelist = NULL;
         opterr = 0;
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 	while ( (c = getopt_long (argc, argv, short_options, long_options, &opt_index)) != -1 )
 #else
 	while ( (c = getopt (argc, argv, short_options)) != -1 )
@@ -139,26 +175,17 @@ int	main (int argc, char *const argv[])
 			if ( config == NULL )
 				fatal ("Out of memory\n");
 			break;
+		case 'o':
+			origin = optarg;
+			break;
 		case 'N':
-			memset (dir, '\0', sizeof (dir));
-			if ( config->zonedir )
-				strncpy (dir, config->zonedir, sizeof(dir));
-			if ( !parse_namedconf (optarg, dir, sizeof (dir), add2zonelist) )
-				fatal ("Can't read file %s as namedconf file\n", optarg);
-			if ( zonelist == NULL )
-				fatal ("No signed zone found in file %s\n", optarg);
+			namedconf = optarg;
 			break;
 		case 'D':
-			if ( !parsedir (optarg, &zonelist, config) )
-				fatal ("Can't read directory tree %s\n", optarg);
-			if ( zonelist == NULL )
-				fatal ("No signed zone found in directory tree %s\n", optarg);
+			dirname = optarg;
 			break;
 		case 'L':		/* error log file|directory */
 			logfile = optarg;
-			break;
-		case 'o':
-			origin = optarg;
 			break;
 		case 'f':
 			force++;
@@ -198,7 +225,7 @@ int	main (int argc, char *const argv[])
 	}
 	dbg_line();
 
-	/* store some of the commandline parameter into the config structure */
+	/* store some of the commandline parameter in the config structure */
 	setconfigpar (config, "--view", viewname);
 	setconfigpar (config, "-v", &verbose);
 	if ( logfile == NULL )
@@ -213,7 +240,7 @@ int	main (int argc, char *const argv[])
 #endif
 	lg_args (LG_NOTICE, argc, argv);
 
-	if ( origin )
+	if ( origin )		/* option -o ? */
 	{
 		if ( (argc - optind) <= 0 )	/* no arguments left ? */
 			zone_readdir (".", origin, NULL, &zonelist, config, dynamic_zone);
@@ -230,13 +257,34 @@ int	main (int argc, char *const argv[])
 			fatal ("Couldn't read zone \"%s\"\n", origin);
 		}
 	}
+	if ( namedconf )	/* option -N ? */
+	{
+		char	dir[255+1];
+
+		memset (dir, '\0', sizeof (dir));
+		if ( config->zonedir )
+			strncpy (dir, config->zonedir, sizeof(dir));
+		if ( !parse_namedconf (namedconf, dir, sizeof (dir), add2zonelist) )
+			fatal ("Can't read file %s as namedconf file\n", namedconf);
+		if ( zonelist == NULL )
+			fatal ("No signed zone found in file %s\n", namedconf);
+	}
+	if ( dirname )		/* option -D ? */
+	{
+		if ( !parsedir (dirname, &zonelist, config) )
+			fatal ("Can't read directory tree %s\n", dirname);
+		if ( zonelist == NULL )
+			fatal ("No signed zone found in directory tree %s\n", dirname);
+	}
+
+	/* none of the above: read current directory tree */
 	if ( zonelist == NULL )
 		parsedir (config->zonedir, &zonelist, config);
 
 	for ( zp = zonelist; zp; zp = zp->next )
 		if ( in_strarr (zp->zone, &argv[optind], argc - optind) )
 		{
-			dosigning (zp);
+			dosigning (zonelist, zp);
 			verbmesg (1, zp->conf, "\n");
 		}
 
@@ -246,11 +294,11 @@ int	main (int argc, char *const argv[])
 	lg_mesg (LG_NOTICE, "end of run: %d error%s occured", errcnt, errcnt == 1 ? "" : "s");
 	lg_close ();
 
-	return errcnt < 64 ? errcnt: 64;
+	return errcnt < 64 ? errcnt : 64;
 }
 
 # define	sopt_usage(mesg, value) fprintf (stderr, mesg, value)
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 # define	lopt_usage(mesg, value) fprintf (stderr, mesg, value)
 # define	loptstr(lstr, sstr)     lstr
 #else
@@ -277,7 +325,7 @@ static	void	usage (char *mesg, zconf_t *conf)
 	fprintf (stderr, "\t-c file%s", loptstr (", --config=file\n", ""));
 	fprintf (stderr, "\t\t read config from <file> instead of %s\n", CONFIG_FILE);
 	fprintf (stderr, "\t-O optstr%s", loptstr (", --config-option=\"optstr\"\n", ""));
-	fprintf (stderr, "\t\t set config options from commandline\n");
+	fprintf (stderr, "\t\t set config options on the commandline\n");
 	fprintf (stderr, "\t-L file|dir%s", loptstr (", --logfile=file|dir\n", ""));
 	fprintf (stderr, "\t\t specify file or directory for the log output\n");
 	fprintf (stderr, "\t-D dir%s", loptstr (", --directory=dir\n", ""));
@@ -286,12 +334,13 @@ static	void	usage (char *mesg, zconf_t *conf)
 	fprintf (stderr, "\t\t get the list of secure zones out of the named like config file \n");
 	fprintf (stderr, "\t-o zone%s", loptstr (", --origin=zone", ""));
 	fprintf (stderr, "\tspecify the name of the zone \n");
-	fprintf (stderr, "\t\t The file to sign should be given as an argument (\"%s.signed\")\n", conf->zonefile);
+	fprintf (stderr, "\t\t The file to sign should be given as an argument (default is \"%s.signed\")\n", conf->zonefile);
 	fprintf (stderr, "\t-h%s\t print this help\n", loptstr (", --help", "\t"));
 	fprintf (stderr, "\t-f%s\t force re-signing\n", loptstr (", --force", "\t"));
 	fprintf (stderr, "\t-n%s\t no execution of external signing command\n", loptstr (", --noexec", "\t"));
-	fprintf (stderr, "\t-r%s\t reload zone via <rndc reload zone>\n", loptstr (", --reload", "\t"));
-        fprintf (stderr, "\t-v%s\t be (very) verbose\n", loptstr (", --verbose", "\t"));
+	// fprintf (stderr, "\t-r%s\t reload zone via <rndc reload zone> (or via the external distribution command)\n", loptstr (", --reload", "\t"));
+	fprintf (stderr, "\t-r%s\t reload zone via %s\n", loptstr (", --reload", "\t"), conf->dist_cmd ? conf->dist_cmd: "rndc");
+        fprintf (stderr, "\t-v%s\t be verbose (use twice to be very verbose)\n", loptstr (", --verbose", "\t"));
 
         fprintf (stderr, "\t[zone]\t sign only those zones given as argument\n");
 
@@ -367,7 +416,7 @@ static	int	parsedir (const char *dir, zone_t **zp, const zconf_t *conf)
 	return 1;
 }
 
-static	int	dosigning (zone_t *zp)
+static	int	dosigning (zone_t *zonelist, zone_t *zp)
 {
 	char	path[MAX_PATHSIZE+1];
 	int	err;
@@ -389,7 +438,7 @@ static	int	dosigning (zone_t *zp)
 		lg_mesg (LG_ERROR, "\"%s\": not a secure zone directory (%s)!", zp->zone, zp->dir);
 		return 1;
 	}
-	zfilesig_time = get_mtime (path);
+	zfilesig_time = file_mtime (path);
 
 	pathname (path, sizeof (path), zp->dir, zp->file, NULL);
 	dbg_val("parsezonedir fileexist (%s)\n", path);
@@ -399,32 +448,32 @@ static	int	dosigning (zone_t *zp)
 		lg_mesg (LG_ERROR, "\"%s\": no zone file found (%s)!", zp->zone, path);
 		return 2;
 	}
-	zfile_time = get_mtime (path);
 	
+	zfile_time = file_mtime (path);
 	currtime = time (NULL);
 
 	/* check rfc5011 key signing keys, create new one if neccessary */
 	dbg_msg("parsezonedir check rfc 5011 ksk ");
 	newkey = ksk5011status (&zp->keys, zp->dir, zp->zone, zp->conf);
-	verbmesg (2, zp->conf, "\t\t->ksk5011status returns %o\n", newkey);
 	if ( (newkey & 02) != 02 )	/* not a rfc 5011 zone ? */
 	{
+		verbmesg (2, zp->conf, "\t\t->not a rfc5011 zone, looking for a regular ksk rollover\n");
 		/* check key signing keys, create new one if neccessary */
 		dbg_msg("parsezonedir check ksk ");
-		newkey |= kskstatus (&zp->keys, zp->dir, zp->zone, zp->conf);
+		newkey |= kskstatus (zonelist, zp);
 	}
 	else
 		newkey &= ~02;		/* reset bit 2 */
 
-	/* check age of zone keys, probably depreciate or remove old keys */
+	/* check age of zone keys, probably retire (depreciate) or remove old keys */
 	dbg_msg("parsezonedir check zsk ");
 	newkey += zskstatus (&zp->keys, zp->dir, zp->zone, zp->conf);
 
-	/* create pathname of "dnskey.db" file */
+	/* check age of "dnskey.db" file against age of keyfiles */
 	pathname (path, sizeof (path), zp->dir, zp->conf->keyfile, NULL);
 	dbg_val("parsezonedir check_keydb_timestamp (%s)\n", path);
 	if ( !newkey )
-		newkey = check_keydb_timestamp (zp->keys, get_mtime (path));
+		newkey = check_keydb_timestamp (zp->keys, file_mtime (path));
 
 	/* if we work in subdir mode, check if there is a new keyset- file */
 	newkeysetfile = 0;
@@ -447,7 +496,7 @@ static	int	dosigning (zone_t *zp)
 		snprintf (mesg, sizeof(mesg), "New zone key"); 
 	else if ( newkeysetfile )
 		snprintf (mesg, sizeof(mesg), "Modified KSK in delegated domain"); 
-	else if ( get_mtime (path) > zfilesig_time )
+	else if ( file_mtime (path) > zfilesig_time )
 		snprintf (mesg, sizeof(mesg), "Modified keys");
 	else if ( zfile_time > zfilesig_time )
 		snprintf (mesg, sizeof(mesg), "Zone file edited");
@@ -457,19 +506,24 @@ static	int	dosigning (zone_t *zp)
 	else if ( dynamic_zone )
 		snprintf (mesg, sizeof(mesg), "dynamic zone");
 
-	if ( mesg && *mesg )
+	if ( *mesg )
 		verbmesg (1, zp->conf, "\tRe-signing necessary: %s\n", mesg);
 	else
 		verbmesg (1, zp->conf, "\tRe-signing not necessary!\n");
 
-	if ( mesg && *mesg )
+	if ( *mesg )
 		lg_mesg (LG_NOTICE, "\"%s\": re-signing triggered: %s", zp->zone,  mesg);
 
 	dbg_line ();
 	if ( !(force || newkey || newkeysetfile || zfile_time > zfilesig_time ||	
-	     get_mtime (path) > zfilesig_time ||
+	     file_mtime (path) > zfilesig_time ||
 	     (currtime - zfilesig_time) > zp->conf->resign - (OFFSET) || dynamic_zone) )
+	{
+		verbmesg (2, zp->conf, "\tCheck if there is a parent file to copy\n");
+		if ( zp->conf->keysetdir && strcmp (zp->conf->keysetdir, "..") == 0 )
+			copy_keyset (zp->dir, zp->zone, zp->conf);	/* copy the parent- file if it exist */
 		return 0;	/* nothing to do */
+	}
 
 	/* let's start signing the zone */
 	dbg_line ();
@@ -554,17 +608,23 @@ static	int	dosigning (zone_t *zp)
 			dyn_update_freeze (zp->zone, zp->conf, 0);	/* thaw dynamic zone file */
 
 		{
-			const	char	*tstr = str_delspace (age2str (timer));
+		const	char	*tstr = str_delspace (age2str (timer));
 
-			if ( !tstr || *tstr == '\0' )
-				tstr = "0s";
-			verbmesg (1, zp->conf, "\tSigning completed after %s.\n", tstr);
+		if ( !tstr || *tstr == '\0' )
+			tstr = "0s";
+		verbmesg (1, zp->conf, "\tSigning completed after %s.\n", tstr);
 		}
-
 	}
+
+	copy_keyset (zp->dir, zp->zone, zp->conf);
+
 	if ( err >= 0 && reloadflag )
 	{
-		reload_zone (zp->zone, zp->conf);
+		if ( zp->conf->dist_cmd )
+			dist_and_reload (zp);
+		else
+			reload_zone (zp->zone, zp->conf);
+
 		register_key (zp->keys, zp->conf);
 	}
 
@@ -576,9 +636,6 @@ static	void	register_key (dki_t *list, const zconf_t *z)
 	dki_t	*dkp;
 	time_t	currtime;
 	time_t	age;
-#if defined(REG_URL) 
-	static	int	sd = 0;
-#endif
 
 	assert ( list != NULL );
 	assert ( z != NULL );
@@ -587,26 +644,13 @@ static	void	register_key (dki_t *list, const zconf_t *z)
 	for ( dkp = list; dkp && dki_isksk (dkp); dkp = dkp->next )
 	{
 		age = dki_age (dkp, currtime);
-
-#if defined(REG_URL) 
+#if 0
 		/* announce "new" and active key signing keys */
 		if ( REG_URL && *REG_URL && dki_status (dkp) == DKI_ACT && age <= z->resign * 4 )
 		{
-			if ( sd == 0 )
-			{
-				char	url[1024];
-				char	*proto;
-				char	*host;
-				char	*port = PORT_STR;
-
-				snprintf (url, sizeof(url), "%s", REG_URL);
-				parseurl (url, &proto, &host, &port, NULL);
-				sd = zktr_socket (host, port, 0);
-			}
 			if ( verbose )
 				logmesg ("\tRegister new KSK with tag %d for domain %s\n",
 								dkp->tag, dkp->name);
-			send_zktr_v01 (sd, dkp->name, dkp->tag, dkp->algo, dkp->time);
 		}
 #endif
 	}
@@ -614,12 +658,12 @@ static	void	register_key (dki_t *list, const zconf_t *z)
 
 /*
  *	This function is not working with symbolic links to keyset- files,
- *	because get_mtime() returns the mtime of the underlying file, and *not*
+ *	because file_mtime() returns the mtime of the underlying file, and *not*
  *	that of the symlink file.
  *	This is bad, because the keyset-file will be newly generated by dnssec-signzone
  *	on every re-signing call.
  *	Instead, in the case of a hierarchical directory structure, we copy the file
- *	(and so we change the timestamp) only if it was changed after the last
+ *	(and so we change the timestamp) only if it was modified after the last
  *	generation (checked with cmpfile(), see func sign_zone()).
  */
 # define	KEYSET_FILE_PFX	"keyset-"
@@ -641,8 +685,8 @@ static	int	new_keysetfiles (const char *dir, time_t zone_signing_time)
 			continue;
 
 		pathname (path, sizeof (path), dir, dentp->d_name, NULL);
-		dbg_val2 ("newkeysetfile timestamp of %s = %s\n", path, time2str (get_mtime(path), 's')); 
-		if ( get_mtime (path) > zone_signing_time )
+		dbg_val2 ("newkeysetfile timestamp of %s = %s\n", path, time2str (file_mtime(path), 's')); 
+		if ( file_mtime (path) > zone_signing_time )
 			newkeysetfile = 1;
 	}
 	closedir (dirp);
@@ -706,6 +750,7 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	char	str[1023+1];
 	char	rparam[254+1];
 	char	keysetdir[254+1];
+	const	char	*gends;
 	const	char	*pseudo;
 	const	char	*param;
 	int	len;
@@ -724,6 +769,10 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	if ( !dynamic_zone && conf->serialform == Unixtime )
 		snprintf (str+len, sizeof (str) - len, " -N unixtime");
 #endif
+
+	gends = "";
+	if ( conf->sig_gends )
+		gends = "-g ";
 
 	pseudo = "";
 	if ( conf->sig_pseudo )
@@ -749,12 +798,12 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	dbg_line();
 #if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( dynamic_zone )
-		snprintf (cmd, sizeof (cmd), "cd %s; %s -N increment %s %s%s%s-o %s -e +%d -g %s -f %s.dsigned %s K*.private",
-			dir, SIGNCMD, param, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file, file);
+		snprintf (cmd, sizeof (cmd), "cd %s; %s %s %s%s%s%s-o %s -e +%d %s -N increment -f %s.dsigned %s K*.private",
+			dir, SIGNCMD, param, gends, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file, file);
 	else
 #endif
-		snprintf (cmd, sizeof (cmd), "cd %s; %s %s %s%s%s-o %s -e +%d -g %s %s K*.private",
-			dir, SIGNCMD, param, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file);
+		snprintf (cmd, sizeof (cmd), "cd %s; %s %s %s%s%s%s-o %s -e +%d %s %s K*.private",
+			dir, SIGNCMD, param, gends, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file);
 	verbmesg (2, conf, "\t  Run cmd \"%s\"\n", cmd);
 	*str = '\0';
 	if ( noexec == 0 )
@@ -767,19 +816,24 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	dbg_line();
 	verbmesg (2, conf, "\t  Cmd dnssec-signzone return: \"%s\"\n", str_chop (str, '\n'));
 
+	return 0;
+}
+
+static	void	copy_keyset (const char *dir, const char *domain, const zconf_t *conf)
+{
+	char	fromfile[1024];
+	char	tofile[1024];
+	int	ret;
+
 	/* propagate "keyset"-file to parent dir */
 	if ( conf->keysetdir && strcmp (conf->keysetdir, "..") == 0 )
 	{
-		char	fromfile[1024];
-		char	tofile[1024];
-		int	ret;
-
 		/* check if special parent-file exist (ksk rollover) */
 		snprintf (fromfile, sizeof (fromfile), "%s/parent-%s", dir, domain);
 		if ( !fileexist (fromfile) )	/* use "normal" keyset-file */
 			snprintf (fromfile, sizeof (fromfile), "%s/keyset-%s", dir, domain);
 
-		verbmesg (2, conf, "\t  check \"%s\" against parent dir\n", fromfile);
+		/* verbmesg (2, conf, "\t  check \"%s\" against parent dir\n", fromfile); */
 		snprintf (tofile, sizeof (tofile), "%s/../keyset-%s", dir, domain);
 		if ( cmpfile (fromfile, tofile) != 0 )
 		{
@@ -793,8 +847,6 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 			}
 		}
 	}
-
-	return 0;
 }
 
 static	int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)
@@ -837,6 +889,84 @@ static	int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)
 	return 0;
 }
 
+/*****************************************************************
+**	distribute and reload a zone via "distribute_command"
+*****************************************************************/
+static	int	dist_and_reload (const zone_t *zp)
+{
+	char	path[MAX_PATHSIZE+1];
+	char	cmdline[254+1];
+	char	zone[254+1];
+	char	str[254+1];
+	FILE	*fp;
+
+	assert (zp != NULL);
+	assert (zp->conf->dist_cmd != NULL);
+
+	if ( !is_exec_ok (zp->conf->dist_cmd) )
+	{
+		char	*mesg;
+
+		if ( getuid () == 0 )
+			mesg = "\tDistribution command %s not run as root\n";
+		else
+			mesg = "\tDistribution command %s not run due to strange file mode settings\n";
+
+		verbmesg (1, zp->conf, mesg, zp->conf->dist_cmd);
+		lg_mesg (LG_ERROR, "exec of distribution command %s disabled due to security reasons", zp->conf->dist_cmd);
+
+		return -1;
+	}
+
+	if ( zp->conf->view )
+		snprintf (zone, sizeof (zone), "\"%s\" in view \"%s\"", zp->zone, zp->conf->view);
+	else
+		snprintf (zone, sizeof (zone), "\"%s\"", zp->zone);
+
+
+	pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
+
+	lg_mesg (LG_NOTICE, "%s: distribution triggered", zone);
+	verbmesg (1, zp->conf, "\tDistribute zone %s\n", zone);
+	if ( zp->conf->view )
+		snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s %s", zp->conf->dist_cmd, zp->zone, path, zp->conf->view);
+	else
+		snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s", zp->conf->dist_cmd, zp->zone, path);
+
+	*str = '\0';
+	if ( noexec == 0 )
+	{
+		verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmdline);
+		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+			return -2;
+		pclose (fp);
+		verbmesg (2, zp->conf, "\t  %s distribute return: \"%s\"\n", zp->conf->dist_cmd, str_chop (str, '\n'));
+	}
+
+
+	lg_mesg (LG_NOTICE, "%s: reload triggered", zone);
+	verbmesg (1, zp->conf, "\tReload zone %s\n", zone);
+	if ( zp->conf->view )
+		snprintf (cmdline, sizeof (cmdline), "%s reload %s %s %s", zp->conf->dist_cmd, zp->zone, path, zp->conf->view);
+	else
+		snprintf (cmdline, sizeof (cmdline), "%s reload %s %s", zp->conf->dist_cmd, zp->zone, path);
+
+	*str = '\0';
+	if ( noexec == 0 )
+	{
+		verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmdline);
+		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+			return -2;
+		pclose (fp);
+		verbmesg (2, zp->conf, "\t  %s reload return: \"%s\"\n", zp->conf->dist_cmd, str_chop (str, '\n'));
+	}
+
+	return 0;
+}
+
+/*****************************************************************
+**	reload a zone via "rndc"
+*****************************************************************/
 static	int	reload_zone (const char *domain, const zconf_t *z)
 {
 	char	cmdline[254+1];
@@ -844,7 +974,7 @@ static	int	reload_zone (const char *domain, const zconf_t *z)
 	FILE	*fp;
 
 	assert (z != NULL);
-	// fprintf (stderr, "relaod_zone %d :%s: :%s:\n", z->verbosity, domain, z->view);
+	// fprintf (stderr, "reload_zone %d :%s: :%s:\n", z->verbosity, domain, z->view);
 	if ( z->view )
 		snprintf (str, sizeof (str), "\"%s\" in view \"%s\"", domain, z->view);
 	else
@@ -858,17 +988,15 @@ static	int	reload_zone (const char *domain, const zconf_t *z)
 	else
 		snprintf (cmdline, sizeof (cmdline), "%s reload %s", RELOADCMD, domain);
 
-	verbmesg (2, z, "\t  Run cmd \"%s\"\n", cmdline);
 	*str = '\0';
 	if ( noexec == 0 )
 	{
+		verbmesg (2, z, "\t  Run cmd \"%s\"\n", cmdline);
 		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
 			return -1;
 		pclose (fp);
+		verbmesg (2, z, "\t  rndc reload return: \"%s\"\n", str_chop (str, '\n'));
 	}
-
-	verbmesg (2, z, "\t  rndc reload return: \"%s\"\n", str_chop (str, '\n'));
 
 	return 0;
 }
-

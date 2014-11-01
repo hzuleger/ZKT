@@ -23,7 +23,7 @@ name of zkt-<ISOdate&timeUTC>.log" will be created on each dnssec-signer run.
 
 Logging into the syslog channel could be enabled via the config file
 parameter "SyslogFacility".
-	SyslogFacility:	"none"|"user"|"local0"|..|"local7" (default is "user")
+	SyslogFacility:	NONE|USER|DAEMON|LOCAL0|..|LOCAL7 (default is USER)
 
 For both channels, the log level could be independently set to one
 of six log levels:
@@ -31,11 +31,11 @@ of six log levels:
 	LB_NOTICE, LG_INFO, LG_DEBUG
 
 The loglevel is settable via the config file parameter :
-	SyslogLevel: "fatal"|"error"|"warning"|"notice"|"info"|"debug"
-		(default is "error")
+	SyslogLevel: FATAL|ERROR|WARNING|NOTICE|INFO|DEBUG
+		(default is ERROR)
 and
-	LogLevel: "fatal"|"error"|"warning"|"notice"|"info"|"debug"
-   		(default is "notice")
+	LogLevel: FATAL|ERROR|WARNING|NOTICE|INFO|DEBUG
+   		(default is NOTICE)
 
 All the log parameters are settable on the commandline via the generic
 option -O "optstring" (--config-option="opt").
@@ -67,33 +67,33 @@ Some recomended and useful logging settings
 
 - The default setting
 	LogFile: ""
-	SyslogFacility: "user"
-	SyslogLevel: "notice"
+	SyslogFacility: USER
+	SyslogLevel: NOTICE
 	VerboseLog: 0
 
 - Setting as in version v0.95
 	LogFile: "zkt-error.log"	# or a directory for seperate logfiles
-	LogLevel: "error"
-	SyslogFacility: "none"
+	LogLevel: ERROR
+	SyslogFacility: NONE
 	VerboseLog: 0
 
 - Setting as in previous versions
 	LogFile: ""
-	SyslogFacility: "none"
+	SyslogFacility: NONE
 	VerboseLog: 0
 
 - Recommended setting for normal usage
 	LogFile: "zkt.log"	# or a directory for seperate logfiles
-	LogLevel: "error"
-	SyslogFacility: "user"
-	SyslogLevel: "notice"
+	LogLevel: ERROR
+	SyslogFacility: USER
+	SyslogLevel: NOTICE
 	VerboseLog: 0
 	
 - Recommended setting for debugging
 	LogFile: "zkt.log"	# or a directory for seperate logfiles
-	LogLevel: "debug"
-	SyslogFacility: "user"
-	SyslogLevel: "notice"
+	LogLevel: DEBUG
+	SyslogFacility: USER
+	SyslogLevel: NOTICE
 	VerboseLog: 2
 	
 - 

@@ -1,9 +1,40 @@
 /*****************************************************************
 **
 **	@(#) dnssec-zkt.c (c) Jan 2005  Holger Zuleger  hznet.de
-**	Secure DNS zone key tool
 **
-**	See LICENCE file for licence
+**	Secure DNS zone key tool
+**	A wrapper command around the BIND dnssec-keygen utility
+**
+**	Copyright (c) 2005 - 2008, Holger Zuleger HZnet. All rights reserved.
+**
+**	This software is open source.
+**
+**	Redistribution and use in source and binary forms, with or without
+**	modification, are permitted provided that the following conditions
+**	are met:
+**
+**	Redistributions of source code must retain the above copyright notice,
+**	this list of conditions and the following disclaimer.
+**
+**	Redistributions in binary form must reproduce the above copyright notice,
+**	this list of conditions and the following disclaimer in the documentation
+**	and/or other materials provided with the distribution.
+**
+**	Neither the name of Holger Zuleger HZnet nor the names of its contributors may
+**	be used to endorse or promote products derived from this software without
+**	specific prior written permission.
+**
+**	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+**	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+**	TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+**	PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+**	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+**	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+**	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+**	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+**	POSSIBILITY OF SUCH DAMAGE.
 **
 *****************************************************************/
 
@@ -15,8 +46,11 @@
 # include <unistd.h>
 # include <ctype.h>
 
-# include "config.h"
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+# include "config_zkt.h"
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 # include <getopt.h>
 #endif
 
@@ -53,7 +87,7 @@ static	char	*kskdomain = "";
 static	const	char	*view = "";
 
 # define	short_options	":0:1:2:3:9A:C:D:P:S:R:HKTs:ZV:afF:c:O:dhkLl:prtez"
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{"ksk-rollover",	no_argument, NULL, '9'},
 	{"ksk-status",		required_argument, NULL, '0'},
@@ -81,7 +115,7 @@ static struct option long_options[] = {
 	{"config",		required_argument, NULL, 'c'},
 	{"option",		required_argument, NULL, 'O'},
 	{"config-option",	required_argument, NULL, 'O'},
-	{"pre-publish",		required_argument, NULL, 'P'},
+	{"published",		required_argument, NULL, 'P'},
 	{"standby",		required_argument, NULL, 'S'},
 	{"active",		required_argument, NULL, 'A'},
 	{"depreciated",		required_argument, NULL, 'D'},
@@ -99,7 +133,7 @@ static struct option long_options[] = {
 static	int	parsedirectory (const char *dir, dki_t **listp);
 static	void	parsefile (const char *file, dki_t **listp);
 static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *conf);
-static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, const zconf_t *conf);
+static	void	ksk_roll (const char *keyname, int phase, const dki_t *list, const zconf_t *conf);
 static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_t *dkp);
 static	void    usage (char *mesg, zconf_t *cp);
 static	const char *parsetag (const char *str, int *tagp);
@@ -123,7 +157,7 @@ int	main (int argc, char *argv[])
 	const	char	*defconfname = NULL;
 	char	*p;
 	char	str[254+1];
-	const char	*keyname;
+	const char	*keyname = NULL;
 	int		searchtag;
 	zconf_t	*config;
 
@@ -142,7 +176,8 @@ int	main (int argc, char *argv[])
 
         opterr = 0;
 	opt_index = 0;
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+	action = 0;
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 	while ( (c = getopt_long (argc, argv, short_options, long_options, &opt_index)) != -1 )
 #else
 	while ( (c = getopt (argc, argv, short_options)) != -1 )
@@ -151,7 +186,7 @@ int	main (int argc, char *argv[])
 		switch ( c )
 		{
 		case '9':		/* ksk rollover help */
-			ksk_rollover ("help", c - '0', NULL, NULL);
+			ksk_roll ("help", c - '0', NULL, NULL);
 			exit (1);
 		case '1':		/* ksk rollover: create new key */
 		case '2':		/* ksk rollover: publish DS */
@@ -221,7 +256,7 @@ int	main (int argc, char *argv[])
 			setglobalflags (config);
 			checkconfig (config);
 			break;
-		case 'O':		/* read option from comanndline */
+		case 'O':		/* read option from commandline */
 			config = loadconfig_fromstr (optarg, config);
 			setglobalflags (config);
 			checkconfig (config);
@@ -358,7 +393,7 @@ int	main (int argc, char *argv[])
 	case '2':	/* ksk rollover publish DS */
 	case '3':	/* ksk rollover delete old key */
 	case '0':	/* ksk rollover status */
-		ksk_rollover (kskdomain, action - '0', data, config);
+		ksk_roll (kskdomain, action - '0', data, config);
 		break;
 	case 'F':
 		zkt_setkeylifetime (data);
@@ -371,7 +406,7 @@ int	main (int argc, char *argv[])
 }
 
 # define	sopt_usage(mesg, value)	fprintf (stderr, mesg, value)
-#if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 # define	lopt_usage(mesg, value)	fprintf (stderr, mesg, value)
 # define	loptstr(lstr, sstr)	lstr
 #else
@@ -403,10 +438,10 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "\t\tKSK (use -k):  %s %d bits\n", dki_algo2str (cp->k_algo), cp->k_bits);
         fprintf (stderr, "\t\tZSK (default): %s %d bits\n", dki_algo2str (cp->z_algo), cp->z_bits);
         fprintf (stderr, "\n");
-        fprintf (stderr, "Change key status of specified key to pre-publish, active or depreciated\n");
+        fprintf (stderr, "Change key status of specified key to published, active or depreciated\n");
         fprintf (stderr, "\t(<keyspec> := tag | tag:name) \n");
         sopt_usage ("\tusage: %s -P|-A|-D <keyspec> [-dr] [-c config] [dir ...]\n", progname);
-        lopt_usage ("\tusage: %s --pre-publish=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --published=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         lopt_usage ("\tusage: %s --active=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         lopt_usage ("\tusage: %s --depreciated=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\n");
@@ -487,7 +522,7 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 	if ( dkp == NULL )
 		fatal ("Can't create key %s: %s!\n", keyname, dki_geterrstr ());
 
-	/* create a new key always in state pre-published, which means "standby" for ksk */
+	/* create a new key always in state published, which means "standby" for ksk */
 	dki_setstatus (dkp, DKI_PUB);
 }
 
@@ -507,7 +542,7 @@ static	int	get_parent_phase (const char *file)
 	return phase;
 }
 
-static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, const zconf_t *conf)
+static	void	ksk_roll (const char *keyname, int phase, const dki_t *list, const zconf_t *conf)
 {
 	char    path[MAX_PATHSIZE+1];
 	zconf_t localconf;
@@ -556,7 +591,7 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 	if ( keyname == NULL || *keyname == '\0' )
 		fatal ("ksk rollover: no domain!");
 
-	dbg_val2 ("ksk_rollover: keyname %s, phase = %d\n", keyname, phase);
+	dbg_val2 ("ksk_roll: keyname %s, phase = %d\n", keyname, phase);
 
 	/* search for already existent key to get the directory name */
 	if ( (keylist = (dki_t *)zkt_search (list, 0, keyname)) == NULL )
@@ -659,7 +694,7 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 		if ( parent_phase != 2 )
 			fatal ("Parent file exists but is in wrong state (phase = %d)\n", parent_phase);
 		if ( parent_age < parent_propagation + key_ttl )
-			fatal ("ksk_rollover (phase3): you have to wait for DS propagation  (at least %dsec or %s)\n",
+			fatal ("ksk_rollover (phase3): you have to wait for DS propagation (at least %dsec or %s)\n",
 				parent_propagation + key_ttl - parent_age,
 				str_delspace (age2str (parent_propagation + key_ttl - parent_age)));
 		/* remove the parentfile */
@@ -679,8 +714,9 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 *****************************************************************/
 static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_t *dkp)
 {
-	char	*p;
 	FILE	*fp;
+
+	assert ( fname != NULL );
 
 	if ( dkp == NULL || (phase != 1 && phase != 2) )
 		return 0;
@@ -693,18 +729,7 @@ static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_
 	else
 		fprintf (fp, "; KSK rollover phase2 (new key)\n");
 
-	fprintf (fp, "%s ", dkp->name);
-	if ( ttl > 0 )
-		fprintf (fp, "%d ", ttl);
-	fprintf (fp, "IN DNSKEY  ");
-	fprintf (fp, "%d 3 %d (", dkp->flags, dkp->algo);
-	fprintf (fp, "\n\t\t\t"); 
-	for ( p = dkp->pubkey; *p ; p++ )
-		if ( *p == ' ' )
-			fprintf (fp, "\n\t\t\t"); 
-		else
-			putc (*p, fp);
-	fprintf (fp, "\n\t\t) ; key id = %u\n", dkp->tag); 
+	dki_prt_dnskeyttl (dkp, fp, ttl);
 	fclose (fp);
 
 	return phase;

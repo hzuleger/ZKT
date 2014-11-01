@@ -1,7 +1,7 @@
-TODO list as of zkt-0.96
+TODO list as of zkt-0.97
 
 general:
-	Renaming of the tools to zkt-?? ? 
+	Renaming of the tools to zkt-* ? 
 
 dnssec-zkt:
  feat	option to specify the key age as remaining lifetime
@@ -10,8 +10,14 @@ dnssec-zkt:
 	implemented without big effort(?).
 
 dnssec-signer:
- feat	The tool depends on a directory structure
-	
+ bug	Distribute_Cmd will not work properly on dynamic zones
+
+ bug	Automatic KSK rollover of dynamic zones will only work if the parent
+ 	uses the standard name for the signed zonefile (zonefile.db.signed).
+
+ bug	Phase3 of manual ksk rollover do not trigger a resigning of the zone
+ 	(Key removal is not recognized by dosigning () function )
+
  bug	There is no online checking of the key material by design.
  	So the signer command checks the status of the key as they
 	are represented in the file system and not in the zone.
@@ -21,11 +27,6 @@ dnssec-signer:
 	option -r when you use dnssec-signer on a production zone.
 	Then the time of propagation is (more or less) equal to the timestamp
 	of the zone.db.signed file.
-
- feat	For security reasons the signing process shouldn't be run
- 	on the master name server, or the master should be a hidden one.
-	A mechanism for copying the signed zone to the production name
-	server and reload the zone would be helpful
 
  bug	The max_TTL and Key_TTL parameter should be set to the value found
  	in the zone. A mechanism for setting up a dnssec.conf file for the

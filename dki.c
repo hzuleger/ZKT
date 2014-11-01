@@ -2,7 +2,39 @@
 **
 **	@(#) dki.c  (c) Jan 2005  Holger Zuleger  hznet.de
 **
-**	See LICENCE file for licence
+**	A library for managing BIND dnssec key files.
+**
+**	Copyright (c) Jan 2005, Holger Zuleger HZnet. All rights reserved.
+**
+**	This software is open source.
+**
+**	Redistribution and use in source and binary forms, with or without
+**	modification, are permitted provided that the following conditions
+**	are met:
+**
+**	Redistributions of source code must retain the above copyright notice,
+**	this list of conditions and the following disclaimer.
+**
+**	Redistributions in binary form must reproduce the above copyright notice,
+**	this list of conditions and the following disclaimer in the documentation
+**	and/or other materials provided with the distribution.
+**
+**	Neither the name of Holger Zuleger HZnet nor the names of its contributors may
+**	be used to endorse or promote products derived from this software without
+**	specific prior written permission.
+**
+**	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+**	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+**	TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+**	PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+**	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+**	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+**	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+**	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+**	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+**	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+**	POSSIBILITY OF SUCH DAMAGE.
+**
 **
 *****************************************************************/
 
@@ -16,7 +48,10 @@
 # include <sys/stat.h>
 # include <dirent.h>
 # include <assert.h>
-# include "config.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+# include "config_zkt.h"
 # include "debug.h"
 # include "domaincmp.h"
 # include "misc.h"
@@ -472,7 +507,7 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 	/* 2) change the filename of the private key in all other cases */
 	totime = 0L;
 	if ( preserve_time )
-		totime = get_mtime (frompath);    /* get original timestamp */
+		totime = file_mtime (frompath);    /* get original timestamp */
 	topath[0] = '\0';
 	switch ( status )
 	{
@@ -482,7 +517,7 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 	case 'd':
 		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_DEP_FILEEXT);
 		break;
-	case 's':		/* standby means a "pre-publish KSK" */
+	case 's':		/* standby means a "published KSK" */
 		if ( !dki_isksk (dkp) )
 			return 2;
 		status = 'p';
@@ -510,7 +545,7 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 /*****************************************************************
 **	dki_remove ()
 **	rename files associated with key, so that the keys are not
-**	recogized by the zkt tools e.g.
+**	recognized by the zkt tools e.g.
 **	Kdo.ma.in.+001+12345.key ==> kdo.ma.in.+001+12345.key 
 **	(second one starts with a lower case 'k')
 *****************************************************************/
@@ -1027,7 +1062,7 @@ const	char	*dki_statusstr (const dki_t *dkp)
 	case DKI_PUB:   if ( dki_isksk (dkp) )
 				return "standby";
 			else
-				return "prepublished";
+				return "published";
 	case DKI_DEP:   return "depreciated";
 	case DKI_REV:   return "revoked";
 	case DKI_SEP:   return "sep";
