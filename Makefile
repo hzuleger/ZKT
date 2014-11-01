@@ -17,7 +17,7 @@ CFLAGS	+=	$(PROFILE) $(OPTIM)
 LDFLAGS	+=	$(PROFILE)
 
 PROJECT =	zkt
-VERSION =	0.92
+VERSION =	0.93
 
 HEADER	=	dki.h misc.h domaincmp.h zconf.h config.h strlist.h \
 		zone.h zkt.h debug.h ncparse.h zktr.h
@@ -34,11 +34,29 @@ OBJ_ZKT	=	$(SRC_ZKT:.c=.o)
 MAN_ZKT	=	dnssec-zkt.8
 PROG_ZKT= dnssec-zkt
 
-MAN	=	$(MAN_ZKT) $(MAN_SIG)
-OTHER	=	README BUGS LICENSE CHANGELOG tags Makefile examples
-SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(MAN) $(OTHER)
+SRC_SER	=	dnssec-soaserial.c
+OBJ_SER	=	$(SRC_SER:.c=.o)
+#MAN_SER	=	dnssec-soaserial.8
+PROG_SER= dnssec-soaserial
 
-all:	$(PROG_ZKT) $(PROG_SIG) 
+MAN	=	$(MAN_ZKT) $(MAN_SIG) #$(MAN_SER)
+OTHER	=	README BUGS LICENSE CHANGELOG tags Makefile examples
+SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(SRC_SER) $(MAN) $(OTHER)
+
+
+all:	$(PROG_ZKT) $(PROG_SIG) $(PROG_SER)
+
+macos:		## for MAC OS
+macos:
+	$(MAKE) CFLAGS="$(CFLAGS) -D HAS_UTYPES=0" all
+
+solaris:	## for solaris
+solaris:
+	@$(MAKE) CFLAGS="$(CFLAGS) -D HAS_GETOPT_LONG=0" all
+
+linux:		## for linux (default)
+linux:
+	@$(MAKE) all
 
 $(PROG_SIG):	$(OBJ_SIG) $(OBJ_ALL) Makefile
 	$(CC) $(LDFLAGS) $(OBJ_SIG) $(OBJ_ALL) -o $(PROG_SIG)
@@ -46,14 +64,19 @@ $(PROG_SIG):	$(OBJ_SIG) $(OBJ_ALL) Makefile
 $(PROG_ZKT):	$(OBJ_ZKT) $(OBJ_ALL) Makefile
 	$(CC) $(LDFLAGS) $(OBJ_ZKT) $(OBJ_ALL) -o $(PROG_ZKT)
 
-install:	$(PROG_ZKT) $(PROG_SIG)
-	cp $(PROG_ZKT) $(PROG_SIG) $(INSTALL_DIR)
+$(PROG_SER):	$(OBJ_SER) Makefile
+	$(CC) $(LDFLAGS) $(OBJ_SER) -o $(PROG_SER)
 
-tags:	$(SRC_ALL) $(SRC_SIG) $(SRC_ZKT)
-	ctags $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT)
+install:	## install binaries in INSTALL_DIR
+install:	$(PROG_ZKT) $(PROG_SIG) $(PROG_SER)
+	cp $(PROG_ZKT) $(PROG_SIG) $(PROG_SER) $(INSTALL_DIR)
 
+tags:	$(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(SRC_SER)
+	ctags $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(SRC_SER)
+
+clean:		## remove objectfiles and binaries
 clean:
-	rm -f $(OBJ_SIG) $(OBJ_ZKT) $(OBJ_ALL)
+	rm -f $(OBJ_SIG) $(OBJ_ZKT) $(OBJ_SER) $(OBJ_ALL)
 
 tar:	$(PROJECT)-$(VERSION).tar
 
@@ -73,7 +96,10 @@ $(PROJECT)-$(VERSION).tar:	$(SAVE)
 	tar cvf $(PROJECT)-$(VERSION).tar $(SAVE)
 
 depend:
-	$(CC) -MM $(SRC_SIG) $(SRC_ZKT) $(SRC_ALL)
+	$(CC) -MM $(SRC_SIG) $(SRC_ZKT) $(SRC_SER) $(SRC_ALL)
+
+help:
+	@grep "^.*:[ 	]*##" Makefile
 
 ## all dependicies
 #:r !make depend

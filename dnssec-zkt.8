@@ -1,4 +1,4 @@
-.TH dnssec-zkt 8 "Oct 1, 2007" "ZKT 0.92" ""
+.TH dnssec-zkt 8 "Nov 1, 2007" "ZKT 0.93" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -272,7 +272,12 @@ the
 .B \-p
 option is specified.
 .TP
-.BI \-R " keyid" ", \-\-rename=" keyid
+.BI \-R " keyid" ", \-\-revoke=" keyid
+Revoke the key signing key with the given keyid.
+A revoked key has bit 8 in the flags filed set (see RFC5011).
+The keyid is the numeric keytag with an optionally added zone name separated by a colon.
+.TP
+.BI \-\-rename=" keyid
 Rename the key files of the key with the given keyid
 (Look at key file names starting with an lower 'k').
 The keyid is the numeric keytag with an optionally added zone name separated by a colon.

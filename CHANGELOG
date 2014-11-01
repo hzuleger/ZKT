@@ -1,6 +1,27 @@
+zkt 0.93 -- 1. Nov 2007
+
+* func	The ksk registration mechanism is disabled by
+	default (see REG_URL in config.h).
+
+* func	Basic support for revoke flag added (RFC5011).
+	Semantic of option -R of dnssec-zkt changed.
+
+* func	Undocumented option -S changed to lower case.
+	Pre-pulished KSK will be shown as "standby" key.
+	New Option -S (standby) for pre-publish KSK.
+
+* func	New command dnssec-soaserial added.
+
+* bug	dnssec-signer do not print the incremented serial
+	number anymore.
+	time2str() fixed bug in time format (HAS_STRFTIME=0).
+
+* port	New build dependencies "solaris", "macos" and "help"
+	added to Makefile.
+
 zkt 0.92 -- 1. Oct 2007
 
-* func	Parameter "Serialformat" in dnssec.conf added 
+* func	Parameter "Serialformat" in dnssec.conf added .
 	Now it is possible to use the unixtime format for
 	the SOA serial number. If you use BIND 9.4 or
 	greater in conjunction with this, than there is no
@@ -9,11 +30,11 @@ zkt 0.92 -- 1. Oct 2007
 	-N option of dnssec-signzone and the suggestion to
 	add the unixtime support to zkt)
 	
-* func	Option --ksk-roll-stat added
+* func	Option --ksk-roll-stat added.
 
 * port	Added macro HAS_GETOPT_LONG to support OS with
-	lack of getopt_long() (e.g. solaris)
-	Options -[01239] added
+	lack of getopt_long() (e.g. solaris).
+	Options -[01239] added.
 
 * misc	Unused macro HAS_ULONG removed from config.h.
 	Deklaration of unsigned types moved from dki.h to
@@ -22,57 +43,57 @@ zkt 0.92 -- 1. Oct 2007
 	Unused macro isblank() (ncparse.c) removed.
 
 * bug	In dosigning(): freeze the dynamic zone _before_ copying
-	the zone file
+	the zone file.
 
 zkt 0.91 -- 1. Apr 2007
 
-* doc	--ksk-rollover option added to usage()
+* doc	--ksk-rollover option added to usage().
 
 * func	some experimental code for dynamic zones added.
-	new functions added: copyzonefile(), dyn_update_freeze()
+	new functions added: copyzonefile(), dyn_update_freeze().
 	New option "-d" added. 
 
 zkt 0.90 -- 6. Dec 2006
 
-* func 	CHECK_RESIGN interval added to config.h
+* func 	CHECK_RESIGN interval added to config.h.
 	This is the dnssec-signer calling interval (at least 1 day or 86400 sec).
 
 * func 	new function dki_destroy() added; semantic of dk_remove()
-	changed to rename the key files instead of physical deletion
+	changed to rename the key files instead of physical deletion.
 
-* doc	Setup of new example directory (flat and hierarchical)
+* doc	Setup of new example directory (flat and hierarchical).
 
-* doc	dnssec-zkt man page updated
+* doc	dnssec-zkt man page updated.
 	Added some comments in misc.c
 
 * misc	function strtaint() renamed to str_untaint(),
-	dki_keycmp() renamed to dki_tagcmp()
+	dki_keycmp() renamed to dki_tagcmp().
 
-* func	New parameter key_ttl added to dnssec.conf
-	New func dki_prt_dnskeyttl () added
-	Now dnskey.db is written with key_ttl value
+* func	New parameter key_ttl added to dnssec.conf.
+	New func dki_prt_dnskeyttl () added.
+	Now dnskey.db is written with key_ttl value.
 
 * func	dnssec-signer: In hierarchical mode sign_zone() copies the
 	parent-file (if such a file exist) instead of the
 	keyset-file to the parent directory.
 
 * func	dnssec-zkt: Option --ksk-roll-phase[123] and function
-	ksk_rollover() added
+	ksk_rollover() added.
 
 * misc	zconf: default values for sigvalidity, resign_int etc. changed,
-	new dnssec.conf example file created
+	new dnssec.conf example file created.
 
-* func	dnssec-zkt: Long option support added 
+* func	dnssec-zkt: Long option support added.
 
 zkt 0.83 -- 11. Sep 2006
 
 * bug	dosigning(): Fixed bug in the bug fixing of printing undefined
-	serial number if incr_serial() failed. (Thanks to Randy McCasskill)
+	serial number if incr_serial() failed. (Thanks to Randy McCasskill).
 
 zkt 0.82 -- 8. Sep 2006
 
 * bug	Use option -e for dnssec-keygen calls in dki_new(), because
-	an RSA exponent of 3 is vulnerable
+	an RSA exponent of 3 is vulnerable.
 
 * bug	dosigning(): Fixed bug in printing undefined serial
 	number if incr_serial() failed.
@@ -89,11 +110,11 @@ zkt 0.8 -- 09. July 2006
 	cmpfile() and new_keysetfiles() for that.
 
 * func	Config parameter added to choose if the domain name is
-	right or left justified listed by dnssec-zkt (printkeyinfo)
+	right or left justified listed by dnssec-zkt (printkeyinfo).
 
 * func	New class of key added ("sep"). A SEP key is a (public) key file
 	without the private counterpart. So we could use the key solely
-	as an secure entry point. (dki.h, dki_read)
+	as an secure entry point. (dki.h, dki_read).
 
 zkt 0.70 -- 15. Sep 2005
 
@@ -109,7 +130,8 @@ zkt 0.70 -- 15. Sep 2005
 * func	Function parseurl added.
 
 * func	Experimental code to register a new ksk. Currently it's more like
-	a key announcement because of the lack of identification and authentication.
+	a key announcement because of the lack of identification and
+	authentication.
 
 zkt 0.65 -- 22. Aug 2005
 
@@ -137,13 +159,13 @@ zkt 0.64 -- 1. Aug 2005
 	complete directory tree. This is usefull if we have a very deep directory
 	structure and the recursive flag is switched on.
 
-* func	SIG_Pseudorand  parameter added
+* func	SIG_Pseudorand parameter added.
 
-* func	([KZ]SK)|(SIG)_randfile parameter added
+* func	([KZ]SK)|(SIG)_randfile parameter added.
 
-* func	measure the time used for signing of each zone 
+* func	measure the time used for signing of each zone.
 
-* bug	function logflush() added to misc.c and called by dosigning()
+* bug	function logflush() added to misc.c and called by dosigning().
 
 * misc	some perfomance test made:
 	- Directory structure "sec/<firstletter>/domain" with round about 12200 domains
@@ -197,52 +219,52 @@ zkt 0.64 -- 1. Aug 2005
 zkt 0.63 -- 14. June 2005
 
 * bug	allow TTL value in keyfiles (see TTL_IN_KEYFILES_ALLOWED
-	in dki_readfile() )
+	in dki_readfile()).
 
-* misc	function strchop() added to misc.c
+* misc	function strchop() added to misc.c.
 
 zkt 0.62 -- 13. May 2005
 
 * func	dnssec-signer: Option -o added.
-	Now it works a little bit more like dnssec-signzone
+	Now it works a little bit more like dnssec-signzone.
 
 * func	strlist.c: prepstrlist and unprepstrlist functions get a
-	second parameter for the delimiter
+	second parameter for the delimiter.
 
 * bug	fixed some typos and inaccurate usage of symbolic constants.
 	Doing some housekeeping.
 
 zkt 0.61 -- 3. May 2005
 
-* bug	local config file will not be mentioned if -N switch is used
+* bug	local config file will not be mentioned if -N switch is used.
 
 zkt 0.6 -- 1. May 2005
 
-* doc	dnssec-signer: man page added
+* doc	dnssec-signer: man page added.
 
-* func	dnssec-signer: Print out a warning message if ksk lifetime is exceeded
+* func	dnssec-signer: Print out a warning message if ksk lifetime is exceeded.
 
 * func	dnssec-signer: Remaining arguments will be interpreted as zone names
-	(in_strarr () added)
+	(in_strarr () added).
 
-* func	dnssec-signer: Option -D added
+* func	dnssec-signer: Option -D added.
 
 
 zkt 0.51 -- 8. April 2005
 
-* func	dnssec-signer: Option -N added
+* func	dnssec-signer: Option -N added.
 
 * func	dnssec-signer: change of keystatus from pre-published to active
-	reset timestamp of key, thus age of active key counts 0
+	resets timestamp of key, thus age of active key counts 0.
 
-* bug	prepstrlist: resulting string was not terminated with '\0'
+* bug	prepstrlist: resulting string was not terminated with '\0'.
 
 * bug	dnssec-signer: do signing if there are additional keys, or the
-	status of any key is changed (function check_keytimestamp)
+	status of any key is changed (function check_keytimestamp).
 
-* func	dnssec-zkt: -l <list> option added
+* func	dnssec-zkt: -l <list> option added.
 
-* func	dnssec-zkt: -p flag defaults to on in key creation mode (-C)
+* func	dnssec-zkt: -p flag defaults to on in key creation mode (-C).
 
 * bug	dnssec-zkt: parsetag() doesn't return label if called with -C
 	and domain name starts with digit (e.g. ENUM Domain).

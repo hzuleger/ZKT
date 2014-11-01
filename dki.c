@@ -229,7 +229,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	if ( sscanf (fname, "K%254[^+]+%hd+%d", dkp->name, &dkp->algo, &dkp->tag) != 3 )
 	{
 		snprintf (dki_estr, sizeof (dki_estr),
-			"dki_read: Filename didn't match expected format (%s)", fname);
+			"dki_read: Filename don't match expected format (%s)", fname);
 		return (NULL);
 	}
 
@@ -263,7 +263,12 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	dbg_line ();
 	pathname (path, sizeof (path), dkp->dname, dkp->fname, DKI_ACT_FILEEXT);
 	if ( fileexist (path) )
-		dkp->status = DKI_ACT;
+	{
+		if ( dki_isrevoked (dkp) )
+			dkp->status = DKI_REV;
+		else
+			dkp->status = DKI_ACT;
+	}
 	else
 	{
 		pathname (path, sizeof (path), dkp->dname, dkp->fname, DKI_PUB_FILEEXT);
@@ -344,20 +349,25 @@ int	dki_setstatus (dki_t *dkp, int status)
 
 /*****************************************************************
 **	dki_setstat ()
-**	low level function of dk_setstatus and dki_setstatus_preservetime
+**	low level function of dki_setstatus and dki_setstatus_preservetime
 *****************************************************************/
 static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 {
 	char	frompath[MAX_PATHSIZE+1];
 	char	topath[MAX_PATHSIZE+1];
 	time_t	totime;
+	FILE	*fp;
 
 	if ( dkp == NULL )
 		return 0;
 
 	status = tolower (status);
-	switch ( dkp->status )
+	switch ( dkp->status )	/* look at old status */
 	{
+	case 'r':
+		if ( status == 'r' )
+			return 1;
+		break;
 	case 'a':
 		if ( status == 'a' )
 			return 1;
@@ -369,7 +379,7 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 		pathname (frompath, sizeof (frompath), dkp->dname, dkp->fname, DKI_DEP_FILEEXT);
 		break;
 	case 'p':
-		if ( status == 'p' )
+		if ( status == 'p' || status == 's' )
 			return 1;
 		pathname (frompath, sizeof (frompath), dkp->dname, dkp->fname, DKI_PUB_FILEEXT);
 		break;
@@ -380,6 +390,32 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 
 	dbg_val ("dki_setstat: \"%s\"\n", frompath);
 	dbg_val ("dki_setstat: to status \"%c\"\n", status);
+
+	/* a state change could result in two different things: */
+	/* 1) write a new keyfile when the REVOKE bit is set or unset */
+	if ( status == 'r' || (status == 'a' && dki_isrevoked (dkp)) )
+	{
+		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_KEY_FILEEXT);
+		totime = get_mtime (topath);    /* remember old timestamp of .key file */
+
+		if ( status == 'r' )
+			dki_setflag (dkp, DK_FLAG_REVOKE); /* set REVOKE BIT and write it to the key file */
+			// dkp->flags |= DK_FLAG_REVOKE;
+		else
+			dki_unsetflag (dkp, DK_FLAG_REVOKE);
+			// dkp->flags &= ~(DK_FLAG_REVOKE);	/* clear REVOKE flag */
+
+		if ( (fp = fopen (topath, "w")) != NULL )
+		{
+			dki_prt_dnskey_raw (dkp, fp);
+			fclose (fp);
+		}
+		touch (topath, totime);	/* restore time of key file */
+		
+		return 0;
+	}
+
+	/* 2) change the filename of the private key in all other cases */
 	totime = 0L;
 	topath[0] = '\0';
 	switch ( status )
@@ -392,6 +428,11 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 	case 'd':
 		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_DEP_FILEEXT);
 		break;
+	case 's':		/* standby means a "pre-publish KSK" */
+		if ( !dki_isksk (dkp) )
+			return 2;
+		status = 'p';
+		/* fall through */
 	case 'p':
 		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_PUB_FILEEXT);
 		break;
@@ -406,7 +447,6 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 			totime = time (NULL);	/* set .key file to current time */
 		pathname (topath, sizeof (topath), dkp->dname, dkp->fname, DKI_KEY_FILEEXT);
 		touch (topath, totime);	/* store/restore time of status change */
-		return 1;
 	}
 
 	return 0;
@@ -417,6 +457,7 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 **	rename files associated with key, so that the keys are not
 **	recogized by the zkt tools e.g.
 **	Kdo.ma.in.+001+12345.key ==> kdo.ma.in.+001+12345.key 
+**	(second one starts with a lower case 'k')
 *****************************************************************/
 dki_t	*dki_remove (dki_t *dkp)
 {
@@ -542,6 +583,28 @@ int	dki_prt_dnskeyttl (const dki_t *dkp, FILE *fp, int ttl)
 		else
 			putc (*p, fp);
 	fprintf (fp, "\n\t\t) ; key id = %u\n", dkp->tag); 
+
+	return 1;
+}
+
+/*****************************************************************
+**	dki_prt_dnskey_raw ()
+*****************************************************************/
+int	dki_prt_dnskey_raw (const dki_t *dkp, FILE *fp)
+{
+	char	*p;
+
+	if ( dkp == NULL )
+		return 0;
+
+	fprintf (fp, "%s ", dkp->name);
+#if 0
+	if ( ttl > 0 )
+		fprintf (fp, "%d ", ttl);
+#endif
+	fprintf (fp, "IN DNSKEY  ");
+	fprintf (fp, "%d 3 %d ", dkp->flags, dkp->algo);
+	fprintf (fp, "%s\n", dkp->pubkey); 
 
 	return 1;
 }
@@ -692,12 +755,45 @@ int	dki_age (const dki_t *dkp, time_t curr)
 }
 
 /*****************************************************************
+**	dki_getflag ()	return the flags field of a key 
+*****************************************************************/
+dk_flag_t	dki_getflag (const dki_t *dkp, time_t curr)
+{
+		return dkp->flags;
+}
+
+/*****************************************************************
+**	dki_setflag ()	set a flag of a key 
+*****************************************************************/
+dk_flag_t	dki_setflag (dki_t *dkp, dk_flag_t flag)
+{
+		return dkp->flags |= (ushort)flag;
+}
+
+/*****************************************************************
+**	dki_unsetflag ()	unset a flag of a key 
+*****************************************************************/
+dk_flag_t	dki_unsetflag (dki_t *dkp, dk_flag_t flag)
+{
+		return dkp->flags &= ~((ushort)flag);
+}
+
+/*****************************************************************
 **	dki_isksk ()
 *****************************************************************/
 int	dki_isksk (const dki_t *dkp)
 {
 	assert (dkp != NULL);
 	return (dkp->flags & DK_FLAG_KSK) == DK_FLAG_KSK;
+}
+
+/*****************************************************************
+**	dki_isrevoked ()
+*****************************************************************/
+int	dki_isrevoked (const dki_t *dkp)
+{
+	assert (dkp != NULL);
+	return (dkp->flags & DK_FLAG_REVOKE) == DK_FLAG_REVOKE;
 }
 
 /*****************************************************************
@@ -743,8 +839,12 @@ const	char	*dki_statusstr (const dki_t *dkp)
 	switch ( dkp->status )
 	{
 	case DKI_ACT:	return "active";
-	case DKI_PUB:   return "prepublished";
+	case DKI_PUB:   if ( dki_isksk (dkp) )
+				return "standby";
+			else
+				return "prepublished";
 	case DKI_DEP:   return "depreciated";
+	case DKI_REV:   return "revoked";
 	case DKI_SEP:   return "sep";
 	}
 	return "unknown";

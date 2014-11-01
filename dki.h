@@ -36,8 +36,12 @@
 # define	DK_PROTO_DNS	3
 
 /* flag bits */
-# define	DK_FLAG_ZONE	0400 (256 == 1 0000 0000)
-# define	DK_FLAG_KSK	01
+typedef enum {				/*             11 1111 */
+					/* 0123 4567 8901 2345 */
+	DK_FLAG_KSK=	01,	/* 0000 0000 0000 0001	Bit 15 RFC4034/RFC3757 */
+	DK_FLAG_REVOKE=	0200,	/* 0000 0000 1000 0000	Bit 8  RFC5011 */
+	DK_FLAG_ZONE=	0400,	/* 0000 0001 0000 0000	Bit 7  RFC4034 */
+} dk_flag_t;
 
 typedef	struct	dki {
 	char	dname[MAX_DNAMESIZE+1];	/* directory */
@@ -45,7 +49,8 @@ typedef	struct	dki {
 	char	name[MAX_LABELSIZE+1];	/* domain name or label */
 	ushort	algo;			/* key algorithm */
 	ushort	proto;			/* must be 3 (DNSSEC) */
-	ushort	flags;			/* ZONE optional SEP Flag */
+	// ushort	flags;			/* ZONE, optional SEP or REVOKE Flag */
+	dk_flag_t	flags;		/* ZONE, optional SEP or REVOKE flag */
 	time_t	time;			/* key (file) creation time */
 	uint	tag;			/* key id */
 	char	status;			/* key exist (".key") and name of private */
@@ -56,14 +61,16 @@ typedef	struct	dki {
 } dki_t;
 
 /* status types */
-# define	DKI_SEP	('s')
+# define	DKI_SEP	('e')
 # define	DKI_PUB	('p')
 # define	DKI_ACT	('a')
 # define	DKI_DEP	('d')
+# define	DKI_REV	('r')
 # define	DKI_SECUREENTRYPOINT	DKI_SEP
 # define	DKI_PUBLISHED	DKI_PUB
 # define	DKI_ACTIVE	DKI_ACT
 # define	DKI_DEPRECIATED	DKI_DEP	
+# define	DKI_REVOKED	DKI_REV
 
 # define	DKI_KEY_FILEEXT	".key"
 # define	DKI_PUB_FILEEXT	".published"
@@ -110,14 +117,19 @@ extern	int	dki_readdir (const char *dir, dki_t **listp, int recursive);
 extern	int	dki_prt_trustedkey (const dki_t *dkp, FILE *fp);
 extern	int	dki_prt_dnskey (const dki_t *dkp, FILE *fp);
 extern	int	dki_prt_dnskeyttl (const dki_t *dkp, FILE *fp, int ttl);
+extern	int	dki_prt_dnskey_raw (const dki_t *dkp, FILE *fp);
 extern	int	dki_prt_comment (const dki_t *dkp, FILE *fp);
 extern	int	dki_cmp (const dki_t *a, const dki_t *b);
 extern	int	dki_timecmp (const dki_t *a, const dki_t *b);
 extern	int	dki_age (const dki_t *dkp, time_t curr);
+extern	dk_flag_t	dki_getflag (const dki_t *dkp, time_t curr);
+extern	dk_flag_t	dki_setflag (dki_t *dkp, dk_flag_t flag);
+extern	dk_flag_t	dki_unsetflag (dki_t *dkp, dk_flag_t flag);
 extern	int	dki_status (const dki_t *dkp);
 extern	const	char	*dki_statusstr (const dki_t *dkp);
 extern	int	dki_isksk (const dki_t *dkp);
 extern	int	dki_isdepreciated (const dki_t *dkp);
+extern	int	dki_isrevoked (const dki_t *dkp);
 extern	int	dki_isactive (const dki_t *dkp);
 extern	int	dki_ispublished (const dki_t *dkp);
 extern	time_t	dki_time (const dki_t *dkp);
@@ -126,10 +138,6 @@ extern	dki_t	*dki_remove (dki_t *dkp);
 extern	dki_t	*dki_destroy (dki_t *dkp);
 extern	int	dki_setstatus (dki_t *dkp, int status);
 extern	int	dki_setstatus_preservetime (dki_t *dkp, int status);
-#if 0
-extern	int	dki_depreciate (dki_t *dkp);
-extern	int	dki_activate (dki_t *dkp);
-#endif
 extern	dki_t	*dki_add (dki_t **dkp, dki_t *new);
 extern	const dki_t	*dki_tsearch (const dki_t *tree, int tag, const char *name);
 extern	const dki_t	*dki_search (const dki_t *list, int tag, const char *name);
@@ -138,6 +146,5 @@ extern	void	dki_free (dki_t *dkp);
 extern	void	dki_freelist (dki_t **listp);
 extern	char	*dki_algo2str (int algo);
 extern	const char	*dki_geterrstr (void);
-
 
 #endif

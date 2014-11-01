@@ -373,7 +373,7 @@ static	int	dosigning (zone_t *zp)
 				error ("Warning: could not increment serialno of domain %s in file %s (errno=%d)!\n",
 								zp->zone, path, err);
 			else if ( verbose )
-				logmesg ("\tIncrementing serial number (%u) in file \"%s\"\n", err, path);
+				logmesg ("\tIncrementing serial number in file \"%s\"\n", path);
 		}
 		else if ( verbose )
 				logmesg ("\tIncrementing serial number in file \"%s\"\n", path);
@@ -458,8 +458,8 @@ static	int	register_key (dki_t *list, const zconf_t *z)
 		age = dki_age (dkp, currtime);
 
 #if defined(REG_URL) 
-		/* announce "new" key signing keys */
-		if ( REG_URL && *REG_URL && age <= z->resign * 4 )
+		/* announce "new" and active key signing keys */
+		if ( REG_URL && *REG_URL && dki_status (dkp) == DKI_ACT && age <= z->resign * 4 )
 		{
 			if ( sd == 0 )
 			{

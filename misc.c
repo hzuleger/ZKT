@@ -575,14 +575,14 @@ char	*time2str (time_t sec)
 	s = abs (t->tm_gmtoff);
 	h = t->tm_gmtoff / 3600;
 	s = t->tm_gmtoff % 3600;
-	snprintf (timestr, sizeof (timestr), "%s %2d %s %4d %02d:%02d:%02d %c%02d%02d", 
+	snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d %c%02d%02d", 
 		mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
 		t->tm_hour, t->tm_min, t->tm_sec,
 		t->tm_gmtoff < 0 ? '-': '+',
 		h, s);
 # else
 	t = localtime (&sec);
-	snprintf (timestr, sizeof (timestr), "%s %2d %s %4d %02d:%02d:%02d", 
+	snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d", 
 		mstr[t->tm_mon], t->tm_mday, t->tm_year + 1900, 
 		t->tm_hour, t->tm_min, t->tm_sec);
 # endif
@@ -593,7 +593,7 @@ char	*time2str (time_t sec)
 
 /*****************************************************************
 **	age2str (sec)
-**	!!Attention: This is an not reentrant function
+**	!!Attention: This is function is not reentrant 
 *****************************************************************/
 char	*age2str (time_t sec)
 {

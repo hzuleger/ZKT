@@ -6,7 +6,7 @@
 #ifndef CONF_H
 # define CONF_H
 
-#ifndef HAS_GETOPT_H
+#ifndef HAS_GETOPT_LONG
 # define	HAS_GETOPT_LONG	1
 #endif
 
@@ -38,8 +38,9 @@
 # define	USE_TREE	1
 #endif
 
-# define	REG_URL		"register.trusted-keys.de:5327"
-//# define	REG_URL		"regkey://trusted-keys.de"
+#ifndef REG_URL
+//# define	REG_URL		"register.trusted-keys.de:5327"
+#endif
 
 #ifndef BIND_VERSION
 # define	BIND_VERSION	941
@@ -55,9 +56,9 @@
 
 #ifndef ZKT_VERSION
 # if defined(USE_TREE) && USE_TREE
-#  define	ZKT_VERSION	"vT0.92 (c) Feb 2005 - Oct 2007 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"vT0.93 (c) Feb 2005 - Nov 2007 Holger Zuleger hznet.de"
 # else
-#  define	ZKT_VERSION	"v0.92 (c) Feb 2005 - Oct 2007 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"v0.93 (c) Feb 2005 - Nov 2007 Holger Zuleger hznet.de"
 # endif
 #endif
 

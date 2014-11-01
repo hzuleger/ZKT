@@ -47,7 +47,7 @@ static	int	trustedkeyflag = 0;
 static	int	kskrollover = 0;
 static	char	*kskdomain = "";
 
-# define	short_options	":0:1:2:3:9A:C:D:P:R:HKTS:ZVac:dhkLl:prtz"
+# define	short_options	":0:1:2:3:9A:C:D:P:S:R:HKTs:ZVac:dhkLl:prtz"
 #if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
 static struct option long_options[] = {
 	{"ksk-rollover",	no_argument, NULL, '9'},
@@ -72,10 +72,12 @@ static struct option long_options[] = {
 	{"directory",		no_argument, NULL, 'd'},
 	{"config",		required_argument, NULL, 'c'},
 	{"pre-publish",		required_argument, NULL, 'P'},
+	{"standby",		required_argument, NULL, 'S'},
 	{"active",		required_argument, NULL, 'A'},
 	{"depreciated",		required_argument, NULL, 'D'},
 	{"create",		required_argument, NULL, 'C'},
-	{"rename",		required_argument, NULL, 'R'},
+	{"revoke",		required_argument, NULL, 'R'},
+	{"remove",		required_argument, NULL, 19 },
 	{"destroy",		required_argument, NULL, 20 },
 	{"help",		no_argument, NULL, 'H'},
 	{0, 0, 0, 0}
@@ -131,10 +133,10 @@ main (int argc, char *argv[])
 		case '9':		/* ksk rollover help */
 			ksk_rollover ("help", c - '0', NULL, NULL);
 			exit (1);
-		case '1':		/* ksk rollover create new key */
-		case '2':		/* ksk rollover publish DS */
-		case '3':		/* ksk rollover delete old key */
-		case '0':		/* ksk rollover status */
+		case '1':		/* ksk rollover: create new key */
+		case '2':		/* ksk rollover: publish DS */
+		case '3':		/* ksk rollover: delete old key */
+		case '0':		/* ksk rollover: show current status */
 			action = c;
 			if ( !optarg )
 				usage ("ksk rollover requires an domain argument", config);
@@ -154,10 +156,12 @@ main (int argc, char *argv[])
 			pathflag = !pathflag;
 			/* fall through */
 		case 'P':
+		case 'S':
 		case 'A':
 		case 'D':
 		case 'R':
-		case 'S':
+		case 's':
+		case 19:
 		case 20:
 			if ( (keyname = parsetag (optarg, &searchtag)) != NULL )
 			{
@@ -262,15 +266,24 @@ main (int argc, char *argv[])
 		createkey (keyname, data, config);
 		break;
 	case 'P':
+	case 'S':
 	case 'A':
 	case 'D':
 		if ( (dkp = (dki_t*)zkt_search (data, searchtag, keyname)) == NULL )
 			fatal ("Key with tag %u not found\n", searchtag);
 		else if ( dkp == (void *) 01 )
 			fatal ("Key with tag %u found multiple times\n", searchtag);
-		dki_setstatus_preservetime (dkp, action);
+		if ( (c = dki_setstatus_preservetime (dkp, action)) != 0 )
+			fatal ("Couldn't change status of key %u: %d\n", searchtag, c);
 		break;
-	case 20:
+	case 19:	/* remove (rename) key file */
+		if ( (dkp = (dki_t *)zkt_search (data, searchtag, keyname)) == NULL )
+			fatal ("Key with tag %u not found\n", searchtag);
+		else if ( dkp == (void *) 01 )
+			fatal ("Key with tag %u found multiple times\n", searchtag);
+		dki_remove (dkp);
+		break;
+	case 20:	/* destroy the key (remove the files!) */
 		if ( (dkp = (dki_t *)zkt_search (data, searchtag, keyname)) == NULL )
 			fatal ("Key with tag %u not found\n", searchtag);
 		else if ( dkp == (void *) 01 )
@@ -282,9 +295,10 @@ main (int argc, char *argv[])
 			fatal ("Key with tag %u not found\n", searchtag);
 		else if ( dkp == (void *) 01 )
 			fatal ("Key with tag %u found multiple times\n", searchtag);
-		dki_remove (dkp);
+		if ( (c = dki_setstatus (dkp, action)) != 0 )
+			fatal ("Couldn't change status of key %u: %d\n", searchtag, c);
 		break;
-	case 'S':
+	case 's':
 		if ( (dkp = (dki_t *)zkt_search (data, searchtag, keyname)) == NULL )
 			fatal ("Key with tag %u not found\n", searchtag);
 		else if ( dkp == (void *) 01 )
@@ -361,11 +375,12 @@ static	void    usage (char *mesg, zconf_t *cp)
         lopt_usage ("\tusage: %s --active=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         lopt_usage ("\tusage: %s --depreciated=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\n");
-        fprintf (stderr, "Remove (rename) specified key (<keyspec> := tag | tag:name) \n");
+        fprintf (stderr, "Revoke specified key (<keyspec> := tag | tag:name) \n");
         sopt_usage ("\tusage: %s -R <keyspec> [-dr] [-c config] [dir ...]\n", progname);
-        lopt_usage ("\tusage: %s --rename=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --revoke=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\n");
-        fprintf (stderr, "Destroy specified key (<keyspec> := tag | tag:name) \n");
+        fprintf (stderr, "Remove (rename) or destroy (delete) specified key (<keyspec> := tag | tag:name) \n");
+        lopt_usage ("\tusage: %s --remove=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
         lopt_usage ("\tusage: %s --destroy=<keyspec> [-dr] [-c config] [dir ...]\n", progname);
 
         fprintf (stderr, "\n");
@@ -382,7 +397,7 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "\t-t%s\t print key generation time (default: %s)\n", loptstr (", --time", "\t"),
 								timeflag ? "on": "off");
         fprintf (stderr, "\t-k%s\t key signing keys only\n", loptstr (", --ksk", "\t"));
-        fprintf (stderr, "\t-z%s\t zone signing keys only\n", loptstr (", --ksk", "\t"));
+        fprintf (stderr, "\t-z%s\t zone signing keys only\n", loptstr (", --zsk", "\t"));
         if ( mesg && *mesg )
                 fprintf (stderr, "%s\n", mesg);
         exit (1);
@@ -420,7 +435,7 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 	if ( dkp == NULL )
 		fatal ("Can't create key %s: %s!\n", keyname, dki_geterrstr ());
 	if  ( zskflag )
-		dki_setstatus (dkp, 'p');
+		dki_setstatus (dkp, DKI_PUB);
 }
 
 static	int	get_parent_phase (const char *file)
@@ -446,6 +461,7 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 	const char *dir;
 	dki_t	*keylist;
 	dki_t	*dkp;
+	dki_t	*standby;
 	int	parent_exist;
 	int	parent_age;
 	int	parent_phase;
@@ -516,11 +532,14 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 	// parent_propagation = 2 * DAYSEC;
 	parent_propagation = 5 * MINSEC;
 
-	ksk = 0;	/* count key signing keys */
+	ksk = 0;	/* count active(!) key signing keys */
+	standby = NULL;	/* find standby key if available */
 	for ( dkp = keylist; dkp; dkp = dkp->next )
 		if ( dki_isksk (dkp) )
-			ksk++;
-
+			if ( dki_status (dkp) == DKI_ACT )
+				ksk++;
+			else if ( dki_status (dkp) == DKI_PUB )
+				standby = dkp;
 
 	switch ( phase )
 	{
@@ -531,7 +550,7 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 		fprintf (stdout, "\t parent_file %s %s\n", path, parent_exist ? "exist": "not exist");
 		if ( parent_exist )
 			fprintf (stdout, "\t age of parent_file %d %s\n", parent_age, str_delspace (age2str (parent_age)));
-		fprintf (stdout, "\t # of ksk %d\n", ksk);
+		fprintf (stdout, "\t # of active key signing keys %d\n", ksk);
 		fprintf (stdout, "\t parent_propagation %d %s\n", parent_propagation, str_delspace (age2str (parent_propagation)));
 		fprintf (stdout, "\t keys ttl %d %s\n", key_ttl, age2str (key_ttl));
 
@@ -549,7 +568,15 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 		dkp = dki_new (dir, keyname, 1, conf->k_algo, conf->k_bits, conf->k_random);
 		if ( dkp == NULL )
 			fatal ("Can't create key %s: %s!\n", keyname, dki_geterrstr ());
-		dkp = keylist;	/* use old key to create the parent file */
+		if ( standby )
+		{
+			dki_setstatus (standby, DKI_ACT);	/* activate standby key */
+			dki_setstatus (dkp, DKI_PUB);	/* new key will be the new standby */
+		}
+
+		// dkp = keylist;	/* use old key to create the parent file */
+		if ( (dkp = (dki_t *)dki_find (keylist, 1, 'a', 1)) == NULL )	/* find the oldest active ksk to create the parent file */
+			fatal ("ksk_rollover phase1: Couldn't find the old active key\n");
 		if ( !create_parent_file (path, phase, key_ttl, dkp) )
 			fatal ("Couldn't create parentfile %s\n", path);
 		break;
@@ -562,7 +589,7 @@ static	void	ksk_rollover (const char *keyname, int phase, const dki_t *list, con
 		if ( parent_phase != 1 )
 			fatal ("Parent file exists but is in wrong state (phase = %d)\n", parent_phase);
 		if ( parent_age < conf->proptime + key_ttl )
-			fatal ("ksk_rollover (phase2): you have to wait for propagation of the new KSK (at least %dsec or %s)\n",
+			fatal ("ksk_rollover (phase2): you have to wait for the propagation of the new KSK (at least %dsec or %s)\n",
 				conf->proptime + key_ttl - parent_age,
 				str_delspace (age2str (conf->proptime + key_ttl - parent_age)));
 
