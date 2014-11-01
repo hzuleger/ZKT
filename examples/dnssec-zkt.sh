@@ -9,4 +9,4 @@ then
 	echo Please start this skript out of the flat or hierarchical sub directory
 	exit 1
 fi
-../../dnssec-zkt -c dnssec.conf "$@"
+ZKT_CONFFILE=`pwd`/dnssec.conf ../../dnssec-zkt "$@"

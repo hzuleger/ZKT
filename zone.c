@@ -119,7 +119,7 @@ zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *fi
 	{
 		char	*p;
 
-		new->zone = strdup (zone);
+		new->zone = str_tolowerdup (zone);
 		new->dir = strdup (dir);
 		new->file = strdup (file);
 		/* check if file ends with ".signed" ? */

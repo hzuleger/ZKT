@@ -15,15 +15,15 @@ CONF_TIMEINT	zconf.c	40;"	d	file:
 ISCOMMENT	zconf.c	32;"	d	file:
 ISDELIM	zconf.c	34;"	d	file:
 ISTRUE	zconf.c	30;"	d	file:
-KEYSET_FILE_PFX	dnssec-signer.c	626;"	d	file:
+KEYSET_FILE_PFX	dnssec-signer.c	664;"	d	file:
 KeyWords	ncparse.c	/^static struct KeyWords {$/;"	s	file:
 OFFSET	dnssec-signer.c	25;"	d	file:
 OPTSTR	dnssec-signer.c	28;"	d	file:
 OPTSTR	dnssec-signer.c	30;"	d	file:
-TAINTEDCHARS	misc.c	27;"	d	file:
+TAINTEDCHARS	misc.c	28;"	d	file:
 TOK_DELEGATION	ncparse.c	29;"	d	file:
 TOK_DIR	ncparse.c	19;"	d	file:
-TOK_FILE	ncparse.c	31;"	d	file:
+TOK_FILE	ncparse.c	32;"	d	file:
 TOK_FORWARD	ncparse.c	28;"	d	file:
 TOK_HINT	ncparse.c	27;"	d	file:
 TOK_INCLUDE	ncparse.c	20;"	d	file:
@@ -32,10 +32,11 @@ TOK_SLAVE	ncparse.c	25;"	d	file:
 TOK_STRING	ncparse.c	18;"	d	file:
 TOK_STUB	ncparse.c	26;"	d	file:
 TOK_TYPE	ncparse.c	23;"	d	file:
-TOK_UNKNOWN	ncparse.c	33;"	d	file:
+TOK_UNKNOWN	ncparse.c	34;"	d	file:
+TOK_VIEW	ncparse.c	30;"	d	file:
 TOK_ZONE	ncparse.c	22;"	d	file:
 a	domaincmp.c	/^         char    *a;$/;"	m	file:
-add2zonelist	dnssec-signer.c	/^static	int	add2zonelist (const char *dir, const char *zone, const char *file)$/;"	f	file:
+add2zonelist	dnssec-signer.c	/^static	int	add2zonelist (const char *dir, const char *view, const char *zone, const char *file)$/;"	f	file:
 age2str	misc.c	/^char	*age2str (time_t sec)$/;"	f
 ageflag	dnssec-zkt.c	/^int	ageflag = 0;$/;"	v
 alg2buf	zktr.c	/^static	char	*alg2buf (char alg, char *buf, int *plen)$/;"	f	file:
@@ -99,7 +100,7 @@ dki_unsetflag	dki.c	/^dk_flag_t	dki_unsetflag (dki_t *dkp, dk_flag_t flag)$/;"	f
 domain2buf	zktr.c	/^static	char	*domain2buf (const char *domain, char *buf, int *plen)$/;"	f	file:
 domaincmp	domaincmp.c	/^int     domaincmp (const char *a, const char *b)$/;"	f
 dosigning	dnssec-signer.c	/^static	int	dosigning (zone_t *zp)$/;"	f	file:
-dyn_update_freeze	dnssec-signer.c	/^static	int	dyn_update_freeze (const char *domain, int freeze)$/;"	f	file:
+dyn_update_freeze	dnssec-signer.c	/^static	int	dyn_update_freeze (const char *domain, const char *view, int freeze)$/;"	f	file:
 dynamic_zone	dnssec-signer.c	/^static	int	dynamic_zone = 0;	\/* dynamic zone ? *\/$/;"	v	file:
 error	misc.c	/^void error (char *fmt, ...)$/;"	f
 ex	domaincmp.c	/^} ex[] = {$/;"	v	file:
@@ -107,8 +108,8 @@ extern	dki.c	21;"	d	file:
 extern	dki.c	23;"	d	file:
 extern	domaincmp.c	11;"	d	file:
 extern	domaincmp.c	13;"	d	file:
-extern	misc.c	23;"	d	file:
-extern	misc.c	25;"	d	file:
+extern	misc.c	24;"	d	file:
+extern	misc.c	26;"	d	file:
 extern	ncparse.c	14;"	d	file:
 extern	ncparse.c	16;"	d	file:
 extern	zconf.c	25;"	d	file:
@@ -124,6 +125,8 @@ force	dnssec-signer.c	/^static	int	force = 0;$/;"	v	file:
 genkey	dnssec-signer.c	/^static	dki_t	*genkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)$/;"	f	file:
 get_mtime	misc.c	/^time_t	get_mtime (const char *fname)$/;"	f
 get_parent_phase	dnssec-zkt.c	/^static	int	get_parent_phase (const char *file)$/;"	f	file:
+getdefconfname	misc.c	/^const	char	*getdefconfname (const char *view)$/;"	f
+getnameappendix	misc.c	/^const	char	*getnameappendix (const char *progname, const char *basename)$/;"	f
 gettok	ncparse.c	/^static	int	gettok (FILE *fp, char *val, size_t valsize)$/;"	f	file:
 goto_labelstart	domaincmp.c	16;"	d	file:
 headerflag	dnssec-zkt.c	/^int	headerflag = 1;$/;"	v
@@ -147,14 +150,14 @@ list_dnskey	zkt.c	/^static	void	list_dnskey (const dki_t **nodep, const VISIT wh
 list_key	zkt.c	/^static	void	list_key (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
 list_trustedkey	zkt.c	/^static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
 ljustflag	dnssec-zkt.c	/^int	ljustflag = 0;$/;"	v
-loadconfig	zconf.c	/^zconf_t	*loadconfig (char *filename, zconf_t *z)$/;"	f
+loadconfig	zconf.c	/^zconf_t	*loadconfig (const char *filename, zconf_t *z)$/;"	f
 logflush	misc.c	/^void logflush ()$/;"	f
 logmesg	misc.c	/^void logmesg (char *fmt, ...)$/;"	f
 long_options	dnssec-zkt.c	/^static struct option long_options[] = {$/;"	v	file:
-lopt_usage	dnssec-zkt.c	329;"	d	file:
-lopt_usage	dnssec-zkt.c	332;"	d	file:
-loptstr	dnssec-zkt.c	330;"	d	file:
-loptstr	dnssec-zkt.c	333;"	d	file:
+lopt_usage	dnssec-zkt.c	341;"	d	file:
+lopt_usage	dnssec-zkt.c	344;"	d	file:
+loptstr	dnssec-zkt.c	342;"	d	file:
+loptstr	dnssec-zkt.c	345;"	d	file:
 main	dnssec-signer.c	/^main (int argc, char *const argv[])$/;"	f
 main	dnssec-soaserial.c	/^main (int argc, char *argv[])$/;"	f
 main	dnssec-zkt.c	/^main (int argc, char *argv[])$/;"	f
@@ -178,7 +181,7 @@ prepstrlist	strlist.c	/^char	*prepstrlist (const char *str, const char *delim)$/
 printconfig	zconf.c	/^int	printconfig (const char *fname, const zconf_t *z)$/;"	f
 printkeyinfo	zkt.c	/^static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)$/;"	f	file:
 printserial	dnssec-soaserial.c	/^static	void	printserial (const char *fname, unsigned long serial)$/;"	f	file:
-printzone	ncparse.c	/^int	printzone (const char *dir, const char *zone, const char *file)$/;"	f
+printzone	ncparse.c	/^int	printzone (const char *dir, const char *view, const char *zone, const char *file)$/;"	f
 progname	dnssec-signer.c	/^const	char	*progname;$/;"	v
 progname	dnssec-soaserial.c	/^static	const char *progname;$/;"	v	file:
 progname	dnssec-zkt.c	/^const	char	*progname;$/;"	v
@@ -188,7 +191,7 @@ progname	ncparse.c	/^char	*progname;$/;"	v
 read_serial_fromfile	dnssec-soaserial.c	/^static	int	read_serial_fromfile (const char *fname, unsigned long *serial)$/;"	f	file:
 recflag	dnssec-zkt.c	/^static	int	recflag = RECURSIVE;$/;"	v	file:
 register_key	dnssec-signer.c	/^static	int	register_key (dki_t *list, const zconf_t *z)$/;"	f	file:
-reload_zone	dnssec-signer.c	/^static	int	reload_zone (const char *domain)$/;"	f	file:
+reload_zone	dnssec-signer.c	/^static	int	reload_zone (const char *domain, const char *view)$/;"	f	file:
 reloadflag	dnssec-signer.c	/^static	int	reloadflag = 0;$/;"	v	file:
 res	domaincmp.c	/^         int     res;$/;"	m	file:
 searchitem	zkt.c	/^static	int	searchitem;$/;"	v	file:
@@ -197,13 +200,14 @@ searchresult	zkt.c	/^static	const	dki_t	*searchresult;$/;"	v	file:
 send_zktr_v01	zktr.c	/^int	send_zktr_v01 (int fd, const char *domain, int tag, int algo, time_t epoch)$/;"	f
 set_all_varptr	zconf.c	/^static	int set_all_varptr (zconf_t *cp)$/;"	f	file:
 set_varptr	zconf.c	/^static	int set_varptr (char *entry, void *ptr)$/;"	f	file:
-short_options	dnssec-zkt.c	50;"	d	file:
+short_options	dnssec-zkt.c	51;"	d	file:
 sign_zone	dnssec-signer.c	/^static	int	sign_zone (const char *dir, const char *domain, const char *file, const zconf_t *conf)$/;"	f	file:
-sopt_usage	dnssec-zkt.c	327;"	d	file:
+sopt_usage	dnssec-zkt.c	339;"	d	file:
 splitpath	misc.c	/^const	char	*splitpath (char *path, size_t size, const char *filename)$/;"	f
 start_timer	misc.c	/^time_t	start_timer ()$/;"	f
 stop_timer	misc.c	/^time_t	stop_timer (time_t start)$/;"	f
 str_delspace	misc.c	/^char	*str_delspace (char *s)$/;"	f
+str_tolowerdup	misc.c	/^char	*str_tolowerdup (const char *s)$/;"	f
 str_untaint	misc.c	/^char	*str_untaint (char *str)$/;"	f
 strchop	misc.c	/^char	*strchop (char *str, char c)$/;"	f
 tag2buf	zktr.c	/^static	char	*tag2buf (ushort tag, char *buf, int *plen)$/;"	f	file:
@@ -225,6 +229,8 @@ usage	dnssec-soaserial.c	/^static	void	usage (const char *msg)$/;"	f	file:
 usage	dnssec-zkt.c	/^static	void    usage (char *mesg, zconf_t *cp)$/;"	f	file:
 var	zconf.c	/^	void	*var;$/;"	m	file:
 verbose	dnssec-signer.c	/^static	int	verbose = 0;$/;"	v	file:
+view	dnssec-zkt.c	/^static	const	char	*view = "";$/;"	v	file:
+viewname	dnssec-signer.c	/^const	char	*viewname = NULL;$/;"	v
 writekeyfile	dnssec-signer.c	/^static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl)$/;"	f	file:
 zconf_para_t	zconf.c	/^} zconf_para_t;$/;"	t	file:
 zkt_list_dnskeys	zkt.c	/^void	zkt_list_dnskeys (const dki_t *data)$/;"	f

@@ -184,7 +184,7 @@ static	int set_all_varptr (zconf_t *cp)
 	set_varptr ("sig_pseudorand", &cp->sig_pseudo);
 }
 
-zconf_t	*loadconfig (char *filename, zconf_t *z)
+zconf_t	*loadconfig (const char *filename, zconf_t *z)
 {
 	FILE		*fp;
 	char		buf[1023+1];

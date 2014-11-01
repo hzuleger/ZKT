@@ -254,6 +254,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	dbg_line ();
 	if ( (err = dki_readfile (fp, dkp)) != 0 )
 	{
+		dbg_line ();
 		snprintf (dki_estr, sizeof (dki_estr),
 			"dki_read: Can\'t read key from file %s (errno %d)", path, err);
 		fclose (fp);

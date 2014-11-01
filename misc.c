@@ -20,6 +20,7 @@
 # include <fcntl.h>
 # include "config.h"
 # include "zconf.h"
+# include "debug.h"
 #define extern
 # include "misc.h"
 #undef extern
@@ -29,6 +30,81 @@
 extern	const	char	*progname;
 
 static	int	incr_soa_serial (FILE *fp, int use_unixtime);
+
+/*****************************************************************
+**	getnameappendix (progname, basename)
+**	return a pointer to the substring in progname subsequent
+**	following basename "-".
+*****************************************************************/
+const	char	*getnameappendix (const char *progname, const char *basename)
+{
+	const	char	*p;
+	int	baselen;
+
+	assert (progname != NULL);
+	assert (basename != NULL);
+
+	if ( (p = strrchr (progname, '/')) != NULL )
+		p++;
+	else
+		p = progname;
+
+	baselen = strlen (basename);
+	if ( strncmp (p, basename, baselen-1) == 0 && *(p+baselen) == '-' )
+	{
+		p += baselen + 1;
+		if ( *p )
+			return p;
+	}
+
+	return NULL;
+}
+
+/*****************************************************************
+**	getdefconfname (view)
+**	returns the default configuration file name
+*****************************************************************/
+const	char	*getdefconfname (const char *view)
+{
+	char	*p;
+	char	*file;
+	char	*buf;
+	int	size;
+	
+	if ( (file = getenv ("ZKT_CONFFILE")) == NULL )
+		file = CONFIG_FILE;
+
+	if ( view == NULL || *view == '\0' || (p = strrchr (file, '.')) == NULL )
+		return strdup (file);
+
+	size = strlen (file) + strlen (view) + 1 + 1;
+	if ( (buf = malloc (size)) == NULL )
+		return file;
+
+	dbg_val1 ("0123456789o123456789o123456789\tsize=%d\n", size);
+	dbg_val4 ("%.*s-%s%s\n", p - file, file, view, p);
+
+	snprintf (buf, size, "%.*s-%s%s", p - file, file, view, p);
+	return buf;	
+}
+
+/*****************************************************************
+**	str_tolowerdup (s)
+*****************************************************************/
+char	*str_tolowerdup (const char *s)
+{
+	char	*new;
+	char	*p;
+
+	if ( s == NULL || (new = p = malloc (strlen (s) + 1)) == NULL )
+		return NULL;
+
+	while ( *s )
+		*p++ = tolower (*s++);
+	*p = '\0';
+
+	return new;
+}
 
 /*****************************************************************
 **	str_delspace (s)

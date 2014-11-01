@@ -1,4 +1,4 @@
-.TH dnssec-signer 8 "Nov 1, 2007" "ZKT 0.93" ""
+.TH dnssec-signer 8 "Dec 1, 2007" "ZKT 0.94" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -8,6 +8,8 @@ dnssec-signer \(em Secure DNS zone signing tool
 .SH SYNOPSYS
 .na
 .B dnssec-signer
+.RB [ \-V|--view
+.IR "view" ]
 .RB [ \-c
 .IR "file" ]
 .RB [ \-fhnr ]
@@ -19,6 +21,8 @@ dnssec-signer \(em Secure DNS zone signing tool
 .RI "" ... ]
 .br
 .B dnssec-signer
+.RB [ \-V|--view
+.IR "view" ]
 .RB [ \-c
 .IR "file" ]
 .RB [ \-fhnr ]
@@ -30,6 +34,8 @@ dnssec-signer \(em Secure DNS zone signing tool
 .RI "" ... ]
 .br
 .B dnssec-signer
+.RB [ \-V|--view
+.IR "view" ]
 .RB [ \-c
 .IR "file" ]
 .RB [ \-fhnr ]
@@ -61,6 +67,11 @@ In the most useful usage scenario the command will be called with option
 to read the secure zones out of the given
 .I named.conf
 file.
+If you have a configuration file with views, you have to use option
+-V viewname or --view viewname to specify the name of the view.
+Alternatively you could link the binary file to a second name like
+.I dnssec-signer-viewname
+and use that command to specify the name of the view.
 All master zone statements will be scanned for filenames
 ending with ".signed".
 These zones will be checked if the necessary zone- and key signing keys
@@ -81,13 +92,6 @@ is given, the
 .I rndc(8)
 command will be called to reload the zone on the
 nameserver.
-.ig
-.br
-If the command is called in regular intervals (e.g. via
-.IR cron(8) ),
-the key management and resigning of secure zones is done complete
-automatically.
-..
 .PP
 In the second form of the command it's possible to specify a directory
 tree with the option
@@ -122,6 +126,14 @@ file by the parameter
 will be used as the top level directory.
 
 .SH OPTIONS
+.TP
+.BI \-V " view" ", \-\-view=" view
+Try to read the default configuration out of a file named
+.I dnssec-<view>.conf .
+Instead of specifying the \-V or --view option every time,
+it's also possible to create a hard or softlink pointing to the
+binary file with a second name like 
+.I dnssec-zkt-<view> .
 .TP
 .BI \-c " file"
 Read configuration values out of the specified file.
@@ -306,15 +318,25 @@ use the command
 to create the initial keying material and a signed zone file.
 Then try to load the file on the name server.
 
+.SH ENVIRONMENT VARIABLES
+.TP
+ZKT_CONFFILE
+Specifies the name of the default global configuration files.
+
 .SH FILES
 .TP
 .I /var/named/dnssec.conf
-Global configuration file.
+Built-in default global configuration file.
+The name of the default global config file is settable via
+the environment variable ZKT_CONFFILE.
 Use
 .I dnssec-zkt(8)
 with option
 .B \-Z
 to create an initial config file.
+.TP
+.I /var/named/dnssec-<view>.conf
+View specific global configuration file.
 .TP
 .I ./dnssec.conf
 Local configuration file.

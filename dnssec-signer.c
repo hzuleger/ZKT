@@ -25,14 +25,14 @@
 # define	OFFSET	((int) (2.5 * MINSEC))
 
 #if defined(BIND_VERSION) && BIND_VERSION >= 940
-# define	OPTSTR	"c:D:N:o:dfHhnrv"
+# define	OPTSTR	"c:V:D:N:o:dfHhnrv"
 #else
-# define	OPTSTR	"c:D:N:o:fHhnrv"
+# define	OPTSTR	"c:V:D:N:o:fHhnrv"
 #endif
 
 /**	function declaration	**/
 static	void	usage (char *mesg, zconf_t *conf);
-static	int	add2zonelist (const char *dir, const char *zone, const char *file);
+static	int	add2zonelist (const char *dir, const char *view, const char *zone, const char *file);
 static	int	parsedir (const char *dir, zone_t **zp, const zconf_t *conf);
 static	int	dosigning (zone_t *zp);
 static	int	kskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t *z);
@@ -42,12 +42,13 @@ static	int	new_keysetfiles (const char *dir, time_t zone_signing_time);
 static	dki_t	*genkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status);
 static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl);
 static	int	sign_zone (const char *dir, const char *domain, const char *file, const zconf_t *conf);
-static	int	dyn_update_freeze (const char *domain, int freeze);
-static	int	reload_zone (const char *domain);
+static	int	dyn_update_freeze (const char *domain, const char *view, int freeze);
+static	int	reload_zone (const char *domain, const char *view);
 static	int	register_key (dki_t *listp, const zconf_t *z);
 
 /**	global command line options	**/
 const	char	*progname;
+const	char	*viewname = NULL;
 const	char	*origin = NULL;
 static	int	verbose = 0;
 static	int	force = 0;
@@ -63,15 +64,18 @@ main (int argc, char *const argv[])
 	char	errstr[255+1];
 	char	dir[255+1];
 	char	*p;
+	const	char	*defconfname;
 	zone_t	*zp;
 
 	progname = *argv;
 	if ( (p = strrchr (progname, '/')) )
 		progname = ++p;
+	viewname = getnameappendix (progname, "dnssec-signer");
 
-	config = loadconfig ("", (zconf_t *)NULL);	/* load config (defaults) */
-	if ( fileexist (CONFIG_FILE) )			/* load default config file */
-		config = loadconfig (CONFIG_FILE, config);
+	defconfname = getdefconfname (viewname);
+	config = loadconfig ("", (zconf_t *)NULL);	/* load built in config */
+	if ( fileexist (defconfname) )			/* load default config file */
+		config = loadconfig (defconfname, config);
 	if ( config == NULL )
 		fatal ("Out of memory\n");
 
@@ -81,6 +85,14 @@ main (int argc, char *const argv[])
 	{
 		switch ( c )
 		{
+		case 'V':		/* view name */
+			viewname = optarg;
+			defconfname = getdefconfname (viewname);
+			if ( fileexist (defconfname) )		/* load default config file */
+				config = loadconfig (defconfname, config);
+			if ( config == NULL )
+				fatal ("Out of memory\n");
+			break;
 		case 'c':
 			config = loadconfig (optarg, config);
 			if ( config == NULL )
@@ -114,8 +126,8 @@ main (int argc, char *const argv[])
 #if defined(BIND_VERSION) && BIND_VERSION >= 940
 		case 'd':
 			dynamic_zone = 1;
-			/* dynamic zone requires a NS reload... */
-			reloadflag = 0;		/* ...but "rndc thaw" reloads the zone already */
+			/* dynamic zone requires a name server reload... */
+			reloadflag = 0;		/* ...but "rndc thaw" reloads the zone anyway */
 			break;
 #endif
 		case 'n':
@@ -213,16 +225,31 @@ static	void	usage (char *mesg, zconf_t *conf)
 }
 
 /**	fill zonelist with infos coming out of named.conf	**/
-static	int	add2zonelist (const char *dir, const char *zone, const char *file)
+static	int	add2zonelist (const char *dir, const char *view, const char *zone, const char *file)
 {
 #ifdef DBG
-	fprintf (stderr, "printzone \"%s\" " , zone);
+	fprintf (stderr, "printzone ");
+	fprintf (stderr, "view \"%s\" " , view);
+	fprintf (stderr, "zone \"%s\" " , zone);
 	fprintf (stderr, "file ");
 	if ( dir && *dir )
-		fprintf (stderr, "%s ", dir, file);
+		fprintf (stderr, "%s/", dir);
 	fprintf (stderr, "%s", file);
 	fprintf (stderr, "\n");
 #endif
+	dbg_line ();
+	if ( view[0] != '\0' )	/* view found in named.conf */
+	{
+		if ( viewname == NULL || viewname[0] == '\0' )	/* viewname wasn't set on startup ? */
+		{
+			dbg_line ();
+			error ("zone \"%s\" in view \"%s\" found in name server config, but no matching view was set on startup\n", zone, view);
+			return 0;
+		}
+		dbg_line ();
+		if ( strcmp (viewname, view) != 0 )	/* zone is _not_ in current view */
+			return 0;
+	}
 	return zone_readdir (dir, zone, file, &zonelist, config, dynamic_zone);
 }
 
@@ -332,7 +359,7 @@ static	int	dosigning (zone_t *zp)
 		else if ( newkeysetfile )
 			logmesg ("\tRe-signing necessary: Modified KSK in delegated domain\n"); 
 		else if ( get_mtime (path) > zfilesig_time )
-			logmesg ("\tRe-signing necessary: Modified keyes\n");
+			logmesg ("\tRe-signing necessary: Modified keys\n");
 		else if ( zfile_time > zfilesig_time )
 			logmesg ("\tRe-signing necessary: Zone file edited\n");
 		else if ( (currtime - zfilesig_time) > zp->conf->resign - (OFFSET) )
@@ -344,11 +371,14 @@ static	int	dosigning (zone_t *zp)
 			logmesg ("\tRe-signing not necessary!\n"); 
 		logflush ();
 	}
+	dbg_line ();
 	if ( !(force || newkey || newkeysetfile || zfile_time > zfilesig_time ||	
+	     get_mtime (path) > zfilesig_time ||
 	     (currtime - zfilesig_time) > zp->conf->resign - (OFFSET) || dynamic_zone) )
 		return 0;	/* nothing to do */
 
 	/* let's start signing the zone */
+	dbg_line ();
 
 	/* create new "dnskey.db" file  */
 	pathname (path, sizeof (path), zp->dir, zp->conf->keyfile, NULL);
@@ -359,6 +389,7 @@ static	int	dosigning (zone_t *zp)
 
 	err = 1;
 	use_unixtime = ( zp->conf->serialform == Unixtime );
+	dbg_val1 ("Use unixtime = %d\n", use_unixtime);
 #if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( !dynamic_zone && !use_unixtime ) /* increment serial no in static zone files */
 #else
@@ -396,7 +427,7 @@ static	int	dosigning (zone_t *zp)
 		{
 			char	zfile[MAX_PATHSIZE+1];
 
-			dyn_update_freeze (zp->zone, 1);	/* freeze dynmaic zone ! */
+			dyn_update_freeze (zp->zone, viewname, 1);	/* freeze dynmaic zone ! */
 
 			pathname (zfile, sizeof (zfile), zp->dir, zp->file, NULL);
 			pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
@@ -415,7 +446,7 @@ static	int	dosigning (zone_t *zp)
 		timer = stop_timer (timer);
 
 		if ( dynamic_zone )
-			dyn_update_freeze (zp->zone, 0);	/* thaw dynamic zone file */
+			dyn_update_freeze (zp->zone, viewname, 0);	/* thaw dynamic zone file */
 
 		if ( verbose )
 		{
@@ -429,7 +460,7 @@ static	int	dosigning (zone_t *zp)
 	}
 	if ( err >= 0 && reloadflag )
 	{
-		reload_zone (zp->zone);
+		reload_zone (zp->zone, viewname);
 		register_key (zp->keys, zp->conf);
 	}
 
@@ -497,6 +528,8 @@ static	int	kskstatus (dki_t **listp, const char *dir, const char *domain, const 
 		if ( verbose )
 			logmesg ("\tNo active KSK found: generate new one\n");
 		akey = genkey (listp, dir, domain, 1, z, 'a');
+		if ( !akey )
+			error ("\tcould not generate new KSK\n");
 		return 1;
 	}
 	/* check ksk lifetime */
@@ -577,8 +610,8 @@ static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const 
 		      nextkey == akey )
 			nextkey = (dki_t *)dki_find (*listp, 0, 'p', 1);
 
-		/* Is the pre-publish key long enough in the zone ? */
-		/* As mentioned by olaf, this should be the ttl of the DNSKEY RR ! */
+		/* Is the pre-publish key sufficient long in the zone ? */
+		/* As mentioned by Olaf, this should be the ttl of the DNSKEY RR ! */
 		if ( nextkey && dki_age (nextkey, currtime) > z->key_ttl + z->proptime )
 		{
 			keychange = 1;
@@ -591,6 +624,9 @@ static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const 
 			dki_setstatus (nextkey, 'a');	/* activate pre-published key */
 			nextkey = NULL;
 		}
+		else
+			if ( verbose )
+				logmesg ("\t\t->waiting for pre-publish key\n");
 	}
 
 	/* Should we add a new pre-publish key?  This is neccessary if the active
@@ -607,8 +643,10 @@ static	int	zskstatus (dki_t **listp, const char *dir, const char *domain, const 
 			logmesg ("\tNew pre-publish key needed\n");
 		nextkey = genkey (listp, dir, domain, 0, z, 'p');
 		if ( verbose )
-			logmesg ("\t\t->creating new pre-publish key %d\n",
-								nextkey->tag);
+			if ( nextkey )
+				logmesg ("\t\t->creating new pre-publish key %d\n", nextkey->tag);
+			else
+				error ("\tcould not generate new ZSK: \"%s\"\n", dki_geterrstr());
 	}
 	return keychange;
 }
@@ -714,10 +752,12 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	assert (conf != NULL);
 	assert (domain != NULL);
 
+	len = 0;
 	str[0] = '\0';
 	if ( conf->lookaside && conf->lookaside[0] )
 		len = snprintf (str, sizeof (str), "-l %.250s", conf->lookaside);
 
+	dbg_line();
 #if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( !dynamic_zone && conf->serialform == Unixtime )
 		snprintf (str+len, sizeof (str) - len, " -N unixtime");
@@ -727,10 +767,12 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	if ( conf->sig_pseudo )
 		pseudo = "-p ";
 
+	dbg_line();
 	rparam[0] = '\0';
 	if ( conf->sig_random && conf->sig_random[0] )
 		snprintf (rparam, sizeof (rparam), "-r %.250s ", conf->sig_random);
 
+	dbg_line();
 	keysetdir[0] = '\0';
 	if ( conf->keysetdir && conf->keysetdir[0] && strcmp (conf->keysetdir, "..") != 0 )
 		snprintf (keysetdir, sizeof (keysetdir), "-d %.250s ", conf->keysetdir);
@@ -738,13 +780,14 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	if ( dir == NULL || *dir == '\0' )
 		dir = ".";
 
+	dbg_line();
 #if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( dynamic_zone )
-		snprintf (cmd, sizeof (cmd), "cd %s; %s -N increment %s%s%s-o %s -e +%d -g %s -f %s.dsigned %s",
+		snprintf (cmd, sizeof (cmd), "cd %s; %s -N increment %s%s%s-o %s -e +%d -g %s -f %s.dsigned %s K*.private",
 			dir, SIGNCMD, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file, file);
 	else
 #endif
-		snprintf (cmd, sizeof (cmd), "cd %s; %s %s%s%s-o %s -e +%d -g %s %s",
+		snprintf (cmd, sizeof (cmd), "cd %s; %s %s%s%s-o %s -e +%d -g %s %s K*.private",
 			dir, SIGNCMD, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file);
 	if ( verbose >= 2 )
 		logmesg ("\t  Run cmd \"%s\"\n", cmd);
@@ -756,6 +799,7 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 		pclose (fp);
 	}
 
+	dbg_line();
 	if ( verbose >= 2 )
 		logmesg ("\t  Cmd dnssec-signzone return: \"%s\"\n", strchop (str, '\n'));
 
@@ -787,7 +831,7 @@ static	int	sign_zone (const char *dir, const char *domain, const char *file, con
 	return 0;
 }
 
-static	int	dyn_update_freeze (const char *domain, int freeze)
+static	int	dyn_update_freeze (const char *domain, const char *view, int freeze)
 {
 	char	cmdline[254+1];
 	char	str[254+1];
@@ -800,8 +844,14 @@ static	int	dyn_update_freeze (const char *domain, int freeze)
 		action = "thaw";
 
 	if ( verbose )
-		logmesg ("\t%s dynamic zone \"%s\"\n", action, domain);
-	snprintf (cmdline, sizeof (cmdline), "%s %s %s", RELOADCMD, action, domain);
+		if ( view )
+			logmesg ("\t%s dynamic zone \"%s\" in view \"%s\"\n", action, domain, view);
+		else
+			logmesg ("\t%s dynamic zone \"%s\"\n", action, domain);
+	if ( view )
+		snprintf (cmdline, sizeof (cmdline), "%s %s %s IN %s", RELOADCMD, action, domain, view);
+	else
+		snprintf (cmdline, sizeof (cmdline), "%s %s %s", RELOADCMD, action, domain);
 
 	if ( verbose >= 2 )
 		logmesg ("\t  Run cmd \"%s\"\n", cmdline);
@@ -819,15 +869,22 @@ static	int	dyn_update_freeze (const char *domain, int freeze)
 	return 0;
 }
 
-static	int	reload_zone (const char *domain)
+static	int	reload_zone (const char *domain, const char *view)
 {
 	char	cmdline[254+1];
 	char	str[254+1];
 	FILE	*fp;
 
 	if ( verbose )
-		logmesg ("\tReload zone \"%s\"\n", domain);
-	snprintf (cmdline, sizeof (cmdline), "%s reload %s", RELOADCMD, domain);
+		if ( view )
+			logmesg ("\tReload zone \"%s\" in view \"%s\"\n", domain, view);
+		else
+			logmesg ("\tReload zone \"%s\"\n", domain);
+
+	if ( view )
+		snprintf (cmdline, sizeof (cmdline), "%s reload %s IN %s", RELOADCMD, domain, view);
+	else
+		snprintf (cmdline, sizeof (cmdline), "%s reload %s", RELOADCMD, domain);
 
 	if ( verbose >= 2 )
 		logmesg ("\t  Run cmd \"%s\"\n", cmdline);

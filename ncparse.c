@@ -1,6 +1,6 @@
 /*****************************************************************
 **	
-**	@(#) ncparse.c 	(c) Apr 2005 by Holger Zuleger  hznet.de
+**	@(#) ncparse.c 	(c) Apr 2005 - Nov 2007 by Holger Zuleger 
 **
 **	A very simple named.conf parser
 **
@@ -27,6 +27,7 @@
 # define	TOK_HINT	265
 # define	TOK_FORWARD	266
 # define	TOK_DELEGATION	267
+# define	TOK_VIEW	268
 
 # define	TOK_FILE	270
 
@@ -51,6 +52,7 @@ static struct KeyWords {
 	{ "hint",	TOK_HINT },
 	{ "forward",	TOK_FORWARD },
 	{ "delegation-only", TOK_DELEGATION },
+	{ "view",	TOK_VIEW },
 	{ NULL,		TOK_UNKNOWN },
 };
 
@@ -166,6 +168,7 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 #else
 	char	strval[4095+1];
 #endif
+	char	view[255+1];
 	char	zone[255+1];
 	char	zonefile[255+1];
 
@@ -175,6 +178,7 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 	assert (dir != NULL && dirsize != 0);
 	assert (func != NULL);
 
+	view[0] = '\0';
 	if ( (fp = fopen (filename, "r")) == NULL )
 	{
 		logmesg ("parse_namedconf: can't open %s for reading\n", filename);
@@ -213,11 +217,17 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 			else
 				error ("parse_namedconf: need a filename after \"include\"!\n");
 		}
+		else if ( tok == TOK_VIEW )
+		{
+			if ( gettok (fp, strval, sizeof (strval)) != TOK_STRING )
+				continue;
+			snprintf (view, sizeof view, "%s", strval);	/* store the name of the view */
+		}
 		else if ( tok == TOK_ZONE )
 		{
 			if ( gettok (fp, strval, sizeof (strval)) != TOK_STRING )
 				continue;
-			strcpy (zone, strval);	/* store the name of the zone */
+			snprintf (zone, sizeof zone, "%s", strval);	/* store the name of the zone */
 
 			if ( gettok (fp, strval, sizeof (strval)) != TOK_MASTER )
 				continue;
@@ -225,10 +235,10 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 				continue;
 			if ( gettok (fp, strval, sizeof (strval)) != TOK_STRING )
 				continue;
-			strcpy (zonefile, strval);	/* this is the filename */
+			snprintf (zonefile, sizeof zonefile, "%s", strval);	/* this is the filename */
 
-			dbg_val3 ("dir %s zone %s file %s\n", dir, zone, zonefile);
-			(*func) (dir, zone, zonefile);
+			dbg_val4 ("dir %s view %s zone %s file %s\n", dir, view, zone, zonefile);
+			(*func) (dir, view, zone, zonefile);
 		}
 		else 
 			dbg_val3 ("%-10s(%d): %s\n", tok2str(tok), tok, strval);
@@ -239,9 +249,11 @@ int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func
 }
 
 #ifdef TEST_NCPARSE
-int	printzone (const char *dir, const char *zone, const char *file)
+int	printzone (const char *dir, const char *view, const char *zone, const char *file)
 {
-	printf ("printzone \"%s\" " , zone);
+	printf ("printzone ");
+	printf ("view \"%s\" " , view);
+	printf ("zone \"%s\" " , zone);
 	printf ("file ");
 	if ( dir && *dir )
 		printf ("%s/", dir, file);

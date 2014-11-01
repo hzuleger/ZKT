@@ -1,0 +1,104 @@
+; File written on Tue Nov 20 13:20:17 2007
+; dnssec_signzone version 9.5.0a7
+example.net.		7200	IN SOA	ns1.example.net. hostmaster.example.net. (
+					1195561217 ; serial
+					43200      ; refresh (12 hours)
+					1800       ; retry (30 minutes)
+					1209600    ; expire (2 weeks)
+					7200       ; minimum (2 hours)
+					)
+			7200	RRSIG	SOA 5 2 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					Ibb65ZhyxZHT0OPK2+6mtFwmCNuGxio/4Osm
+					7wx0/wvGnu6Spqh1kRqWyLSZiJ6nRAg8zx6R
+					uc3CwY/S3Yp04Q== )
+			7200	NS	ns1.example.net.
+			7200	NS	ns2.example.net.
+			7200	RRSIG	NS 5 2 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					ON3NEogUZrvj42I9zCK1IHyITVdtPSA34BJS
+					0nBdwDWB4+PnqQXoeBD235Iy5s0AxCmlhrhb
+					SrkFgZry/eao7w== )
+			7200	NSEC	localhost.example.net. NS SOA RRSIG NSEC DNSKEY
+			7200	RRSIG	NSEC 5 2 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					W1XLJjVukHVjU4/Ihi/DvE0HnBtbSIOt4xS3
+					FzcYkcBg8f5M8VMMDhMe1b1NKwLi0pWeZp8w
+					sC/uF9KDadw12w== )
+			3600	DNSKEY	257 3 5 (
+					BQEAAAABDEEycfY6uqWNTpQO8ygi9xms6NOF
+					YGhCjijN109fVGJ4KDnIZtLhoFrOKru9rZn+
+					pyqurlyZG4vESg0BMty6xljVDlr/TegDYFTN
+					19mQuwvlasJhZPv9pjROPqQGnqLaw3O4OKCY
+					9HgTTPdXK1hQ4Mg2rNU4SM2Tu5ki91f5AQqi
+					XF8KYMics0mwVvpj5C2YTDvE9SafLrce68JM
+					6DaiC6E1sQ==
+					) ; key id = 23553
+			3600	DNSKEY	256 3 5 (
+					BQEAAAAB1HKCH/ItBBOdDyb3JnyaRSlwGKqv
+					oJP6TV2kVy9eXpMn3v7eZMUVO09qRXSqvrYB
+					CR5s1IIwFrrNRVTH6cb8DQ==
+					) ; key id = 36122
+			3600	RRSIG	DNSKEY 5 2 3600 20071130112017 (
+					20071120112017 36122 example.net.
+					I3HqYSk2lBLzUdUJBQShAY14ipeObYtLJZhs
+					1Qv1XwXDNgro4ObOD8T75Eau56AgBvu1sovg
+					FdUXUA1ixE413w== )
+			3600	RRSIG	DNSKEY 5 2 3600 20071130112017 (
+					20071120112017 23553 example.net.
+					AlBT0+8G0cwSTgp4UsizqV/uM74bpeXXgcqP
+					sti9qnYby2B6d/jpCbjjwvjYdU+esEvzyGKJ
+					63EkcJKpFKQr3rl0GxUHb7gsPhnj0pNvtouV
+					vPh7Amn+s22DIoeZ0NiohOX+4TMhdiW9e7U9
+					EmSmOylxIg9j410KrrDPaNMdJxrI9AHr/xkm
+					p4Pm0lDMBPPQkk3HUD4Dcd6/hHhDUUOb/tji
+					CQ== )
+localhost.example.net.	7200	IN A	127.0.0.1
+			7200	RRSIG	A 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					lgpUlxyMTbRAed6uJpZBkVOu8UzAu8hPwH/L
+					3cIIH/BbBs3F9+3taGWjG/xLZdyptu+nVLiL
+					5cN257QlLlcoWQ== )
+			7200	NSEC	ns1.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					lXfe2QDZ2FQjK6hJFOCG4es1Xrju/myBAmxf
+					gVLdSTA78o/HEKSvp3XmqtZORl7i77A/GfY9
+					bTdhxEaqYQfxjw== )
+ns1.example.net.	7200	IN A	1.0.0.5
+			7200	RRSIG	A 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					NV6RRJeSdR9pYrsFPTyiYlOGeWppbmCgYxg2
+					WfbdhSHFc1fbK0+zhcXSMNMGKYbrAuINdvSD
+					a+DWm+dHD5Lc4Q== )
+			7200	AAAA	2001:db8::53
+			7200	RRSIG	AAAA 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					K4H8YCDh6TAmwvDdlYGMm8lVsSD24UUllEJ0
+					wIk9zkPr6ugwCN7Vs4V6tlogoQGCt2dI/2Lm
+					muXNszWlMMR0Zw== )
+			7200	NSEC	ns2.example.net. A AAAA RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					FzC472mqg0PWxFEvZ5WWVny9tkhdgAUz0K48
+					JQ0UGYd5071VAhWexhCVa0MaTx3zFH/8Y+Nd
+					qYr9XfV/Y2EyKw== )
+ns2.example.net.	7200	IN A	1.2.0.6
+			7200	RRSIG	A 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					rK/tshoOAtywWWGkA++iMHmoAKgNqz2mEnCj
+					ojtCUFHRFQKfi0Jd3xbnluwq44Heq+1c06Rn
+					vH8XC0PcYkry8g== )
+			7200	NSEC	sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					1HBGg3OvX/AXNvq/00b6OqBpfwkFvBpNJWCn
+					KqkLbDvrLa8Q0zrk+6N5JSUu5zDbt/m9eMvZ
+					GrQzZjhhEAmH0w== )
+sub.example.net.	7200	IN NS	ns1.example.net.
+			7200	NSEC	example.net. NS RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20071130112017 (
+					20071120112017 36122 example.net.
+					0HXh0yt4U8IdL1xg0MPfwczIVVG+FF4hj8tC
+					q0l8bUZkkH4oaCdpm5PZHTP4BbU2BJizfr5y
+					6btutWPo+uoikQ== )

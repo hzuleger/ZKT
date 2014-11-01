@@ -1,3 +1,31 @@
+zkt 0.94 -- 6. Dec 2007
+
+* bug	Case mismatch of zone name and key file name prevent
+	dki_read() from reading the key.
+	Thanks to Alan Clegg for finding this out.
+	Added some additional error processing and convert
+	zone name to lower case.
+
+* misc	Builtin default for KSK_randfile changed
+	from NULL to "/dev/urandom".
+
+* bug	dnssec-signer has to use private keys for signing
+	even if the revoke bit is set.
+	To achieve this the file pattern K*.private is added
+	to the dnssec-signzone run.
+
+* bug	Uninitialized variable "len" in sign_zone().
+
+* func	Default config file is settable via environment
+	var ZKT_CONFFILE
+
+* func	Support of views added
+	Link dnssec-zkt to dnssec-zkt-<view> and
+	dnssec-signer to dnssec-signer-<view>.
+	Option -V and --view added to dnssec-zkt.
+	Option -V added to dnssec-signer.
+	View support added to parse_namedconf().
+
 zkt 0.93 -- 1. Nov 2007
 
 * func	The ksk registration mechanism is disabled by
@@ -93,6 +121,11 @@ zkt 0.83 -- 11. Sep 2006
 zkt 0.82 -- 8. Sep 2006
 
 * bug	Use option -e for dnssec-keygen calls in dki_new(), because
+	an RSA exponent of 3 is vulnerable.
+
+* bug	dosigning(): Fixed bug in printing undefined serial
+	number if incr_serial() failed.
+
 	an RSA exponent of 3 is vulnerable.
 
 * bug	dosigning(): Fixed bug in printing undefined serial
@@ -265,8 +298,3 @@ zkt 0.51 -- 8. April 2005
 * func	dnssec-zkt: -l <list> option added.
 
 * func	dnssec-zkt: -p flag defaults to on in key creation mode (-C).
-
-* bug	dnssec-zkt: parsetag() doesn't return label if called with -C
-	and domain name starts with digit (e.g. ENUM Domain).
-
-zkt 0.5 -- 1. April 2005 (first public release)

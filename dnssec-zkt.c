@@ -46,8 +46,9 @@ static	int	recflag = RECURSIVE;
 static	int	trustedkeyflag = 0;
 static	int	kskrollover = 0;
 static	char	*kskdomain = "";
+static	const	char	*view = "";
 
-# define	short_options	":0:1:2:3:9A:C:D:P:S:R:HKTs:ZVac:dhkLl:prtz"
+# define	short_options	":0:1:2:3:9A:C:D:P:S:R:HKTs:ZV:ac:dhkLl:prtz"
 #if defined(HAS_GETOPT_LONG) && HAS_GETOPT_LONG
 static struct option long_options[] = {
 	{"ksk-rollover",	no_argument, NULL, '9'},
@@ -79,6 +80,7 @@ static struct option long_options[] = {
 	{"revoke",		required_argument, NULL, 'R'},
 	{"remove",		required_argument, NULL, 19 },
 	{"destroy",		required_argument, NULL, 20 },
+	{"view",		required_argument, NULL, 'V' },
 	{"help",		no_argument, NULL, 'H'},
 	{0, 0, 0, 0}
 };
@@ -100,6 +102,7 @@ main (int argc, char *argv[])
 	int	opt_index;
 	int	action;
 	const	char	*file;
+	const	char	*defconfname = NULL;
 	char	*p;
 	char	str[254+1];
 	const char	*keyname;
@@ -109,10 +112,12 @@ main (int argc, char *argv[])
 	progname = *argv;
 	if ( (p = strrchr (progname, '/')) )
 		progname = ++p;
+	view = getnameappendix (progname, "dnssec-zkt");
 
+	defconfname = getdefconfname (view);
 	config = loadconfig ("", (zconf_t *)NULL);	/* load built in config */
-	if ( fileexist (CONFIG_FILE) )			/* load default config file */
-		config = loadconfig (CONFIG_FILE, config);
+	if ( fileexist (defconfname) )			/* load default config file */
+		config = loadconfig (defconfname, config);
 	if ( config == NULL )
 		fatal ("Out of memory\n");
 	recflag = config->recursive;
@@ -140,7 +145,7 @@ main (int argc, char *argv[])
 			action = c;
 			if ( !optarg )
 				usage ("ksk rollover requires an domain argument", config);
-			kskdomain = optarg;
+			kskdomain = str_tolowerdup (optarg);
 			break;
 		case 'T':
 			trustedkeyflag = 1;
@@ -148,7 +153,6 @@ main (int argc, char *argv[])
 			/* fall through */
 		case 'H':
 		case 'K':
-		case 'V':
 		case 'Z':
 			action = c;
 			break;
@@ -172,10 +176,19 @@ main (int argc, char *argv[])
 					keyname = str;
 				}
 			}
+			keyname = str_tolowerdup (keyname);
 			action = c;
 			break;
 		case 'a':		/* age */
 			ageflag = !ageflag;
+			break;
+		case 'V':		/* view name */
+			view = optarg;
+			defconfname = getdefconfname (view);
+			if ( fileexist (defconfname) )		/* load default config file */
+				config = loadconfig (defconfname, config);
+			if ( config == NULL )
+				fatal ("Out of memory\n");
 			break;
 		case 'c':
 			config = loadconfig (optarg, config);
@@ -260,7 +273,6 @@ main (int argc, char *argv[])
 	switch ( action )
 	{
 	case 'H':
-	case 'V':
 		usage ("", config);
 	case 'C':
 		createkey (keyname, data, config);

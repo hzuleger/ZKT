@@ -1,5 +1,5 @@
 /*****************************************************************
-**	@(#) misc.h  (c) Jan 2005  Holger Zuleger  hznet.de
+**	@(#) misc.h  (c) 2005 - 2007  Holger Zuleger  hznet.de
 *****************************************************************/
 #ifndef MISC_H
 # define MISC_H
@@ -7,6 +7,8 @@
 # include <stdarg.h>
 # include <stdio.h>
 
+extern	const	char	*getnameappendix (const char *progname, const char *basename);
+extern	const	char	*getdefconfname (const char *view);
 extern	int	fileexist (const char *name);
 extern	int	file_age (const char *fname);
 extern	int	touch (const char *fname, time_t sec);
@@ -15,6 +17,7 @@ extern	int	copyfile (const char *fromfile, const char *tofile);
 extern	int	copyzonefile (const char *fromfile, const char *tofile);
 extern	int	cmpfile (const char *file1, const char *file2);
 extern	char	*str_delspace (char *s);
+extern	char	*str_tolowerdup (const char *s);
 extern	int	in_strarr (const char *str, char *const arr[], int cnt);
 extern	const	char	*splitpath (char *path, size_t  size, const char *filename);
 extern	char	*pathname (char *name, size_t size, const char *path, const char *file, const char *ext);

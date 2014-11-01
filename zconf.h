@@ -31,7 +31,7 @@
 
 # define	KSK_ALGO	(DK_ALGO_RSASHA1)
 # define	KSK_BITS	(1300)
-# define	KSK_RANDOM	NULL	/* "/dev/random" */
+# define	KSK_RANDOM	"/dev/urandom"	/* was NULL before v0.94 */
 # define	ZSK_ALGO	(DK_ALGO_RSASHA1)
 # define	ZSK_BITS	(512)
 # define	ZSK_RANDOM	"/dev/urandom"
@@ -95,7 +95,7 @@ typedef	struct zconf	{
 	int	sig_pseudo;
 } zconf_t;
 
-extern	zconf_t	*loadconfig (char *filename, zconf_t *z);
+extern	zconf_t	*loadconfig (const char *filename, zconf_t *z);
 extern	int	printconfig (const char *fname, const zconf_t *cp);
 extern	int	checkconfig (const zconf_t *z);
 

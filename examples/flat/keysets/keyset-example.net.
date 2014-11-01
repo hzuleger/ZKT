@@ -1,5 +1,5 @@
 $ORIGIN .
-example.net		7200	IN DNSKEY 257 3 3 (
+example.NET		7200	IN DNSKEY 257 3 3 (
 					CJEUcyN1ES5bAnBI4O+m7nLhbmTfxVtF31O4
 					agNVe+6Hu8kZ8EKzm+/UxGXGl4uKsGYv63+h
 					zm8BYvW64vVWg4RLDY8p4ZC9Y2PO7i7CyI47
@@ -16,3 +16,8 @@ example.net		7200	IN DNSKEY 257 3 3 (
 					EyOeRichLvlBXn15nkkLr4usbPitr68DrVas
 					o6bci4LJlPJBkHVS/3MtBo0lSY3XvoiBJtgp
 					) ; key id = 51141
+			7200	IN DNSKEY 257 3 1 (
+					AQPB7T6EqTeIztiVqEqMvYpULPQc5NGcyYDL
+					x709/vNUEYRTPpWuu0/IzcPSuJ0odb7g7O9W
+					1obfcm4fq+JURBzz
+					) ; key id = 17436
