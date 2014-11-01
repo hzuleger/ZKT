@@ -193,6 +193,7 @@ void	zkt_list_keys (const dki_t *data)
 }
 
 #if defined(USE_TREE) && USE_TREE
+# if 0
 static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
 {
 	const	dki_t	*dkp;
@@ -214,6 +215,73 @@ static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
 		}
 	}
 }
+# else
+const	dki_t	*parent;
+static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
+{
+	const	dki_t	*dkp;
+
+	if ( nodep == NULL )
+		return;
+
+	dkp = *nodep;
+	if ( which == INORDER || which == LEAF )
+	{
+// fprintf (stderr, "list_trustedkey order=%d(pre=0,in=1,post=2,leaf=3) depth=%d %s\n", which, depth, dkp->name);
+		if ( labellist && !isinlist (dkp->name, labellist) )
+			return;
+
+		if ( parent == NULL || !issubdomain (dkp->name, parent->name) )
+		{
+			parent = dkp;	
+			/* loop through list */
+			while ( dkp )
+			{
+				if ( (dki_isksk (dkp) || zskflag) )
+					dki_prt_trustedkey (dkp, stdout);
+				dkp = dkp->next;
+			}
+		}
+	}
+}
+static	void	list_managedkey (const dki_t **nodep, const VISIT which, int depth)
+{
+	const	dki_t	*dkp;
+
+	if ( nodep == NULL )
+		return;
+
+	dkp = *nodep;
+	if ( which == INORDER || which == LEAF )
+	{
+// fprintf (stderr, "list_trustedkey order=%d(pre=0,in=1,post=2,leaf=3) depth=%d %s\n", which, depth, dkp->name);
+		if ( labellist && !isinlist (dkp->name, labellist) )
+			return;
+
+		if ( parent == NULL || !issubdomain (dkp->name, parent->name) )
+		{
+			const	dki_t	*dkp_head = NULL;
+			const	dki_t	*standby = NULL;
+
+			parent = dkp;
+
+			dkp_head = dkp;
+			/* look for a standby key */
+			for ( dkp = dkp_head; dkp; dkp = dkp->next )
+				if ( dki_isksk (dkp) && dki_ispublished (dkp) )
+					standby = dkp;
+
+			if ( !standby )	/* no standby key found ? */
+				return;
+
+			/* print all non-standby ksk */
+			for ( dkp = dkp_head; dkp; dkp = dkp->next )
+				if ( dki_isksk (dkp) && dkp != standby )
+					dki_prt_managedkey (dkp, stdout);
+		}
+	}
+}
+# endif
 #endif
 
 void	zkt_list_trustedkeys (const dki_t *data)
@@ -230,6 +298,27 @@ void	zkt_list_trustedkeys (const dki_t *data)
 		if ( (dki_isksk (dkp) || zskflag) &&
 		     (labellist == NULL || isinlist (dkp->name, labellist)) )
 			dki_prt_trustedkey (dkp, stdout);
+#endif
+
+	/* print end of trusted-key section */
+	if ( data && headerflag )
+		printf ("};\n");
+}
+
+void	zkt_list_managedkeys (const dki_t *data)
+{
+
+	/* print headline if list is not empty */
+	if ( data && headerflag )
+		printf ("managed-keys {\n");
+
+#if defined(USE_TREE) && USE_TREE
+	twalk (data, list_managedkey);
+#else
+	for ( dkp = data; dkp; dkp = dkp->next )	/* loop through list */
+		if ( (dki_isksk (dkp) || zskflag) &&
+		     (labellist == NULL || isinlist (dkp->name, labellist)) )
+			dki_prt_managedkey (dkp, stdout);
 #endif
 
 	/* print end of trusted-key section */

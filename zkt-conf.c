@@ -70,9 +70,10 @@ static	int	writeflag = 0;
 static	int	allflag = 0;
 static	int	testflag = 0;
 
-# define	short_options	":ac:O:dlstvwV:rh"
+# define	short_options	":aC:c:O:dlstvwV:rh"
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
+	{"compability",		required_argument, NULL, 'C'},
 	{"config",		required_argument, NULL, 'c'},
 	{"option",		required_argument, NULL, 'O'},
 	{"config-option",	required_argument, NULL, 'O'},
@@ -98,6 +99,9 @@ int	main (int argc, char *argv[])
 	int	c;
 	int	opt_index;
 	int	action;
+	int	major = 0;
+	int	minor = 0;
+	int	revision = 0;
 	const	char	*file;
 	const	char	*defconfname = NULL;
 	const	char	*confname = NULL;
@@ -112,7 +116,7 @@ int	main (int argc, char *argv[])
 	view = getnameappendix (progname, "zkt-conf");
 
 	defconfname = getdefconfname (view);
-	dbg_val0 ("Load built in config \"%s\"\n");
+	dbg_val0 ("Load built in config\n");
 	config = loadconfig ("", (zconf_t *)NULL);	/* load built in config */
 
 	if ( fileexist (defconfname) )			/* load default config file */
@@ -127,6 +131,18 @@ int	main (int argc, char *argv[])
         opterr = 0;
 	opt_index = 0;
 	action = 0;
+
+	/* set current config version based on ZKT version */
+	switch ( sscanf (ZKT_VERSION, "%d.%d.%d", &major, &minor, &revision) )
+	{
+	case 3:	major = (major * 100) + (minor * 10) + revision;	break;
+	case 2:	major = (major * 100) + (minor * 10);	break;
+	case 1: major = major * 100;	break;
+	default:
+		usage ("illegal release number");
+	}
+	setconfigversion (major);
+
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 	while ( (c = getopt_long (argc, argv, short_options, long_options, &opt_index)) != -1 )
 #else
@@ -146,6 +162,17 @@ int	main (int argc, char *argv[])
 			break;
 		case 'O':		/* read option from commandline */
 			config = loadconfig_fromstr (optarg, config);
+			break;
+		case 'C':
+			switch ( sscanf (optarg, "%d.%d.&d", &major, &minor, &revision) )
+			{
+			case 3:	major = (major * 100) + (minor * 10) + revision;	break;
+			case 2:	major = (major * 100) + (minor * 10);	break;
+			case 1: major = major * 100;	break;
+			default:
+				usage ("illegal release number");
+			}
+			setconfigversion (major);
 			break;
 		case 'c':
 			if ( *optarg == '\0' )
@@ -263,11 +290,11 @@ int	main (int argc, char *argv[])
 		}
 
 		if ( minttl < (10 * MINSEC) )
-			fprintf (stderr, "Min_TTL of %s (%ld seconds) is too low to use it in a signed zone (see RFC4641)\n", 
+			fprintf (stderr, "MinimumTTL of %s (%ld seconds) is too low to use it in a signed zone (see RFC4641)\n", 
 							timeint2str (minttl), minttl);
 		else
-			fprintf (stderr, "Min_TTL:\t%s\t# (%ld seconds)\n", timeint2str (minttl), minttl);
-		fprintf (stdout, "Max_TTL:\t%s\t# (%ld seconds)\n", timeint2str (maxttl), maxttl);
+			fprintf (stderr, "MinimumTTL:\t%s\t# (%ld seconds)\n", timeint2str (minttl), minttl);
+		fprintf (stdout, "MaximumTTL:\t%s\t# (%ld seconds)\n", timeint2str (maxttl), maxttl);
 
 		if ( writeflag )
 		{
@@ -278,7 +305,7 @@ int	main (int argc, char *argv[])
 				dbg_val ("Load local config file \"%s\"\n", LOCALCONF_FILE);
 				config = loadconfig (LOCALCONF_FILE, config);
 			}
-			setconfigpar (config, "Max_TTL", &maxttl);
+			setconfigpar (config, "MaximumTTL", &maxttl);
 			printconfigdiff (confname, refconfig, config);
 		}
 	}

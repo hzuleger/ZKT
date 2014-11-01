@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.20.1 -->
-<!-- CreationDate: Tue Mar 23 23:47:33 2010 -->
+<!-- CreationDate: Tue Aug  3 17:20:51 2010 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -74,6 +74,18 @@ zkt&minus;ls &minus;&minus;list-trustedkeys</b>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls
+&minus;M</b> [<b>&minus;V|--view</b> <i>view</i>]
+[<b>&minus;c</b> <i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;dhrz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;ls &minus;&minus;list-managedkeys</b>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;l</b> <i>list</i>]
+[<b>&minus;dhrz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;ls
 &minus;K</b> [<b>&minus;V|--view</b> <i>view</i>]
 [<b>&minus;c</b> <i>file</i>] [<b>&minus;l</b> <i>list</i>]
 [<b>&minus;dhkrz</b>] [{<i>keyfile</i>|<i>dir</i>}
@@ -101,7 +113,8 @@ keyfile in the directory tree.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Other forms of
 the command, print out keys in a format suitable for a
-trusted-key section (<b>&minus;T</b>) or as a DNSKEY
+trusted- or managed-key section
+(<b>&minus;T</b>or<b>&minus;M</b>) or as a DNSKEY
 (<b>&minus;K</b>) resource record.</p>
 
 <h2>GENERAL OPTIONS
@@ -228,8 +241,8 @@ PrintTime).</p>
 <td width="78%">
 
 
-<p>No header or trusted-key section header and trailer in
--T mode</p></td></tr>
+<p>No header or trusted-key resp. managed-key section
+header and trailer in &minus;T or &minus;M mode.</p></td></tr>
 </table>
 
 <h2>COMMAND OPTIONS

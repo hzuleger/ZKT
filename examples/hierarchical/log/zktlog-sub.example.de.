@@ -31,3 +31,17 @@
 2010-04-01 01:05:48.169: notice: "sub.example.de.": lifetime of zone signing key 63530 exceeded: ZSK rollover done
 2010-04-01 01:05:48.650: info: "sub.example.de.": new key 40559 generated for publishing
 2010-04-01 01:05:48.650: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-08-26 22:54:24.495: info: "sub.example.de.": kskrollover phase3: Remove old key 8544
+2010-08-26 22:54:24.495: info: "sub.example.de.": old ZSK 63530 removed
+2010-08-26 22:54:24.513: notice: "sub.example.de.": lifetime of zone signing key 7295 exceeded: ZSK rollover done
+2010-08-26 22:54:24.617: info: "sub.example.de.": new key 25007 generated for publishing
+2010-08-26 22:54:24.617: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-08-26 23:11:44.485: info: "sub.example.de.": kskrollover phase1: New key 38331 generated
+2010-08-26 23:11:44.485: info: "sub.example.de.": old ZSK 7295 removed
+2010-08-26 23:11:44.513: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-10-21 13:41:22.956: info: "sub.example.de.": kskrollover phase2: send new key 27861 to the parent zone
+2010-10-21 13:41:22.956: notice: "sub.example.de.": lifetime of zone signing key 40559 exceeded: ZSK rollover done
+2010-10-21 13:41:22.956: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2010-10-21 14:30:47.663: info: "sub.example.de.": old ZSK 40559 removed
+2010-10-21 14:30:47.663: notice: "sub.example.de.": re-signing triggered: Modfied zone key set
+2011-01-25 10:15:57.334: notice: "sub.example.de.": re-signing triggered: Zone file edited

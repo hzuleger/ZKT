@@ -80,6 +80,10 @@
 # define	ALWAYS_CHECK_KEYSETFILES	1
 #endif
 
+#ifndef ALLOW_ALWAYS_PREPUBLISH_ZSK
+# define	ALLOW_ALWAYS_PREPUBLISH_ZSK	1
+#endif
+
 #ifndef CONFIG_PATH
 # define	CONFIG_PATH	"/var/named/"
 #endif
@@ -89,20 +93,19 @@
 # define	USE_TREE	1
 #endif
 
-/* BIND version and utility path will be set by ./configure script */
-#ifndef BIND_VERSION
-# define	BIND_VERSION	942
-#endif
-
+/* BIND version and utility path *must* be set by ./configure script */
 #ifndef BIND_UTIL_PATH
-# define	BIND_UTIL_PATH	"/usr/local/sbin/"
+# error ("BIND_UTIL_PATH not set. Please run configure with --enable-bind_util_path=");
+#endif
+#ifndef BIND_VERSION
+# define	BIND_VERSION	970
 #endif
 
 #ifndef ZKT_VERSION
 # if defined(USE_TREE) && USE_TREE
-#  define	ZKT_VERSION	"vT0.99c (c) Feb 2005 - Aug 2009 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"vT1.1.0 (c) Feb 2005 - Jan 2012 Holger Zuleger hznet.de"
 # else
-#  define	ZKT_VERSION	"v0.99c (c) Feb 2005 - Aug 2009 Holger Zuleger hznet.de"
+#  define	ZKT_VERSION	"v1.1.0 (c) Feb 2005 - Jan 2012 Holger Zuleger hznet.de"
 # endif
 #endif
 

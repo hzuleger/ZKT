@@ -1,6 +1,68 @@
-zkt 1.0 -- 1. Apr 2010 (The 1.0 release is sponsored by DOMINIC(r) )
+zkt 1.1 -- 30. Jan 2012
 
-* feat	Several config parameter are printed now in a more consistent and
+* misc	Release numbering changed to three level "major.minor.revison" scheme
+
+* bug	REMOVE_HOLD_TIME was set to 10 days only (Thanks to Chris Thompson)
+
+* doc	Improved README file (Thanks to Jan-Piet Mens)
+
+* misc	Fix of some typos in log messages
+
+* bug	Fixed error in rollover.c (return code of genfirstkey() wasn't checked)
+
+* misc	Default of KeySetDir changed from NULL to ".." (best for hierarchical mode)
+	Default Sig Lifetime changed from 10 days to 3 weeks (21 days)
+	Default ZSK lifetime changed from 3 months to 4 times the sig lifetime
+	Default KSK lifetime changed from 1 year to 2 years
+	Parameter checks in checkconfig() adapted.
+	KSK random device changed back from /dev/urandom to BIND default
+	(Be aware of some possibly long delay in key generation)
+
+* func	New configure option to set the bind utility path manually (--enable-bindutil_path)
+	BIND_UTIL_PATH in config_zkt.h will no longer used
+	(Thanks to Mans Nilsson)
+
+* bug	If nsec3 is turned on and KeyAlgo (or AddKeyAlgo) is RSHASHA1
+	or DSA, genkey() uses algorithm type NSECRSASHA1 or NSEC3DSA instead.
+	(Thanks to Holger Wirtz)
+
+* bug	Error in printconfigdiff() fixed. (Thanks to Holger Wirtz)
+
+* func	Description added to (some of the) dnssec.conf parameters
+
+* func	Adding a patch from Hrant Dadivanyan to always pre-publish ZSKs
+
+* misc	Config file syntax changed to parameter names without underscores.
+	zkt-conf uses ZKT_VERSION string as config version
+
+* bug	"make install-man" now installs all man page
+
+* bug	Bug fixed in zfparse.c. zkt-conf was unable to detect an already
+	included dnskey.db file if another file was included.
+
+* misc	destination dnssec-zkt removed from Makefile.in
+
+* func  dki_prt_managedkeys() added to dki.c
+	zkt_list_managedkeys() added to zkt.c
+	zkt-ls has new option -M to print out a list of managed-keys
+
+* bug	Bug fixed in the config parser (zconf.c). Couldn't parse
+	agorithm RSASHA512 correctly (Thanks to Michael Sinatra)
+
+zkt 1.0 -- 15. June 2010
+
+* func	"/dev/urandom" check added to checkconfig()
+
+* func	Config compability switch (-C) added to zkt-conf
+
+* func	zkt-ls has a new switch -s to change sorting of domains from
+	subdomain before parent to subdomain below the parent
+
+* func	"zkt-ls -T" prints only parent trust anchor
+
+zkt 1.0rc1 -- 1. Apr 2010 (The 1.0 release was sponsored by DOMINIC(r) )
+
+* func	Several config parameter are printed now in a more consistent and
 	user friendly form.
 	SerialFormat "Incremental" could be abbreviated as "inc" on input.
 

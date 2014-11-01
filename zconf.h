@@ -49,7 +49,7 @@
 # define	MONTH	(DAY * 30)
 # define	YEAR	(DAY * 365)
 
-# define	SIG_VALID_DAYS	(10)	/* or 3 Weeks ? */
+# define	SIG_VALID_DAYS	(21)	/* 3 Weeks  */
 # define	SIG_VALIDITY	(SIG_VALID_DAYS * DAYSEC)
 # define	MAX_TTL		( 8 * HOURSEC)	/* default value of maximum ttl time */
 # define	KEY_TTL		( 4 * HOURSEC)	/* default value of KEY TTL */
@@ -60,34 +60,36 @@
 #endif
 
 # define	RESIGN_INT	((SIG_VALID_DAYS - (SIG_VALID_DAYS / 3)) * DAYSEC)
-# define	KSK_LIFETIME	(1 * YEARSEC)
-#if 0
+# define	KSK_LIFETIME	(2 * YEARSEC)
+#if 1
 # define	ZSK_LIFETIME	((SIG_VALID_DAYS * 3) * DAYSEC)	/* set to three times the sig validity */
 #else
-# if 0
-#  define	ZSK_LIFETIME	((MONTH * 3) * DAYSEC)	/* set fixed to 3 month */
-# else
-#  define	ZSK_LIFETIME	(12 * WEEKSEC)	/* set fixed to 3 month */
-# endif
+# define	ZSK_LIFETIME	(12 * WEEKSEC)	/* set fixed to 3 month */
 #endif
 
 /* # define	KSK_ALGO	(DK_ALGO_RSASHA1)	KSK_ALGO renamed to KEY_ALGO (v0.99) */
 # define	KEY_ALGO	(DK_ALGO_RSASHA1)	/* general KEY_ALGO used for both ksk and zsk */
 # define	ADDITIONAL_KEY_ALGO	0
 # define	KSK_BITS	(1300)
-# define	KSK_RANDOM	"/dev/urandom"	/* was NULL before v0.94 */
+# define	KSK_RANDOM	NULL
 /* # define	ZSK_ALGO	(DK_ALGO_RSASHA1)	ZSK_ALGO has to be the same as KSK, so this is no longer used (v0.99) */
 # define	ZSK_BITS	(512)
+# define	ZSK_ALWAYS	0
 # define	ZSK_RANDOM	"/dev/urandom"
 # define	NSEC3		0		/* by default nsec3 is off */
 # define	SALTLEN		24		/* salt length in bits (resolution is 4 bits)*/
 
+#if 0
 # define	ZONEDIR		"."
+#else
+# define	ZONEDIR		CONFIG_PATH
+#endif
 # define	RECURSIVE	0
 # define	PRINTTIME	1
 # define	PRINTAGE	0
 # define	LJUST		0
-# define	KEYSETDIR	NULL	/* keysets */
+# define	LSCOLORTERM	NULL	/* or "" */
+# define	KEYSETDIR	".."	/* keysets */
 # define	LOGFILE		""
 # define	LOGLEVEL	"error"
 # define	LOGDOMAINDIR	""
@@ -142,6 +144,7 @@ typedef	struct zconf	{
 	int	printtime;
 	int	printage;
 	int	ljust;
+	char	*colorterm;
 	long	sigvalidity;	/* should be less than expire time */
 	long	max_ttl;	/* should be set to the maximum used ttl in the zone */
 	long	key_ttl;
@@ -160,6 +163,7 @@ typedef	struct zconf	{
 	long	z_life;
 	/* int	z_algo;		no longer used; renamed to k2_algo (v0.99) */
 	int	z_bits;
+	int	z_always;	/* always pre-publish zsk ? */
 	char	*z_random;
 	nsec3_t	nsec3;		/* 0 == off; 1 == on; 2 == on with optout */
 	int	saltbits;
@@ -196,5 +200,6 @@ extern	int	setconfigpar (zconf_t *conf, char *entry, const void *pval);
 extern	int	printconfig (const char *fname, const zconf_t *cp);
 extern	int	printconfigdiff (const char *fname, const zconf_t *ref, const zconf_t *z);
 extern	int	checkconfig (const zconf_t *z);
+extern	void	setconfigversion (int version);
 
 #endif

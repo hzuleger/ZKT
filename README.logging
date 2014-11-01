@@ -65,10 +65,8 @@ Current logging messages:
 		Key rollover events
 		KSK key generation and revoking
 		Zone reload resp. freeze/thaw of dynamic zone
-	LG_INFO: Currently none
-		planned:
-		Mesages for key generation and key status change
-		(e.g.: pre-publish -> activate; revoked -> removed etc.)
+	LG_INFO:
+		Messages for key generation/removal and ksk rollover
 	LG_DEBUG: all "verbose" (-v) and "very verbose" (-v -v)  messages
 
 Some recomended and useful logging settings

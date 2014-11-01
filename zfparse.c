@@ -40,19 +40,12 @@
 # include <unistd.h>	/* for link(), unlink() */
 # include <ctype.h>
 # include <assert.h>
-#if 0
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <time.h>
-# include <utime.h>
-# include <errno.h>
-# include <fcntl.h>
-#endif
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 # include "config_zkt.h"
 # include "zconf.h"
+# include "misc.h"
 # include "log.h"
 # include "debug.h"
 #define extern
@@ -184,7 +177,10 @@ int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *k
 	dbg_val4 ("parsezonefile (\"%s\", %ld, %ld, \"%s\")\n", file, *pminttl, *pmaxttl, keydbfile);
 
 	if ( (infp = fopen (file, "r")) == NULL )
+	{
+		error ("parsezonefile: couldn't open file \"%s\" for input\n", file); 
 		return -1;
+	}
 
 	lnr = 0;
 	keydbfilefound = 0;
@@ -220,7 +216,11 @@ int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *k
 				if ( keydbfile && strcmp (fname, keydbfile) == 0 )
 					keydbfilefound = 1;
 				else
-					keydbfilefound = parsezonefile (fname, pminttl, pmaxttl, keydbfile);
+				{
+					int	ret = parsezonefile (fname, pminttl, pmaxttl, keydbfile);
+					if ( ret )	/* keydb found or read error ? */
+						keydbfilefound = ret;
+				}
 			}
 		}
 		else if ( !isspace (*p) )	/* label ? */

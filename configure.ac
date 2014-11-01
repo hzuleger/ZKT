@@ -12,12 +12,14 @@
 #	2008-10-01	if BIND_UTIL_PATH check failed, use config_zkt.h setting as last resort
 #	2009-07-30	check for timegm() added
 #	2009-12-02	the tr command in bind_version= didn't work well under solaris
+#	2010-10-14	new option to specify BIND_UTIL_PATH on command line (thanks to Mans Nilsson)
+#			No build in default BIND_UTIL_PATH used anymore
 #
 
 dnl AC_PREREQ(2.59)
 
 ### Package name and current version
-AC_INIT(ZKT, 1.0rc1, Holger Zuleger hznet.de)
+AC_INIT(ZKT, 1.1.0, Holger Zuleger hznet.de)
 dnl AC_REVISION($Revision: 1.397 $)
 
 ### Files to test to check if src dir contains the package
@@ -29,17 +31,33 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 ### find out the path to BIND utils and version
-AC_PATH_PROG([SIGNZONE_PROG], dnssec-signzone)
-if test -z "$SIGNZONE_PROG" ; then
-        AC_MSG_WARN([*** 'BIND dnssec-signzone' missing, use default BIND_UTIL_PATH and BIND_VERSION setting out of config_zkt.h ***])
+AC_ARG_ENABLE([bind_util_path], AS_HELP_STRING(	[--enable-bind_util_path=PATH], [Define path to BIND utilities, default is path to dnssec-signzone]), [bind_util_path=$enableval])
+if test -n "$bind_util_path"
+then
+	if test -x "$bind_util_path/dnssec-signzone"
+	then
+		AC_MSG_NOTICE([BIND utilities path successfully set to $bind_util_path.])
+		SIGNZONE_PROG=$bind_util_path/dnssec-signzone	
+	else
+        	AC_MSG_ERROR([*** 'BIND utility not found in $bind_util_path, please use --enable-bind_util_path= to set it manually' ***])
+	fi
 else
-	bind_util_path=`dirname "$SIGNZONE_PROG"`
-	# define BIND_UTIL_PATH in config.h.in
-	AC_DEFINE_UNQUOTED(BIND_UTIL_PATH, "$bind_util_path/", Path to BIND utilities)
-	# define BIND_VERSION in config.h.in
-	bind_version=`$SIGNZONE_PROG 2>&1 | grep "Version:" | tr -cd "[[0-9]]\012" | sed "s/^\(...\).*/\1/"`
-	AC_DEFINE_UNQUOTED(BIND_VERSION, $bind_version, BIND version as integer number without dots)
+	AC_PATH_PROG([SIGNZONE_PROG], dnssec-signzone)
+	if test -n "$SIGNZONE_PROG" 
+	then
+		bind_util_path=`dirname "$SIGNZONE_PROG"`
+		AC_MSG_NOTICE([BIND utilities path automatically set to $bind_util_path.])
+	else
+        	AC_MSG_ERROR([*** 'could not determine BIND utility path, please use --enable-bind_util_path= ' to set it manually ***])
+	fi
 fi
+### By now, we have a path. We'll use it.  
+# define BIND_UTIL_PATH in config.h.in
+AC_DEFINE_UNQUOTED(BIND_UTIL_PATH, "$bind_util_path/", Path to BIND utilities)
+# define BIND_VERSION in config.h.in
+bind_version=`$SIGNZONE_PROG 2>&1 |  grep "Version:" | tr -cd "[[0-9]]\012" | sed "s/^\(...\).*/\1/"`
+AC_DEFINE_UNQUOTED(BIND_VERSION, $bind_version, BIND version as integer number without dots)
+
 
 AC_CHECK_TYPE(uint, unsigned int)
 AC_CHECK_TYPE(ulong, unsigned long)
@@ -68,7 +86,6 @@ AS_IF([test "$enable_printtimezone" = "yes"], [printtimezone=1])
 AC_DEFINE_UNQUOTED(PRINT_TIMEZONE, $printtimezone, print out timezone)
 
 AC_ARG_ENABLE([printyear], AS_HELP_STRING( [--enable-print-age], [print age with year]))
-test "$printyear" = yes && printyear=1
 printyear=0
 AS_IF([test "$enable_printyear" = "yes"], [printyear=1])
 AC_DEFINE_UNQUOTED(PRINT_AGE_WITH_YEAR, $printyear, print age with year)

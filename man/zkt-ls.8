@@ -46,6 +46,30 @@ zkt\-ls \(em list dnskeys
 .RI "" ... ]
 
 .B zkt\-ls
+.B \-M
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-l
+.IR "list" ]
+.RB [ \-dhrz ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+.br
+.B zkt\-ls
+.B \-\-list-managedkeys
+.RB [ \-V|--view
+.IR "view" ]
+.RB [ \-c
+.IR "file" ]
+.RB [ \-l
+.IR "list" ]
+.RB [ \-dhrz ]
+.RI [{ keyfile | dir }
+.RI "" ... ]
+
+.B zkt\-ls
 .B \-K
 .RB [ \-V|--view
 .IR "view" ]
@@ -84,8 +108,8 @@ In that mode the use of option
 may be helpful to find the location of the keyfile in the directory tree.
 .PP
 Other forms of the command, print out keys in a format suitable for
-a trusted-key section
-.RB ( \-T )
+a trusted- or managed-key section
+.RB ( \-T or \-M )
 or as a DNSKEY
 .RB ( \-K )
 resource record.
@@ -161,7 +185,7 @@ Print the key generation time (default is on).
 Also settable in the dnssec.conf file (Parameter: PrintTime).
 .TP
 .B \-h
-No header or trusted-key section header and trailer in -T mode
+No header or trusted-key resp. managed-key section header and trailer in \-T or \-M mode.
 
 .SH COMMAND OPTIONS
 .TP

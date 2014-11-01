@@ -44,7 +44,7 @@
 # include <utime.h>
 # include <assert.h>
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+# include "config.h"
 #endif
 # include "config_zkt.h"
 # include "zconf.h"
@@ -79,12 +79,15 @@ static	const	char	*strfindstr (const char *str, const char *search);
 **	of at least 10 characters like this:
 **	<SPACEes or TABs>      1         ; Serial 
 **
+**	Since ZKT 1.1.0 single line SOA records are also supported
+**
 ****************************************************************/
 int	inc_serial (const char *fname, int use_unixtime)
 {
 	FILE	*fp;
 	char	buf[4095+1];
 	int	error;
+	int	serial_pos;
 
 	/**
 	   since BIND 9.4, there is a dnssec-signzone option available for
@@ -99,22 +102,32 @@ int	inc_serial (const char *fname, int use_unixtime)
 		return -1;
 
 		/* read until the line matches the beginning of a soa record ... */
-	while ( fgets (buf, sizeof buf, fp) && !is_soa_rr (buf) )
-		;
+	while ( fgets (buf, sizeof buf, fp) )
+	{
+		dbg_val ("inc_serial() checking line for SOA RR \"%s\"\n", buf);
+		serial_pos = is_soa_rr (buf);
+		if ( serial_pos )	/* SOA record found ? */
+			break;
+	}
 
 	if ( feof (fp) )
 	{
 		fclose (fp);
 		return -2;
 	}
+	dbg_val ("serial_pos = %d\n", serial_pos);
+	if (serial_pos > 1 )	/* if we found a single line SOA RR */
+		fseek (fp, -(long)serial_pos, SEEK_CUR);	/* go back to the beginning of the line */
 
 	error = inc_soa_serial (fp, use_unixtime);	/* .. inc soa serial no ... */
+	dbg_val ("inc_soa_serial() returns %d\n", error);
 
-	if ( fclose (fp) != 0 )
+	if ( error == 0 && fclose (fp) != 0 )
 		return -5;
 	return error;
 }
 
+#if 0
 /*****************************************************************
 **	check if line is the beginning of a SOA RR record, thus
 **	containing the string "IN .* SOA" and ends with a '('
@@ -126,17 +139,65 @@ static	int	is_soa_rr (const char *line)
 
 	assert ( line != NULL );
 
-	if ( (p = strfindstr (line, "IN")) && strfindstr (p+2, "SOA") )	/* line contains "IN" and "SOA" */
+		/* line contains "IN" and "SOA" */
+	if ( (p = strfindstr (line, "IN")) && strfindstr (p+2, "SOA") )
 	{
 		p = line + strlen (line) - 1;
 		while ( p > line && isspace (*p) )
 			p--;
-		if ( *p == '(' )	/* last character have to be a '(' to start a multi line record */
+		if ( *p == '(' )	/* last character must be a '(' to start a multi line record */
 			return 1;
 	}
 
 	return 0;
 }
+#else
+/*****************************************************************
+**
+**	check if line is the beginning of a SOA RR record, thus
+**	containing the string "IN .* SOA" and ends with a '('
+**	(multiline record) or is a single line record.
+**
+**	returns 1 if it is a multi line record (for compability to
+**	the old function) or the position of the serial number
+**	field counted from the end of the line 
+**
+*****************************************************************/
+static	int	is_soa_rr (const char *line)
+{
+	const	char	*p;
+	const	char	*soa_p;
+
+	assert ( line != NULL );
+
+			/* line contains "IN" and "SOA" ? */
+	if ( (p = strfindstr (line, "IN")) && (soa_p = strfindstr (p+2, "SOA")) )
+	{
+		int	len = strlen (line);
+
+		/* check for multiline record */
+		p = line + len - 1;
+		while ( p > line && isspace (*p) )
+			p--;
+		if ( *p == '(' )	/* last character must be a '(' to start a multi line record */
+			return 1;
+
+		/* line is single line record */
+		p = soa_p + 3;			/* start just behind the SOA string */
+		dbg_val1 ("p = \"%s\"\n", p);
+		p += strspn (p, " \t");		/* skip white space */
+		p += strcspn (p, " \t");	/* skip primary master */
+		p += strspn (p, " \t");		/* skip white space */
+		p += strcspn (p, " \t");	/* skip mail address */
+		dbg_val1 ("p = \"%s\"\n", p);
+
+		dbg_val1 ("is_soa_rr returns = %d\n", (line+len) - p);
+		return (line+len) - p;	/* position of serial nr from the end of the line */
+	}
+
+	return 0;
+}
+#endif
 
 /*****************************************************************
 **	Find string 'search' in 'str' and ignore case in comparison.
@@ -194,7 +255,7 @@ static	int	inc_soa_serial (FILE *fp, int use_unixtime)
 	int	digits;
 	ulong	today;
 
-	/* move forward until any non ws reached */
+	/* move forward until any non ws is reached */
 	while ( (c = getc (fp)) != EOF && isspace (c) )
 		;
 	ungetc (c, fp);		/* push back the last char */
@@ -258,7 +319,8 @@ main (int argc, char *argv[])
 
 	if ( (err = inc_serial (argv[1], 0)) <= 0 )
 	{
-		error ("can't change serial errno=%d\n", err);
+		fprintf (stderr, "can't change serial no: errno=%d %s\n",
+					err, inc_errstr (err));
 		exit (1);
 	}
 

@@ -1,10 +1,10 @@
 $ORIGIN .
 example.net		7200	IN DNSKEY 257 3 8 (
-					BQEAAAABDUkWE4dtbBTfkAnlOJSbnYSikE7c
-					yHPg6qFItoYObenlTGkGTECQb1flWaKLDhQZ
-					54CdnYN3FdlRVHKmkkxZOwH0HvW+fGXTGv35
-					adGJJBDqlJWJC0bxHsrlUZTdczt2B6g9AHUU
-					g2WSXTa5KZHJGjFiACFzfln9SQlVj/UzWGv2
-					sDwQb+XiOIHkZ2VmMPx3SvFOOIG4nmTla76X
-					YTNfUJPYBQ==
-					) ; key id = 8406
+					BQEAAAABC6qZRCQRp2qnmxvWal1kergOJ1xQ
+					5wGD+HZFLEvsvD8sU0i1BGJoeDK5N/07S7s0
+					aYVdIViQ1/CmpqBgahnlOKAoMO3eYnTuFRE7
+					HqJK1CSN2+nvN1m+miz+vfSPSOLeP2u8GAwI
+					Jmq/gb78AWStvW6HAXrDfaiqvqb4MDZCvpla
+					chhyHfngVLFYI22tyivUmzN/pRBePYGQ1nVs
+					K1cPYDPp4Q==
+					) ; key id = 52101

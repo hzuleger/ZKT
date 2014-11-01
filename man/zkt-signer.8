@@ -1,4 +1,4 @@
-.TH zkt-signer 8 "Feb 2, 2010" "ZKT 1.0" ""
+.TH zkt-signer 8 "Nov 27, 2010" "ZKT 1.1" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -8,12 +8,14 @@ zkt-signer \(em Secure DNS zone signing tool
 .SH SYNOPSYS
 .na
 .B zkt-signer
-.RB [ \-L|--logfile
+.RB [ \-L
 .IR "file" ]
-.RB [ \-V|--view
+.RB [ \-V
 .IR "view" ]
 .RB [ \-c
 .IR "file" ]
+.RB [ \-O
+.IR "optstr" ]
 .RB [ \-fhnr ]
 .RB [ \-v
 .RB [ \-v ]]
@@ -23,12 +25,14 @@ zkt-signer \(em Secure DNS zone signing tool
 .RI "" ... ]
 .br
 .B zkt-signer
-.RB [ \-L|--logfile
+.RB [ \-L
 .IR "file" ]
-.RB [ \-V|--view
+.RB [ \-V
 .IR "view" ]
 .RB [ \-c
 .IR "file" ]
+.RB [ \-O
+.IR "optstr" ]
 .RB [ \-fhnr ]
 .RB [ \-v
 .RB [ \-v ]]
@@ -38,12 +42,14 @@ zkt-signer \(em Secure DNS zone signing tool
 .RI "" ... ]
 .br
 .B zkt-signer
-.RB [ \-L|--logfile
+.RB [ \-L
 .IR "file" ]
-.RB [ \-V|--view
+.RB [ \-V
 .IR "view" ]
 .RB [ \-c
 .IR "file" ]
+.RB [ \-O
+.IR "optstr" ]
 .RB [ \-fhnr ]
 .RB [ \-v
 .RB [ \-v ]]
@@ -78,6 +84,7 @@ If you have a configuration file with views, you have to use option
 Alternately you could link the executable file to a second name like
 .I zkt-signer-viewname
 and use that command to specify the name of the view.
+.br
 All master zone statements will be scanned for filenames
 ending with ".signed".
 These zones will be checked if the necessary zone- and key signing keys
@@ -108,30 +115,22 @@ Every secure zone found in a subdirectory below
 will be signed.
 However, it is also possible to reduce the signing to those
 zones given as arguments.
-.ig
-In directory mode the pre-requisite is, that the directory name is
-exactly (including the trailing dot) the same as the zone name.
-..
-.PP
-In the last form of the command, the functionality is more or less the same
-as the
-.I dnssec-signzone (8)
-command.
-The parameter specifies the zone file name and the option
-.B \-o
-takes the name of the zone.
-.PP
-If neither
+.br
+If
+.B \-D
+is ommitted (and neither
 .B \-N
 nor
-.B \-D
-nor
-.B \-o
-is given, then the default directory specified in the
+.BI \-o origin 
+is specified) the default directory specified in the
 .I dnssec.conf
 file by the parameter
 .I zonedir
 will be used as top level directory.
+.ig
+In directory mode the pre-requisite is, that the directory name is
+exactly (including the trailing dot) the same as the zone name.
+..
 
 .SH OPTIONS
 .TP
@@ -262,7 +261,7 @@ files.
 .TP
 .fam C
 .B "zkt-signer \-\-config-option='ResignInterval 1d; Sigvalidity 28h; \e
-.B ZSK_lifetime 2d;' \-v \-v \-o example.net. zone.db
+.B ZSKlifetime 2d;' \-v \-v \-o example.net. zone.db
 .fam T
 .br
 Sign the example.net zone but override some config file values with parameters
@@ -278,7 +277,7 @@ Besides the zone file
 .RI ( zone.db ),
 there is a signed zone file
 .RI ( zone.db.signed),
-a minimum of four files containing the keying material,
+a minimum of four files containing the key material,
 a file called
 .I dnskey.db
 with the current used keys,
@@ -314,7 +313,7 @@ The filename is the name of the zone file with the
 extension
 .IR .signed .
 Create an empty file with the name
-.IB zonefile .signed
+.IB zone.db .signed
 in the zone directory.
 .TP
 Include the keyfile in the zone.
@@ -354,7 +353,8 @@ must be formated, so that the serial number is on a single line and
 left justified in a field of at least 10 spaces!
 .if t \{\
 .fam C
-.fi 0
+.\"fi 0
+.nf
 @  IN SOA  ns1.example.net. hostmaster.example.net.  (
 		60        ; Serial    
 		43200 ; Refresh
@@ -366,7 +366,7 @@ left justified in a field of at least 10 spaces!
 .\}
 If you use BIND version 9.4 or later and
 use the unixtime format for the serial number (which is the default since ZKT-1.0)
-than this is not necessary.
+this is not necessary.
 See also the parameter Serialformat in 
 .IR dnssec.conf .
 .TP
@@ -389,7 +389,7 @@ Then try to load the file on the name server.
 .SH ENVIRONMENT VARIABLES
 .TP
 ZKT_CONFFILE
-Specifies the name of the default global configuration files.
+Specifies the name of the default global configuration file.
 
 .SH FILES
 .TP

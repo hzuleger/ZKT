@@ -254,13 +254,10 @@ int	main (int argc, char *const argv[])
 	if ( lg_open (progname, config->syslogfacility, config->sysloglevel, config->zonedir, logfile, config->loglevel) < -1 )
 		fatal ("Couldn't open logfile %s in dir %s\n", logfile, config->zonedir);
 
-#if defined(DBG) && DBG
-	for ( zp = zonelist; zp; zp = zp->next )
-		zone_print ("in main: ", zp);
-#endif
 	lg_args (LG_NOTICE, argc, argv);
 
-	/* 1.0rc1: The ttl for dynamic zones is not known or if it is 0, use sig valid time for this */
+	/* 1.0rc1: If the ttl is 0 or not known because of dynamic zone signing, ... */
+	/* ... use sig valid time for this */
 	if ( config->max_ttl <= 0 || dynamic_zone )
 	{
 		// config = dupconfig (config);
@@ -316,10 +313,14 @@ int	main (int argc, char *const argv[])
 		free (dir);
 	}
 
-	/* none of the above: read current directory tree */
+	/* none of the above: read default directory tree */
 	if ( zonelist == NULL )
 		parsedir (config->zonedir, &zonelist, config);
 
+#if defined(DBG) && DBG
+	for ( zp = zonelist; zp; zp = zp->next )
+		zone_print ("in main: ", zp);
+#endif
 	for ( zp = zonelist; zp; zp = zp->next )
 		if ( in_strarr (zp->zone, &argv[optind], argc - optind) )
 		{
@@ -550,7 +551,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	if ( force )
 		snprintf (mesg, sizeof(mesg), "Option -f"); 
 	else if ( newkey )
-		snprintf (mesg, sizeof(mesg), "Modfied zone key set"); 
+		snprintf (mesg, sizeof(mesg), "Modified zone key set"); 
 	else if ( newkeysetfile )
 		snprintf (mesg, sizeof(mesg), "Modified KSK in delegated domain"); 
 	else if ( file_mtime (path) > zfilesig_time )

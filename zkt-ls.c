@@ -80,22 +80,25 @@ int	pathflag = 0;
 int	kskflag = 1;
 int	zskflag = 1;
 int	ljustflag = 0;
+int	subdomain_before_parent = 1;
 
 static	int	dirflag = 0;
 static	int	recflag = RECURSIVE;
 static	int	trustedkeyflag = 0;
+static	int	managedkeyflag = 0;
 static	const	char	*view = "";
 static	const	char	*term = NULL;
 
 #if defined(COLOR_MODE) && COLOR_MODE
-# define	short_options	":HKTV:afC::c:O:dhkLl:prtez"
+# define	short_options	":HKTMV:afC::c:O:dhkLl:prstez"
 #else
-# define	short_options	":HKTV:af:c:O:dhkLl:prtez"
+# define	short_options	":HKTMV:af:c:O:dhkLl:prstez"
 #endif
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{"list-dnskeys",	no_argument, NULL, 'K'},
 	{"list-trustedkeys",	no_argument, NULL, 'T'},
+	{"list-managedkeys",	no_argument, NULL, 'M'},
 	{"ksk",			no_argument, NULL, 'k'},
 	{"zsk",			no_argument, NULL, 'z'},
 	{"age",			no_argument, NULL, 'a'},
@@ -106,6 +109,8 @@ static struct option long_options[] = {
 	{"leftjust",		no_argument, NULL, 'L'},
 	{"label-list",		no_argument, NULL, 'l'},
 	{"path",		no_argument, NULL, 'p'},
+	{"sort",		no_argument, NULL, 's'},
+	{"subdomain",		no_argument, NULL, 's'},
 	{"nohead",		no_argument, NULL, 'h'},
 	{"directory",		no_argument, NULL, 'd'},
 #if defined(COLOR_MODE) && COLOR_MODE
@@ -120,8 +125,8 @@ static struct option long_options[] = {
 };
 #endif
 
-static	int	parsedirectory (const char *dir, dki_t **listp);
-static	void	parsefile (const char *file, dki_t **listp);
+static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before);
+static	void	parsefile (const char *file, dki_t **listp, int sub_before);
 static	void    usage (char *mesg, zconf_t *cp);
 
 static	void	setglobalflags (zconf_t *config)
@@ -130,6 +135,9 @@ static	void	setglobalflags (zconf_t *config)
 	ageflag = config->printage;
 	timeflag = config->printtime;
 	ljustflag = config->ljust;
+	term = config->colorterm;
+	if ( term && *term == '\0' )
+		term = getenv ("TERM");
 }
 
 int	main (int argc, char *argv[])
@@ -176,8 +184,15 @@ int	main (int argc, char *argv[])
 				term = getenv ("TERM");
 			break;
 #endif
+		case 'M':
+			managedkeyflag = 1;
+			subdomain_before_parent = 0;
+			zskflag = pathflag = 0;
+			action = c;
+			break;
 		case 'T':
 			trustedkeyflag = 1;
+			subdomain_before_parent = 0;
 			zskflag = pathflag = 0;
 			/* fall through */
 		case 'H':
@@ -233,6 +248,9 @@ int	main (int argc, char *argv[])
 		case 'r':		/* switch recursive flag */
 			recflag = !recflag;
 			break;
+		case 's':		/* switch subdomain sorting flag */
+			subdomain_before_parent = !subdomain_before_parent;
+			break;
 		case 't':		/* time */
 			timeflag = !timeflag;
 			break;
@@ -274,9 +292,9 @@ int	main (int argc, char *argv[])
 			file = argv[c++];
 
 		if ( is_directory (file) )
-			parsedirectory (file, &data);
+			parsedirectory (file, &data, subdomain_before_parent);
 		else
-			parsefile (file, &data);
+			parsefile (file, &data, subdomain_before_parent);
 
 	}  while ( c < argc );	/* for all arguments */
 
@@ -289,6 +307,9 @@ int	main (int argc, char *argv[])
 		break;
 	case 'T':
 		zkt_list_trustedkeys (data);
+		break;
+	case 'M':
+		zkt_list_managedkeys (data);
 		break;
 	default:
 		zkt_list_keys (data);
@@ -323,13 +344,17 @@ static	void    usage (char *mesg, zconf_t *cp)
         sopt_usage ("\tusage: %s -T [-dhrz] [-c config] [file|dir ...]\n", progname);
         lopt_usage ("\tusage: %s --list-trustedkeys [-dhzr] [-c config] [file|dir ...]\n", progname);
         fprintf (stderr, "\n");
+        fprintf (stderr, "List managed keys (output is suitable for managed-keys section)\n");
+        sopt_usage ("\tusage: %s -M [-dhrz] [-c config] [file|dir ...]\n", progname);
+        lopt_usage ("\tusage: %s --list-managedkeys [-dhzr] [-c config] [file|dir ...]\n", progname);
+        fprintf (stderr, "\n");
 
         fprintf (stderr, "General options \n");
         fprintf (stderr, "\t-c file%s", loptstr (", --config=file\n", ""));
 	fprintf (stderr, "\t\t read config from <file> instead of %s\n", CONFIG_FILE);
         fprintf (stderr, "\t-O optstr%s", loptstr (", --config-option=\"optstr\"\n", ""));
 	fprintf (stderr, "\t\t read config options from commandline\n");
-        fprintf (stderr, "\t-h%s\t no headline or trusted-key section header/trailer in -T mode\n", loptstr (", --nohead", "\t"));
+        fprintf (stderr, "\t-h%s\t no headline or trusted/managed-key section header/trailer in -T/-M mode\n", loptstr (", --nohead", "\t"));
         fprintf (stderr, "\t-d%s\t skip directory arguments\n", loptstr (", --directory", "\t"));
         fprintf (stderr, "\t-L%s\t print the domain name left justified (default: %s)\n", loptstr (", --leftjust", "\t"), ljustflag ? "on": "off");
         fprintf (stderr, "\t-l list%s", loptstr (", --label=\"list\"\n\t", ""));
@@ -338,6 +363,7 @@ static	void    usage (char *mesg, zconf_t *cp)
         fprintf (stderr, "\t\t turn color mode on \n");
         fprintf (stderr, "\t-p%s\t show path of keyfile / create key in current directory\n", loptstr (", --path", "\t"));
         fprintf (stderr, "\t-r%s\t recursive mode on/off (default: %s)\n", loptstr(", --recursive", "\t"), recflag ? "on": "off");
+        fprintf (stderr, "\t-s%s\t change sorting of subdomains\n", loptstr(", --subdomain", "\t"));
         fprintf (stderr, "\t-a%s\t print age of key (default: %s)\n", loptstr (", --age", "\t"), ageflag ? "on": "off");
         fprintf (stderr, "\t-t%s\t print key generation time (default: %s)\n", loptstr (", --time", "\t"),
 								timeflag ? "on": "off");
@@ -350,7 +376,7 @@ static	void    usage (char *mesg, zconf_t *cp)
         exit (1);
 }
 
-static	int	parsedirectory (const char *dir, dki_t **listp)
+static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before)
 {
 	dki_t	*dkp;
 	DIR	*dirp;
@@ -374,14 +400,14 @@ static	int	parsedirectory (const char *dir, dki_t **listp)
 		if ( is_directory (path) && recflag )
 		{
 			dbg_val ("directory: recursive %s\n", path);
-			parsedirectory (path, listp);
+			parsedirectory (path, listp, sub_before);
 		}
 		else if ( is_keyfilename (dentp->d_name) )
 			if ( (dkp = dki_read (dir, dentp->d_name)) )
 			{
 				// fprintf (stderr, "parsedir: tssearch (%d %s)\n", dkp, dkp->name);
 #if defined (USE_TREE) && USE_TREE
-				dki_tadd (listp, dkp);
+				dki_tadd (listp, dkp, sub_before);
 #else
 				dki_add (listp, dkp);
 #endif
@@ -391,7 +417,7 @@ static	int	parsedirectory (const char *dir, dki_t **listp)
 	return 1;
 }
 
-static	void	parsefile (const char *file, dki_t **listp)
+static	void	parsefile (const char *file, dki_t **listp, int sub_before)
 {
 	char	path[MAX_PATHSIZE+1];
 	dki_t	*dkp;
@@ -403,7 +429,7 @@ static	void	parsefile (const char *file, dki_t **listp)
 	{
 		if ( (dkp = dki_read (path, file)) )	/* read DNS key file ... */
 #if defined (USE_TREE) && USE_TREE
-			dki_tadd (listp, dkp);		/* ... and add to tree */
+			dki_tadd (listp, dkp, sub_before);		/* ... and add to tree */
 #else
 			dki_add (listp, dkp);		/* ... and add to list */
 #endif

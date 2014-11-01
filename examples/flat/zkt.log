@@ -260,3 +260,164 @@
 2010-03-11 23:53:27.856: debug: parsing zone "example.net." in dir "./example.net"
 2010-03-11 23:53:27.920: debug: 
 2010-03-11 23:53:27.920: notice: end of run: 0 errors occured
+2010-07-05 08:15:23.500: notice: ------------------------------------------------------------
+2010-07-05 08:15:23.500: notice: running ../../zkt-signer 
+2010-07-05 08:15:23.502: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-07-05 08:15:24.179: debug: 
+2010-07-05 08:15:24.179: debug: parsing zone "example.net." in dir "./example.net"
+2010-07-05 08:15:24.316: debug: 
+2010-07-05 08:15:24.316: notice: end of run: 0 errors occured
+2010-07-05 08:15:28.171: notice: ------------------------------------------------------------
+2010-07-05 08:15:28.171: notice: running ../../zkt-signer -v -v 
+2010-07-05 08:15:28.173: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-07-05 08:15:28.173: debug: 
+2010-07-05 08:15:28.174: debug: parsing zone "example.net." in dir "./example.net"
+2010-07-05 08:15:28.174: debug: 
+2010-07-05 08:15:28.174: notice: end of run: 0 errors occured
+2010-07-05 08:15:58.498: notice: ------------------------------------------------------------
+2010-07-05 08:15:58.498: notice: running ../../zkt-signer -v -v 
+2010-07-05 08:15:58.501: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-07-05 08:15:58.502: debug: 
+2010-07-05 08:15:58.502: debug: parsing zone "example.net." in dir "./example.net"
+2010-07-05 08:15:58.503: debug: 
+2010-07-05 08:15:58.504: notice: end of run: 0 errors occured
+2010-07-05 08:16:04.892: notice: ------------------------------------------------------------
+2010-07-05 08:16:04.892: notice: running ../../zkt-signer -f -v -v 
+2010-07-05 08:16:04.894: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-07-05 08:16:04.937: debug: 
+2010-07-05 08:16:04.937: debug: parsing zone "example.net." in dir "./example.net"
+2010-07-05 08:16:04.993: debug: 
+2010-07-05 08:16:04.993: notice: end of run: 0 errors occured
+2010-07-05 08:16:33.557: notice: ------------------------------------------------------------
+2010-07-05 08:16:33.557: notice: running ../../zkt-signer -f -v -v 
+2010-07-05 08:16:33.559: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-07-05 08:16:33.604: debug: 
+2010-07-05 08:16:33.604: debug: parsing zone "example.net." in dir "./example.net"
+2010-07-05 08:16:33.648: debug: 
+2010-07-05 08:16:33.648: notice: end of run: 0 errors occured
+2010-07-30 01:30:54.873: notice: ------------------------------------------------------------
+2010-07-30 01:30:54.873: notice: running ../../zkt-signer -v -v 
+2010-07-30 01:30:54.879: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-07-30 01:30:55.411: debug: 
+2010-07-30 01:30:55.411: debug: parsing zone "example.net." in dir "./example.net"
+2010-07-30 01:30:55.563: debug: 
+2010-07-30 01:30:55.563: notice: end of run: 0 errors occured
+2010-08-26 22:52:09.066: notice: ------------------------------------------------------------
+2010-08-26 22:52:09.066: notice: running ../../zkt-signer -v -v 
+2010-08-26 22:52:09.092: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 22:52:09.538: debug: 
+2010-08-26 22:52:09.539: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 22:52:09.704: debug: 
+2010-08-26 22:52:09.704: notice: end of run: 0 errors occured
+2010-08-26 22:56:02.935: notice: ------------------------------------------------------------
+2010-08-26 22:56:02.935: notice: running ../../zkt-signer -v -v 
+2010-08-26 22:56:02.937: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 22:56:02.938: debug: 
+2010-08-26 22:56:02.938: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 22:56:02.938: debug: 
+2010-08-26 22:56:02.938: notice: end of run: 0 errors occured
+2010-08-26 23:06:00.453: notice: ------------------------------------------------------------
+2010-08-26 23:06:00.453: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:06:00.456: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:06:00.593: debug: 
+2010-08-26 23:06:00.593: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:06:00.672: debug: 
+2010-08-26 23:06:00.672: notice: end of run: 0 errors occured
+2010-08-26 23:11:33.804: notice: ------------------------------------------------------------
+2010-08-26 23:11:33.805: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:11:33.807: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:11:33.808: debug: 
+2010-08-26 23:11:33.808: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:11:33.809: debug: 
+2010-08-26 23:11:33.809: notice: end of run: 0 errors occured
+2010-08-26 23:12:51.008: notice: ------------------------------------------------------------
+2010-08-26 23:12:51.008: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:12:51.010: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:12:51.011: debug: 
+2010-08-26 23:12:51.012: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:12:51.012: debug: 
+2010-08-26 23:12:51.012: notice: end of run: 0 errors occured
+2010-08-26 23:23:47.879: notice: ------------------------------------------------------------
+2010-08-26 23:23:47.880: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:23:47.886: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:23:47.886: debug: 
+2010-08-26 23:23:47.886: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:23:47.886: debug: 
+2010-08-26 23:23:47.886: notice: end of run: 0 errors occured
+2010-08-26 23:50:15.720: notice: ------------------------------------------------------------
+2010-08-26 23:50:15.720: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:50:15.722: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:50:15.724: debug: 
+2010-08-26 23:50:15.724: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:50:15.725: debug: 
+2010-08-26 23:50:15.725: notice: end of run: 0 errors occured
+2010-08-26 23:50:55.121: notice: ------------------------------------------------------------
+2010-08-26 23:50:55.121: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:50:55.123: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:50:55.124: debug: 
+2010-08-26 23:50:55.124: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:50:55.124: debug: 
+2010-08-26 23:50:55.124: notice: end of run: 0 errors occured
+2010-08-26 23:51:46.603: notice: ------------------------------------------------------------
+2010-08-26 23:51:46.604: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:51:46.606: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:51:46.719: debug: 
+2010-08-26 23:51:46.719: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:51:46.719: debug: 
+2010-08-26 23:51:46.719: notice: end of run: 0 errors occured
+2010-08-26 23:54:22.818: notice: ------------------------------------------------------------
+2010-08-26 23:54:22.819: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:54:22.821: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:54:22.823: debug: 
+2010-08-26 23:54:22.823: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:54:22.825: debug: 
+2010-08-26 23:54:22.825: notice: end of run: 0 errors occured
+2010-08-26 23:55:00.013: notice: ------------------------------------------------------------
+2010-08-26 23:55:00.013: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:55:00.017: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:55:00.018: debug: 
+2010-08-26 23:55:00.018: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:55:00.169: debug: 
+2010-08-26 23:55:00.169: notice: end of run: 0 errors occured
+2010-08-26 23:56:17.462: notice: ------------------------------------------------------------
+2010-08-26 23:56:17.462: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:56:17.464: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:56:17.465: debug: 
+2010-08-26 23:56:17.465: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:56:17.531: debug: 
+2010-08-26 23:56:17.531: notice: end of run: 0 errors occured
+2010-08-26 23:57:00.176: notice: ------------------------------------------------------------
+2010-08-26 23:57:00.176: notice: running ../../zkt-signer -v -v 
+2010-08-26 23:57:00.178: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-08-26 23:57:00.178: debug: 
+2010-08-26 23:57:00.178: debug: parsing zone "example.net." in dir "./example.net"
+2010-08-26 23:57:00.179: debug: 
+2010-08-26 23:57:00.179: notice: end of run: 0 errors occured
+2010-10-21 14:01:35.484: notice: ------------------------------------------------------------
+2010-10-21 14:01:35.484: notice: running zkt-signer -c dnssec.conf -D . 
+2010-10-21 14:01:35.486: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-10-21 14:01:35.546: debug: 
+2010-10-21 14:01:35.546: debug: parsing zone "example.net." in dir "./example.net"
+2010-10-21 14:01:35.794: debug: 
+2010-10-21 14:01:35.794: notice: end of run: 2 errors occured
+2010-10-21 14:02:09.144: notice: ------------------------------------------------------------
+2010-10-21 14:02:09.144: notice: running zkt-signer -v -v -c dnssec.conf -D . 
+2010-10-21 14:02:09.146: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-10-21 14:02:09.209: debug: 
+2010-10-21 14:02:09.209: debug: parsing zone "example.net." in dir "./example.net"
+2010-10-21 14:02:09.209: debug: 
+2010-10-21 14:02:09.209: notice: end of run: 2 errors occured
+2010-10-21 14:05:35.986: notice: ------------------------------------------------------------
+2010-10-21 14:05:35.986: notice: running ../../zkt-signer -v -v 
+2010-10-21 14:05:35.988: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-10-21 14:05:36.170: debug: 
+2010-10-21 14:05:36.170: debug: parsing zone "example.net." in dir "./example.net"
+2010-10-21 14:05:36.170: debug: 
+2010-10-21 14:05:36.170: notice: end of run: 0 errors occured
+2010-10-21 14:30:43.890: notice: ------------------------------------------------------------
+2010-10-21 14:30:43.890: notice: running ../../zkt-signer -v -v 
+2010-10-21 14:30:43.892: debug: parsing zone "sub.example.net." in dir "./sub.example.net"
+2010-10-21 14:30:43.892: debug: 
+2010-10-21 14:30:43.892: debug: parsing zone "example.net." in dir "./example.net"
+2010-10-21 14:30:43.893: debug: 
+2010-10-21 14:30:43.893: notice: end of run: 0 errors occured

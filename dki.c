@@ -789,6 +789,39 @@ int	dki_prt_trustedkey (const dki_t *dkp, FILE *fp)
 	return len;
 }
 
+/*****************************************************************
+**	dki_prt_managedkey ()
+*****************************************************************/
+int	dki_prt_managedkey (const dki_t *dkp, FILE *fp)
+{
+	char	*p;
+	int	spaces;
+	int	len = 0;
+
+	if ( dkp == NULL )
+		return len;
+	len += fprintf (fp, "\"%s\"  ", dkp->name);
+	spaces = 22 - (strlen (dkp->name) + 3);
+	len += fprintf (fp, "initial-key  ");
+	spaces -= 13;
+	len += fprintf (fp, "%*s", spaces > 0 ? spaces : 0 , " ");
+	len += fprintf (fp, "%d 3 %d ", dkp->flags, dkp->algo);
+	if ( spaces < 0 )
+		len += fprintf (fp, "\n\t\t\t%7s", " "); 
+	len += fprintf (fp, "\"");
+	for ( p = dkp->pubkey; *p ; p++ )
+		if ( *p == ' ' )
+			len += fprintf (fp, "\n\t\t\t\t"); 
+		else
+			putc (*p, fp), len += 1;
+
+	if ( dki_isrevoked (dkp) )
+		len += fprintf (fp, "\" ; # key id = %u (original key id = %u)\n\n", (dkp->tag + 128) % 65535, dkp->tag); 
+	else
+		len += fprintf (fp, "\" ; # key id = %u\n\n", dkp->tag); 
+	return len;
+}
+
 
 /*****************************************************************
 **	dki_cmp () 	return <0 | 0 | >0
@@ -850,6 +883,18 @@ int	dki_namecmp (const dki_t *a, const dki_t *b)
 
 	return domaincmp (a->name, b->name);
 }
+
+/*****************************************************************
+**	dki_revnamecmp () 	return <0 | 0 | >0
+*****************************************************************/
+int	dki_revnamecmp (const dki_t *a, const dki_t *b)
+{
+	if ( a == NULL ) return -1;
+	if ( b == NULL ) return 1;
+
+	return domaincmp_dir (a->name, b->name, 0);
+}
+
 /*****************************************************************
 **	dki_tagcmp () 	return <0 | 0 | >0
 *****************************************************************/
@@ -1137,11 +1182,14 @@ const dki_t	*dki_search (const dki_t *list, int tag, const char *name)
 /*****************************************************************
 **	dki_tadd ()	add a key to the given tree
 *****************************************************************/
-dki_t	*dki_tadd (dki_t **tree, dki_t *new)
+dki_t	*dki_tadd (dki_t **tree, dki_t *new, int sub_before)
 {
 	dki_t	**p;
 
-	p = tsearch (new, tree, dki_namecmp);
+	if ( sub_before )
+		p = tsearch (new, tree, dki_namecmp);
+	else
+		p = tsearch (new, tree, dki_revnamecmp);
 	if ( *p == new )
 		dbg_val ("dki_tadd: New entry %s added\n", new->name);
 	else

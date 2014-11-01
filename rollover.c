@@ -62,40 +62,63 @@
 **	local function definition
 *****************************************************************/
 
-static	dki_t	*genkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)
+static	dki_t	*genkey (int addkey, dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status);
+
+/*	generate the first (or primary) key (algorithm k_algo) */
+static	dki_t	*genfirstkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)
+{
+	return genkey (0, listp, dir, domain, ksk, conf, status);
+}
+
+/*	generate the additional (or second) key (algorithm k2_algo) */
+static	dki_t	*genaddkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)
+{
+	return genkey (1, listp, dir, domain, ksk, conf, status);
+}
+
+
+/*	generate a DNSKEY key  */
+static	dki_t	*genkey (int addkey, dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)
 {
 	dki_t	*dkp;
+	int	confalgo;
+	int	algo;
 
+#if 0
 	if ( listp == NULL || domain == NULL )
 		return NULL;
+#else
+	assert ( listp != NULL );
+	assert ( domain != NULL );
+#endif
+
+	if ( addkey )	/* generating an additional key ? */
+		confalgo = conf->k2_algo;
+	else
+		confalgo = conf->k_algo;
+
+	algo = confalgo;
+#if defined(BIND_VERSION) && BIND_VERSION >= 960
+	if ( conf->nsec3 != NSEC3_OFF )		/* is nsec3 turned on ? */
+	{
+		if ( confalgo == DK_ALGO_RSASHA1 )
+			algo = DK_ALGO_NSEC3RSASHA1;
+		else if ( confalgo == DK_ALGO_DSA )
+			algo = DK_ALGO_NSEC3DSA;
+	}
+#endif
 
 	if ( ksk )
-		dkp = dki_new (dir, domain, DKI_KSK, conf->k_algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);
+		dkp = dki_new (dir, domain, DKI_KSK, algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);
 	else
-		dkp = dki_new (dir, domain, DKI_ZSK, conf->k_algo, conf->z_bits, conf->z_random, conf->z_life / DAYSEC);
+		dkp = dki_new (dir, domain, DKI_ZSK, algo, conf->z_bits, conf->z_random, conf->z_life / DAYSEC);
 	dki_add (listp, dkp);
 	dki_setstatus (dkp, status);
 
 	return dkp;
 }
 
-static	dki_t	*genkey2 (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)
-{
-	dki_t	*dkp;
-
-	if ( listp == NULL || domain == NULL )
-		return NULL;
-
-	if ( ksk )
-		dkp = dki_new (dir, domain, DKI_KSK, conf->k2_algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);
-	else
-		dkp = dki_new (dir, domain, DKI_ZSK, conf->k2_algo, conf->z_bits, conf->z_random, conf->z_life / DAYSEC);
-	dki_add (listp, dkp);
-	dki_setstatus (dkp, status);
-
-	return dkp;
-}
-
+/* get expiration time */
 static	time_t	get_exptime (dki_t *key, const zconf_t *z)
 {
 	time_t	exptime;
@@ -257,7 +280,7 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 		{
 			verbmesg (2, z, "\t\tkskrollover: create new key signing key\n");
 			/* create a new key: this is phase one of a double signing key rollover */
-			ksk = genkey (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
+			ksk = genfirstkey (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
 			if ( ksk == NULL )
 			{
 				lg_mesg (LG_ERROR, "\"%s\": unable to generate new ksk for double signing rollover", zp->zone);
@@ -434,7 +457,7 @@ int	ksk5011status (dki_t **listp, const char *dir, const char *domain, const zco
 		verbmesg (1, z, "\tLifetime of Key Signing Key %d exceeded (%s): Starting rfc5011 rollover!\n",
 							activekey->tag, str_delspace (age2str (dki_age (activekey, currtime))));
 		verbmesg (2, z, "\t\t=>Generating new standby key signing key\n");
-		dkp = genkey (listp, dir, domain, DKI_KSK, z, DKI_PUBLISHED);	/* gentime == now; lifetime = z->k_life; exp = 0 */
+		dkp = genfirstkey (listp, dir, domain, DKI_KSK, z, DKI_PUBLISHED);	/* gentime == now; lifetime = z->k_life; exp = 0 */
 		if ( !dkp )
 		{
 			error ("\tcould not generate new standby KSK\n");
@@ -484,7 +507,7 @@ int	kskstatus (zone_t *zonelist, zone_t *zp)
 	if ( akey == NULL )
 	{
 		verbmesg (1, z, "\tNo active KSK found: generate new one\n");
-		akey = genkey (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
+		akey = genfirstkey (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
 		if ( !akey )
 		{
 			error ("\tcould not generate new KSK\n");
@@ -506,7 +529,7 @@ int	kskstatus (zone_t *zonelist, zone_t *zp)
 		if ( akey == NULL )
 		{
 			verbmesg (1, z, "\tNo active KSK for additional algorithm found: generate new one\n");
-			akey = genkey2 (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
+			akey = genaddkey (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
 			if ( !akey )
 			{
 				error ("\tcould not generate new KSK for additional algorithm\n");
@@ -584,8 +607,14 @@ int	zskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t
 	if ( akey == NULL && lifetime > 0 )	/* no active key found */
 	{
 		verbmesg (1, z, "\tNo active ZSK found: generate new one\n");
-		akey = genkey (listp, dir, domain, DKI_ZSK, z, DKI_ACTIVE);
-		lg_mesg (LG_INFO, "\"%s\": generated new ZSK %d", domain, akey->tag);
+		akey = genfirstkey (listp, dir, domain, DKI_ZSK, z, DKI_ACTIVE);
+		if ( !akey )
+		{
+			error ("\tcould not generate new ZSK\n");
+			lg_mesg (LG_ERROR, "\%s\": can't generate new ZSK", domain);
+		}
+		else
+			lg_mesg (LG_INFO, "\"%s\": generated new ZSK %d", domain, akey->tag);
 	}
 	else	/* active key exist */
 	{
@@ -626,29 +655,54 @@ int	zskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t
 			}
 		}
 	}
-	/* Should we add a new publish key?  This is necessary if the active
-	 * key will be expired at the next re-signing interval (The published
-	 * time will be checked just before the active key will be removed.
-	 * See above).
-	 */
-	nextkey = (dki_t *)dki_findalgo (*listp, DKI_ZSK, z->k_algo, 'p', 1);
-	if ( nextkey == NULL && lifetime > 0 && (akey == NULL ||
-	     dki_age (akey, currtime + z->resign) > lifetime - (OFFSET)) )
-	{
-		keychange = 1;
-		verbmesg (1, z, "\tNew key for publishing needed\n");
-		nextkey = genkey (listp, dir, domain, DKI_ZSK, z, DKI_PUB);
 
-		if ( nextkey )
+	/* Should we add a new publish key? */
+	nextkey = (dki_t *)dki_findalgo (*listp, DKI_ZSK, z->k_algo, 'p', 1);	/* is there a published ZSK? */ 
+#if defined(ALLOW_ALWAYS_PREPUBLISH_ZSK) && ALLOW_ALWAYS_PREPUBLISH_ZSK
+	if ( z->z_always )	/* always add a pre-publish ZSK  (patch from Hrant Dadivanyan) */
+	{
+		if ( nextkey == NULL )
 		{
-			verbmesg (1, z, "\t\t->creating new key %d\n", nextkey->tag);
-			lg_mesg (LG_INFO, "\"%s\": new key %d generated for publishing", domain, nextkey->tag);
+			verbmesg (1, z, "\tNew key for pre-publishing needed\n");
+			nextkey = genfirstkey (listp, dir, domain, DKI_ZSK, z, DKI_PUB);
+			if ( nextkey )
+			{
+				keychange = 1;
+				verbmesg (1, z, "\t\t->creating new key %d\n", nextkey->tag);
+				lg_mesg (LG_INFO, "\"%s\": new key %d generated for pre-publishing", domain, nextkey->tag);
+			}
+			else
+			{
+				error ("\tcould not generate new ZSK: \"%s\"\n", dki_geterrstr());
+				lg_mesg (LG_ERROR, "\"%s\": can't generate new ZSK: \"%s\"",
+									domain, dki_geterrstr());
+			}
 		}
-		else
+	}
+	else	/* do we need a new ZSK ? */
+#endif
+	{
+		/* This is necessary if the active key will be expired at the
+		 * next re-signing interval (The published time will be checked
+		 * just before the active key will be removed. See above).
+		 */
+		if ( nextkey == NULL && lifetime > 0 && (akey == NULL ||
+		     dki_age (akey, currtime + z->resign) > lifetime - (OFFSET)) )
 		{
-			error ("\tcould not generate new ZSK: \"%s\"\n", dki_geterrstr());
-			lg_mesg (LG_ERROR, "\"%s\": can't generate new ZSK: \"%s\"",
-								domain, dki_geterrstr());
+			verbmesg (1, z, "\tNew ZSK for publishing needed\n");
+			nextkey = genfirstkey (listp, dir, domain, DKI_ZSK, z, DKI_PUB);
+			if ( nextkey )
+			{
+				keychange = 1;
+				verbmesg (1, z, "\t\t->creating new key %d\n", nextkey->tag);
+				lg_mesg (LG_INFO, "\"%s\": new zone signing key %d generated for publishing", domain, nextkey->tag);
+			}
+			else
+			{
+				error ("\tcould not generate new ZSK: \"%s\"\n", dki_geterrstr());
+				lg_mesg (LG_ERROR, "\"%s\": can't generate new ZSK: \"%s\"",
+									domain, dki_geterrstr());
+			}
 		}
 	}
 
@@ -660,7 +714,7 @@ int	zskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t
 		if ( akey == NULL )
 		{
 			verbmesg (1, z, "\tNo active ZSK for second algorithm found: generate new one\n");
-			akey = genkey2 (listp, dir, domain, DKI_ZSK, z, DKI_ACTIVE);
+			akey = genaddkey (listp, dir, domain, DKI_ZSK, z, DKI_ACTIVE);
 			if ( !akey )
 			{
 				error ("\tcould not generate new ZSK for 2nd algorithm\n");
