@@ -1,3 +1,8 @@
+zkt 1.x
+
+* misc	Remove flag to request large exponent when creating keys
+	(BIND always creates keys with large exponents since BIND 9.5.0)
+
 zkt 1.1.2 -- 05. Dec 2012
 
 * bug	Fixed bug introduced by changes on inc_soa_serial()

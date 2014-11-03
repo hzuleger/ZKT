@@ -245,7 +245,6 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 	FILE	*fp;
 	int	len;
 	char	*flag = "";
-	char	*expflag = "";
 	dki_t	*new;
 
 	if ( ksk )
@@ -254,16 +253,13 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 	randfile[0] = '\0';
 	if ( rfile && *rfile )
 		snprintf (randfile, sizeof (randfile), "-r %.250s ", rfile);
-		
-	if ( algo == DK_ALGO_RSA || algo == DK_ALGO_RSASHA1 || algo == DK_ALGO_RSASHA256 || algo == DK_ALGO_RSASHA512 )
-		expflag = "-e ";
 
 	if ( dir && *dir )
-		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s%s%s-n ZONE -a %s -b %d %s %s",
-			dir, KEYGENCMD, KEYGEN_COMPMODE, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
+		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s%s-n ZONE -a %s -b %d %s %s",
+			dir, KEYGENCMD, KEYGEN_COMPMODE, randfile, dki_algo2str(algo), bitsize, flag, name);
 	else
-		snprintf (cmdline, sizeof (cmdline), "%s %s%s%s-n ZONE -a %s -b %d %s %s",
-			KEYGENCMD, KEYGEN_COMPMODE, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
+		snprintf (cmdline, sizeof (cmdline), "%s %s%s-n ZONE -a %s -b %d %s %s",
+			KEYGENCMD, KEYGEN_COMPMODE, randfile, dki_algo2str(algo), bitsize, flag, name);
 
 	dbg_msg (cmdline);
 
