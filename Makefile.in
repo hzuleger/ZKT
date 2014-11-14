@@ -157,13 +157,14 @@ man/$(MAN_CNF).html: man/$(MAN_CNF)
 man/$(MAN_CNF).pdf: man/$(MAN_CNF)
 	groff -Tps -man man/$(MAN_CNF) | ps2pdf - man/$(MAN_CNF).pdf
 	
-	
-$(PROJECT)-$(VERSION).tar.gz:	$(SAVE)
-	rm -f examples/hierarchical/log/zkt-*
-	(	\
-		distfiles=`ls -d $(SAVE) | sed 's|^|$(PROJECT)-$(VERSION)/|'` ;\
-		cd .. && tar czvf $(PROJECT)-$(VERSION)/$(PROJECT)-$(VERSION).tar.gz $$distfiles ;\
-	)
+# generation of tar file out of the git archive
+# (use v$(VERSION) instead of HEAD if the tar file should depend on a tagged revision)
+$(PROJECT)-$(VERSION).tar.gz:   $(SAVE)
+	@test "`git tag -l $(VERSION)`" != $(VERSION) && echo "no tag $(VERSION) found in repository" && exit 
+        git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" $(VERSION) | \
+        gzip  > $(PROJECT)-$(VERSION).tar.gz
+        # git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" HEAD | \
+        # cat > $(PROJECT)-$(VERSION).tar
 
 depend:
 	$(CC) -MM $(CFLAGS) $(SRC_PRG) $(SRC_ALL)

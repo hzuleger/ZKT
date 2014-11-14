@@ -15,3 +15,6 @@ zkt-signer
 zkt-soaserial
 core
 
+# ignore some of the example files
+examples/hierarchical/log/
+examples/flat/zkt.log

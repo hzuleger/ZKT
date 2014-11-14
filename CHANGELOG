@@ -1,4 +1,6 @@
-zkt 1.x
+zkt 1.1.3 --
+
+* misc	Makefile changed to build tar file out of git repository
 
 * misc	Minimum supported BIND version is now 9.8
 
