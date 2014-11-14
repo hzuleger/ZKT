@@ -2,7 +2,9 @@ zkt 1.x
 
 * misc	Minimum supported BIND version is now 9.8
 
-* bug	Fixed bug in BIND version parsing (9.10 was parsed as 910 == 9.1.0)
+* bug	Fixed bug in BIND version parsing (9.10.1 was parsed as 910
+	which is similar to 9.1.0)
+	Version 9.10.1 is parsed now as 091001 
 
 * misc	Remove flag to request large exponent when creating keys
 	(BIND always creates keys with large exponents since BIND 9.5.0)

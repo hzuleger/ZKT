@@ -3063,6 +3063,10 @@ cat >>confdefs.h <<_ACEOF
 #define BIND_VERSION $bind_version
 _ACEOF
 
+if test $bind_version -lt "90800"
+then
+	as_fn_error $? "*** 'This version of ZKT requires a BIND version greater 9.7' ***" "$LINENO" 5
+fi
 
 
 

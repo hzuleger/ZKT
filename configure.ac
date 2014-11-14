@@ -60,6 +60,10 @@ AC_DEFINE_UNQUOTED(BIND_UTIL_PATH, "$bind_util_path/", Path to BIND utilities)
 bind_version=`$SIGNZONE_PROG 2>&1 |  awk -F: '/^Version:/ { split ($2, v, "."); printf ("%2d%02d%02d\n", atoi (v[[1]]), atoi (v[[2]]), atoi (v[[3]])); };'`
 AC_MSG_NOTICE([BIND_VERSION string set to $bind_version.])
 AC_DEFINE_UNQUOTED(BIND_VERSION, $bind_version, BIND version as integer number without dots)
+if test $bind_version -lt "90800" 
+then
+	AC_MSG_ERROR([*** 'This version of ZKT requires a BIND version greater 9.7' ***])
+fi
 
 
 AC_CHECK_TYPE(uint, unsigned int)
