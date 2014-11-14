@@ -321,7 +321,7 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 {
 	char		*end, *val, *p;
 	char		*tag;
-	unsigned int	len, found;
+	unsigned int	found;
 	zconf_para_t	*c;
 
 	assert (buf[0] != '\0');
@@ -377,7 +377,6 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 	c = confpara;
 	while ( !found && c->type != CONF_END )
 	{
-		len = strlen (c->label);
 		if ( strcasecmp (tag, c->label) == 0 )
 		{
 			char	**str;
@@ -435,7 +434,6 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 					  strcasecmp (val, "nsec3rsasha1") == 0 ||
 					  strcasecmp (val, "n3rsasha1") == 0 )
 					*((int *)c->var) = DK_ALGO_NSEC3RSASHA1;
-#if defined(BIND_VERSION) && BIND_VERSION >= 970
 				else if ( strcmp (val, "8") == 0 ||
 					  strcasecmp (val, "rsasha2") == 0 ||
 				          strcasecmp (val, "rsasha256") == 0 ||
@@ -452,7 +450,6 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 					  strcasecmp (val, "nsec3rsasha512") == 0 ||
 					  strcasecmp (val, "n3rsasha512") == 0 )
 					*((int *)c->var) = DK_ALGO_RSASHA512;
-#endif
 				else
 					error ("Illegal algorithm \"%s\" "
 						"in line %d.\n" , val, line);

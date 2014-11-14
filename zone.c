@@ -156,7 +156,7 @@ zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *fi
 		const	char	*p;
 		if ( (p = strrchr (file, '/')) != NULL )
 		{
-			snprintf (path, sizeof (path), "%s/%.*s", dir, p-file, file);
+			snprintf (path, sizeof (path), "%s/%.*s", dir, (int)(p-file), file);
 			dir = path;
 			file = p+1;
 		}
@@ -222,7 +222,7 @@ int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t *
 	{	
 		char	subdir[MAX_PATHSIZE+1];
 
-		snprintf (subdir, sizeof (subdir), "%s/%.*s", dir, p - zfile, zfile);
+		snprintf (subdir, sizeof (subdir), "%s/%.*s", dir, (int)(p - zfile), zfile);
 		pathname (path, sizeof (path), subdir, LOCALCONF_FILE, NULL);
 	}
 	else

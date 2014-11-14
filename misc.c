@@ -116,7 +116,7 @@ const	char	*getdefconfname (const char *view)
 	dbg_val1 ("0123456789o123456789o123456789\tsize=%d\n", size);
 	dbg_val4 ("%.*s-%s%s\n", p - file, file, view, p);
 
-	snprintf (buf, size, "%.*s-%s%s", p - file, file, view, p);
+	snprintf (buf, size, "%.*s-%s%s", (int)(p - file), file, view, p);
 	return buf;	
 }
 

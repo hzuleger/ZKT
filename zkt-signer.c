@@ -64,11 +64,7 @@
 # include "rollover.h"
 # include "log.h"
 
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 # define	short_options	"c:L:V:D:N:o:O:dfHhnrv"
-#else
-# define	short_options	"c:L:V:D:N:o:O:fHhnrv"
-#endif
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{"reload",		no_argument, NULL, 'r'},
@@ -84,9 +80,7 @@ static struct option long_options[] = {
 	{"directory",		required_argument, NULL, 'D'},
 	{"named-conf",		required_argument, NULL, 'N'},
 	{"origin",		required_argument, NULL, 'o'},
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 	{"dynamic",		no_argument, NULL, 'd' },
-#endif
 	{"help",		no_argument, NULL, 'h'},
 	{0, 0, 0, 0}
 };
@@ -125,9 +119,7 @@ static	zone_t	*zonelist = NULL;	/* must be static global because add2zonelist us
 static	zconf_t	*config;
 
 /**	macros **/
-#define	set_bind94_dynzone(dz)	((dz) = 1)
 #define	set_bind96_dynzone(dz)	((dz) = 6)
-#define	bind94_dynzone(dz)	( (dz) > 0 && (dz) < 6 )
 #define	bind96_dynzone(dz)	( (dz) >= 6 )
 #define	is_defined(str)		( (str) && *(str) )
 
@@ -208,17 +200,11 @@ int	main (int argc, char *const argv[])
 		case 'h':
 			usage (NULL, config);
 			break;
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 		case 'd':
-# if BIND_VERSION >= 960
-			set_bind96_dynzone (dynamic_zone);
-# else
-			set_bind94_dynzone(dynamic_zone);
-# endif
+			dynamic_zone = 1;
 			/* dynamic zone requires a name server reload... */
 			reloadflag = 0;		/* ...but "rndc thaw" reloads the zone anyway */
 			break;
-#endif
 		case 'n':
 			noexec = 1;
 			break;
@@ -561,8 +547,6 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	else if ( (currtime - zfilesig_time) > zp->conf->resign - (OFFSET) )
 		snprintf (mesg, sizeof(mesg), "re-signing interval (%s) reached",
 						str_delspace (age2str (zp->conf->resign)));
-	else if ( bind94_dynzone (dynamic_zone) )
-		snprintf (mesg, sizeof(mesg), "dynamic zone");
 
 	if ( *mesg )
 		verbmesg (1, zp->conf, "\tRe-signing necessary: %s\n", mesg);
@@ -575,8 +559,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	dbg_line ();
 	if ( !(force || newkey || newkeysetfile || zfile_time > zfilesig_time ||	
 	     file_mtime (path) > zfilesig_time ||
-	     (currtime - zfilesig_time) > zp->conf->resign - (OFFSET) ||
-	      bind94_dynzone (dynamic_zone)) )
+	     (currtime - zfilesig_time) > zp->conf->resign - (OFFSET)) )
 	{
 		verbmesg (2, zp->conf, "\tCheck if there is a parent file to copy\n");
 		if ( zp->conf->keysetdir && strcmp (zp->conf->keysetdir, "..") == 0 )
@@ -601,11 +584,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	err = 1;
 	use_unixtime = ( zp->conf->serialform == Unixtime );
 	dbg_val1 ("Use unixtime = %d\n", use_unixtime);
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( !dynamic_zone && !use_unixtime ) /* increment serial number in static zone files */
-#else
-	if ( !dynamic_zone ) /* increment serial no in static zone files */
-#endif
 	{
 		pathname (path, sizeof (path), zp->dir, zp->file, NULL);
 		err = 0;
@@ -713,9 +692,9 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 static	void	register_key (dki_t *list, const zconf_t *z)
 {
 	dki_t	*dkp;
-	time_t	currtime;
 	time_t	age;
 
+	time_t	currtime;
 	assert ( list != NULL );
 	assert ( z != NULL );
 
@@ -854,24 +833,16 @@ static	int	sign_zone (const zone_t *zp)
 		len = snprintf (str, sizeof (str), "-l %.250s", conf->lookaside);
 
 	dbg_line();
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( !dynamic_zone && conf->serialform == Unixtime )
 		snprintf (str+len, sizeof (str) - len, " -N unixtime");
-#endif
 
 	gends = "";
 	if ( conf->sig_gends )
-#if defined(BIND_VERSION) && BIND_VERSION >= 970
 		gends = "-C -g ";
-#else
-		gends = "-g ";
-#endif
 
 	dnskeyksk = "";
-#if defined(BIND_VERSION) && BIND_VERSION >= 970
 	if ( conf->sig_dnskeyksk )
 		dnskeyksk = "-x ";
-#endif
 
 	pseudo = "";
 	if ( conf->sig_pseudo )
@@ -882,7 +853,6 @@ static	int	sign_zone (const zone_t *zp)
 		param = conf->sig_param;
 
 	nsec3param[0] = '\0';
-#if defined(BIND_VERSION) && BIND_VERSION >= 960
 	if ( conf->k_algo == DK_ALGO_NSEC3DSA || conf->k_algo == DK_ALGO_NSEC3RSASHA1 ||
 	     conf->nsec3 != NSEC3_OFF )
 	{
@@ -891,11 +861,7 @@ static	int	sign_zone (const zone_t *zp)
 		const	char	*optout;
 		unsigned int	seed;
 
-# if defined(BIND_VERSION) && BIND_VERSION >= 970
 		update = "-u ";		/* trailing blank is necessary */
-# else
-		update = "";
-# endif
 		if ( conf->nsec3 == NSEC3_OPTOUT )
 			optout = "-A ";
 		else
@@ -919,7 +885,6 @@ static	int	sign_zone (const zone_t *zp)
 		if ( gensalt (salt, sizeof (salt), conf->saltbits, seed) )
 			snprintf (nsec3param, sizeof (nsec3param), "%s%s-3 %s ", update, optout, salt);
 	}
-#endif
 
 	dbg_line();
 	rparam[0] = '\0';
@@ -935,12 +900,10 @@ static	int	sign_zone (const zone_t *zp)
 		dir = ".";
 
 	dbg_line();
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( dynamic_zone )
 		snprintf (cmd, sizeof (cmd), "cd %s; %s %s %s%s%s%s%s%s-o %s -e +%ld %s -N increment -f %s.dsigned %s K*.private 2>&1",
 			dir, SIGNCMD, param, nsec3param, dnskeyksk, gends, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file, file);
 	else
-#endif
 		snprintf (cmd, sizeof (cmd), "cd %s; %s %s %s%s%s%s%s%s-o %s -e +%ld %s %s K*.private 2>&1",
 			dir, SIGNCMD, param, nsec3param, dnskeyksk, gends, pseudo, rparam, keysetdir, domain, conf->sigvalidity, str, file);
 	verbmesg (2, conf, "\t  Run cmd \"%s\"\n", cmd);

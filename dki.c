@@ -227,11 +227,7 @@ void	dki_tfree (dki_t **tree)
 }
 #endif
 
-#if defined(BIND_VERSION) && BIND_VERSION >= 970
-# define	KEYGEN_COMPMODE	"-C -q "	/* this is the compability mode needed by BIND 9.7 */
-#else
-# define	KEYGEN_COMPMODE	""
-#endif
+# define	KEYGEN_COMPMODE	"-C -q "	/* this is the compability mode needed since BIND 9.7 */
 /*****************************************************************
 **	dki_new ()
 **	create new keyfile
@@ -448,12 +444,10 @@ static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)
 	char	frompath[MAX_PATHSIZE+1];
 	char	topath[MAX_PATHSIZE+1];
 	time_t	totime;
-	time_t	currtime;
 
 	if ( dkp == NULL )
 		return 0;
 
-	currtime = time (NULL);
 	status = tolower (status);
 	switch ( dkp->status )	/* look at old status */
 	{

@@ -151,22 +151,17 @@ int	issubdomain (const char *child, const char *parent)
 {
 	const	char	*p;
 	const	char	*cdot;
-	const	char	*pdot;
 	int	ccnt;
 	int	pcnt;
 
 	if ( !child || !parent || *child == '\0' || *parent == '\0' )
 		return 0;
 
-	pdot = cdot = NULL;
+	cdot = NULL;
 	pcnt = 0;
 	for ( p = parent; *p; p++ )
 		if ( *p == '.' )
-		{
-			if ( pcnt == 0 )
-				pdot = p;
 			pcnt++;
-		}
 
 	ccnt = 0;
 	for ( p = child; *p; p++ )

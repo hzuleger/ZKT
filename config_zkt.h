@@ -98,7 +98,7 @@
 # error ("BIND_UTIL_PATH not set. Please run configure with --enable-bind_util_path=");
 #endif
 #ifndef BIND_VERSION
-# define	BIND_VERSION	970
+# define	BIND_VERSION	980
 #endif
 
 #ifndef ZKT_VERSION

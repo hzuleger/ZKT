@@ -98,7 +98,6 @@ int	main (int argc, char *argv[])
 {
 	int	c;
 	int	opt_index;
-	int	action;
 	int	major = 0;
 	int	minor = 0;
 	int	revision = 0;
@@ -130,7 +129,6 @@ int	main (int argc, char *argv[])
 
         opterr = 0;
 	opt_index = 0;
-	action = 0;
 
 	/* set current config version based on ZKT version */
 	switch ( sscanf (ZKT_VERSION, "%d.%d.%d", &major, &minor, &revision) )

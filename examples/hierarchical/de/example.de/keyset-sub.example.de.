@@ -1,7 +1,7 @@
-; KSK rollover phase1 (new key generated but this is alread the old one)
+; KSK rollover phase2 (this is the new key)
 sub.example.de. 14400 IN DNSKEY  257 3 5 (
-			BQEAAAABzRcWJYuBn9eY8u4x+04jkYmSmfRaGuNc4soput6Fo2/HViu1
-			1Jo2uMnp4Z4MeGzti4IGsL2Lp5vC66qXeX0Qqk+aIJBQUyHCF1nPmPad
-			2hDVFpD4Lp/uArmHaaLxQ4px6LEe0PMG1W/a/gJWNxuiTmkSN5c9vXsQ
-			m3SuRnb0ef0=
-		) ; key id = 38331
+			BQEAAAAB2CMCmaITzL7L6UmI0Y+u16LiyINgkYc3dxYunDYWK0FEXGa5
+			L7ss8jepJnBM6KD/rekwqb5wgso/5VnSprhUUnQqec6ESuJ/9/ThI6i7
+			zD6AnwdtXagTOaTRqWhUEcjgMIG4oJK/Pb5mZAlXvzPqmRkyeStRw0cU
+			AEWQvdtuDcc=
+		) ; key id = 51846

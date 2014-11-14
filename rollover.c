@@ -98,7 +98,6 @@ static	dki_t	*genkey (int addkey, dki_t **listp, const char *dir, const char *do
 		confalgo = conf->k_algo;
 
 	algo = confalgo;
-#if defined(BIND_VERSION) && BIND_VERSION >= 960
 	if ( conf->nsec3 != NSEC3_OFF )		/* is nsec3 turned on ? */
 	{
 		if ( confalgo == DK_ALGO_RSASHA1 )
@@ -106,7 +105,6 @@ static	dki_t	*genkey (int addkey, dki_t **listp, const char *dir, const char *do
 		else if ( confalgo == DK_ALGO_DSA )
 			algo = DK_ALGO_NSEC3DSA;
 	}
-#endif
 
 	if ( ksk )
 		dkp = dki_new (dir, domain, DKI_KSK, algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);

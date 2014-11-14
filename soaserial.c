@@ -94,10 +94,9 @@ int	inc_serial (const char *fname, int use_unixtime)
 	   serial number increment.
 	   If the user requests "unixtime"; then use this mechanism.
 	**/
-#if defined(BIND_VERSION) && BIND_VERSION >= 940
 	if ( use_unixtime )
 		return 0;
-#endif
+
 	if ( (fp = fopen (fname, "r+")) == NULL )
 		return -1;
 

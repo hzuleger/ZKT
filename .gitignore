@@ -1,0 +1,17 @@
+#
+Makefile
+autom4te.cache
+config.h
+config.h.in~
+config.log
+config.status
+
+# ignore object and exe file
+*.o
+zkt-conf
+zkt-keyman
+zkt-ls
+zkt-signer
+zkt-soaserial
+core
+

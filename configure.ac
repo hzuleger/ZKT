@@ -43,6 +43,7 @@ then
 	fi
 else
 	AC_PATH_PROG([SIGNZONE_PROG], dnssec-signzone)
+	AC_MSG_NOTICE([BIND utility $SIGNZONE_PROG found])
 	if test -n "$SIGNZONE_PROG" 
 	then
 		bind_util_path=`dirname "$SIGNZONE_PROG"`
@@ -54,8 +55,10 @@ fi
 ### By now, we have a path. We'll use it.  
 # define BIND_UTIL_PATH in config.h.in
 AC_DEFINE_UNQUOTED(BIND_UTIL_PATH, "$bind_util_path/", Path to BIND utilities)
+
 # define BIND_VERSION in config.h.in
-bind_version=`$SIGNZONE_PROG 2>&1 |  grep "Version:" | tr -cd "[[0-9]]\012" | sed "s/^\(...\).*/\1/"`
+bind_version=`$SIGNZONE_PROG 2>&1 |  awk -F: '/^Version:/ { split ($2, v, "."); printf ("%2d%02d%02d\n", atoi (v[[1]]), atoi (v[[2]]), atoi (v[[3]])); };'`
+AC_MSG_NOTICE([BIND_VERSION string set to $bind_version.])
 AC_DEFINE_UNQUOTED(BIND_VERSION, $bind_version, BIND version as integer number without dots)
 
 
