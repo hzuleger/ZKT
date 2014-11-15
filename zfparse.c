@@ -155,11 +155,13 @@ int	addkeydb (const char *file, const char *keydbfile)
 **	parse the BIND zone file 'file' and store the minimum and
 **	maximum ttl value in the corresponding parameter.
 **	if keydbfile is set, check if this file is already include.
+**	if inclfiles is not NULL store a list of included files names
+**	in it.
 **	return 0 if keydbfile is not included
 **	return 1 if keydbfile is included
 **	return -1 on error
 *****************************************************************/
-int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *keydbfile)
+int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *keydbfile, char *inclfiles, size_t *plen)
 {
 	FILE	*infp;
 	int	len;
@@ -213,11 +215,19 @@ int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *k
 
 				sscanf (p+9, "%30s", fname);
 				dbg_val ("$INCLUDE directive for file \"%s\" found\n", fname);
-				if ( keydbfile && strcmp (fname, keydbfile) == 0 )
+				if ( strcmp (fname, keydbfile) == 0 )
 					keydbfilefound = 1;
 				else
 				{
-					int	ret = parsezonefile (fname, pminttl, pmaxttl, keydbfile);
+					if ( inclfiles && plen )
+					{
+						len = snprintf (inclfiles, *plen, ",%s", fname);
+						if ( *plen <= len )	/* no space left in include file string */
+							return keydbfilefound;
+						inclfiles += len;
+						*plen -= len;
+					}
+					int	ret = parsezonefile (fname, pminttl, pmaxttl, keydbfile, inclfiles, plen);
 					if ( ret )	/* keydb found or read error ? */
 						keydbfilefound = ret;
 				}

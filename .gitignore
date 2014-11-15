@@ -18,3 +18,6 @@ core
 # ignore some of the example files
 examples/hierarchical/log/
 examples/flat/zkt.log
+examples/flat/*/K*
+examples/flat/*/zktlog-*
+examples/views/

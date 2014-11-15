@@ -260,6 +260,8 @@ int	main (int argc, char *argv[])
 	}
 	else	/* command line argument found: use it as name of zone file */
 	{
+		char	includefiles[1023+1];	/* list of include files */
+		size_t	filelistsize;		/* size of list */
 		long	minttl;
 		long	maxttl;
 		int	keydbfound;
@@ -271,7 +273,9 @@ int	main (int argc, char *argv[])
 
 		minttl = 0x7FFFFFFF;
 		maxttl = 0;
-		keydbfound = parsezonefile (file, &minttl, &maxttl, dnskeydb);
+		includefiles[0] = '\0';
+		filelistsize = sizeof (includefiles);
+		keydbfound = parsezonefile (file, &minttl, &maxttl, dnskeydb, includefiles, &filelistsize);
 		if ( keydbfound < 0 )
 			error ("can't parse zone file %s\n", file);
 
@@ -285,6 +289,11 @@ int	main (int argc, char *argv[])
 			else
 				printf ("\"$INCLUDE %s\" should be added to \"%s\" (run with option -w)\n",
 							dnskeydb, file);
+		}
+
+		if ( isflistdelim (*includefiles) )
+		{
+			printf ("InclFiles:\t\"%s\"\n", includefiles+1);
 		}
 
 		if ( minttl < (10 * MINSEC) )

@@ -104,6 +104,7 @@
 # define	SIG_GENDS	1
 # define	SIG_DNSKEY_KSK	0	/* Sign DNSKEY RR with KSK only */
 # define	SIG_PARAM	""
+# define	INCLFILES	""
 # define	DIST_CMD	NULL	/* default is to run "rndc reload" */
 # define	NAMED_CHROOT	NULL	/* default is none */
 
@@ -120,6 +121,9 @@
 # define	SIGNCMD		BIND_UTIL_PATH "dnssec-signzone"
 # define	KEYGENCMD	BIND_UTIL_PATH "dnssec-keygen"
 # define	RELOADCMD	BIND_UTIL_PATH "rndc"
+
+/* macros */
+# define	isflistdelim(c)	( (c) == ':' || (c) == ',' || isspace (c) )
 
 typedef	enum {
 	Unixtime = 1,
@@ -187,6 +191,7 @@ typedef	struct zconf	{
 	int	sig_gends;
 	int	sig_dnskeyksk;
 	char	*sig_param;
+	char	*inclfiles;
 	char	*dist_cmd;	/* cmd to run instead of "rndc reload" */
 	char	*chroot_dir;	/* chroot directory of named */
 } zconf_t;

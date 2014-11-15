@@ -524,6 +524,33 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 		newkeysetfile = new_keysetfiles (zp->dir, zfilesig_time);
 #endif
 
+	/* is there a list of files included in zone.db ? */
+	if ( zp->conf->inclfiles && *zp->conf->inclfiles )
+	{
+		char	file[255+1];
+		const	char	*p;
+		int	i;
+		time_t	incfile_mtime;
+
+		/* check the timestamp of each file against "zone.db" */
+		p = zp->conf->inclfiles;
+		while ( p && *p )
+		{
+			while ( isflistdelim (*p) )
+				p++;
+
+			for ( i = 0; i < 255 && *p && !isflistdelim (*p); i++ )
+				file[i] = *p++;
+			file[i] = '\0';
+
+			pathname (path, sizeof (path), zp->dir, file, NULL);
+
+			incfile_mtime = file_mtime (path);
+			if ( incfile_mtime > zfile_time )	/* include file is newer? */
+				zfile_time = incfile_mtime;	/* take this one as new mtime */
+		}
+	}
+
 	/**
 	** Check if it is time to do a re-sign. This is the case if
 	**	a) the command line flag -f is set, or

@@ -113,6 +113,7 @@ static	zconf_t	def = {
 	DNSKEYFILE, ZONEFILE, KEYSETDIR,
 	LOOKASIDEDOMAIN,
 	SIG_RANDOM, SIG_PSEUDO, SIG_GENDS, SIG_DNSKEY_KSK, SIG_PARAM,
+	INCLFILES,
 	DIST_CMD,	/* defaults to NULL which means to run "rndc reload" */
 	NAMED_CHROOT
 };
@@ -212,6 +213,7 @@ static	zconf_para_t	confpara[] = {
 	{ "SigDnsKeyKSK",	101,	last,	CONF_BOOL,	&def.sig_dnskeyksk, "sign dns keyset with ksk only?" },
 	{ "Sig_Parameter",	first,	100,	CONF_STRING,	&def.sig_param },
 	{ "SigParameter",	101,	last,	CONF_STRING,	&def.sig_param, "additional dnssec-signzone parameter (if any)" },
+	{ "InclFiles",		113,	last,	CONF_STRING,	&def.inclfiles, "list of files included in ZoneFile (except KeyFile)" },
 	{ "Distribute_Cmd",	97,	100,	CONF_STRING,	&def.dist_cmd },
 	{ "DistributeCmd",	101,	last,	CONF_STRING,	&def.dist_cmd },
 	{ "NamedChrootDir",	99,	last,	CONF_STRING,	&def.chroot_dir },
@@ -312,6 +314,7 @@ static	void set_all_varptr (zconf_t *cp, const zconf_t *cp2)
 	set_varptr ("sigdnskeyksk", &cp->sig_dnskeyksk, cp2 ? &cp2->sig_dnskeyksk: NULL);
 	set_varptr ("sig_parameter", &cp->sig_param, cp2 ? &cp2->sig_param: NULL);
 	set_varptr ("sigparameter", &cp->sig_param, cp2 ? &cp2->sig_param: NULL);
+	set_varptr ("inclfiles", &cp->inclfiles, cp2 ? &cp2->inclfiles: NULL);
 	set_varptr ("distribute_cmd", &cp->dist_cmd, cp2 ? &cp2->dist_cmd: NULL);
 	set_varptr ("distributecmd", &cp->dist_cmd, cp2 ? &cp2->dist_cmd: NULL);
 	set_varptr ("namedchrootdir", &cp->chroot_dir, cp2 ? &cp2->chroot_dir: NULL);
