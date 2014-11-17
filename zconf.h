@@ -104,7 +104,7 @@
 # define	SIG_GENDS	1
 # define	SIG_DNSKEY_KSK	0	/* Sign DNSKEY RR with KSK only */
 # define	SIG_PARAM	""
-# define	INCLFILES	""
+# define	DEPENDFILES	""
 # define	DIST_CMD	NULL	/* default is to run "rndc reload" */
 # define	NAMED_CHROOT	NULL	/* default is none */
 
@@ -191,7 +191,7 @@ typedef	struct zconf	{
 	int	sig_gends;
 	int	sig_dnskeyksk;
 	char	*sig_param;
-	char	*inclfiles;
+	char	*dependfiles;
 	char	*dist_cmd;	/* cmd to run instead of "rndc reload" */
 	char	*chroot_dir;	/* chroot directory of named */
 } zconf_t;

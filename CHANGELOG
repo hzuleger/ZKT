@@ -1,6 +1,6 @@
 zkt 1.1.3 --
 
-* func	New Config Parameter InclFiles added.
+* func	New Config Parameter DependFiles added.
 	Contains a (comma separated) list of files which are
 	included into the ZoneFile. The timestamps of this files
 	are checked additional to the timestamp of the ZoneFile.
@@ -16,6 +16,9 @@ zkt 1.1.3 --
 
 * misc	Remove flag to request large exponent when creating keys
 	(BIND always creates keys with large exponents since BIND 9.5.0)
+
+* misc	Project moved to github
+	Thanks to Jakob Schlyter for doing the initial stuff
 
 zkt 1.1.2 -- 05. Dec 2012
 

@@ -525,7 +525,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 #endif
 
 	/* is there a list of files included in zone.db ? */
-	if ( zp->conf->inclfiles && *zp->conf->inclfiles )
+	if ( zp->conf->dependfiles && *zp->conf->dependfiles )
 	{
 		char	file[255+1];
 		const	char	*p;
@@ -533,7 +533,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 		time_t	incfile_mtime;
 
 		/* check the timestamp of each file against "zone.db" */
-		p = zp->conf->inclfiles;
+		p = zp->conf->dependfiles;
 		while ( p && *p )
 		{
 			while ( isflistdelim (*p) )
