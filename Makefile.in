@@ -160,10 +160,9 @@ man/$(MAN_CNF).pdf: man/$(MAN_CNF)
 # generation of tar file out of the git archive
 # (use v$(VERSION) instead of HEAD if the tar file should depend on a tagged revision)
 $(PROJECT)-$(VERSION).tar.gz:   $(SAVE)
-	@test "`git tag -l $(VERSION)`" != $(VERSION) && echo "no tag $(VERSION) found in repository" && exit 
-        git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" $(VERSION) | \
-        gzip  > $(PROJECT)-$(VERSION).tar.gz
-        # git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" HEAD | \
+	git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" $(VERSION) | \
+	gzip  > $(PROJECT)-$(VERSION).tar.gz
+	# git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" HEAD | \
         # cat > $(PROJECT)-$(VERSION).tar
 
 depend:

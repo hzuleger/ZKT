@@ -13,6 +13,8 @@ zkt-keyman
 zkt-ls
 zkt-signer
 zkt-soaserial
+*.tar
+*.tar.gz
 core
 
 # ignore some of the example files
