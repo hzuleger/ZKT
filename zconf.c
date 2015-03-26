@@ -453,6 +453,14 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 					  strcasecmp (val, "nsec3rsasha512") == 0 ||
 					  strcasecmp (val, "n3rsasha512") == 0 )
 					*((int *)c->var) = DK_ALGO_RSASHA512;
+				else if ( strcmp (val, "13") == 0 ||
+					  strcasecmp (val, "p256") == 0 ||
+					  strcasecmp (val, "ecdsap256sha256") == 0 )
+					*((int *)c->var) = DK_ALGO_ECDSAP256SHA256;
+				else if ( strcmp (val, "14") == 0 ||
+					  strcasecmp (val, "p384") == 0 ||
+					  strcasecmp (val, "ecdsap384sha384") == 0 )
+					*((int *)c->var) = DK_ALGO_ECDSAP384SHA384;
 				else
 					error ("Illegal algorithm \"%s\" "
 						"in line %d.\n" , val, line);

@@ -66,6 +66,8 @@
 # define	DK_ALGO_RSASHA512	10	/* RFCxxx */
 # define	DK_ALGO_NSEC3RSASHA256	DK_ALGO_RSASHA256	/* same as non nsec algorithm RFCxxx */
 # define	DK_ALGO_NSEC3RSASHA512	DK_ALGO_RSASHA512	/* same as non nsec algorithm RFCxxx */
+# define	DK_ALGO_ECDSAP256SHA256	13	/* RFC 6605 */
+# define	DK_ALGO_ECDSAP384SHA384	14	/* RFC 6605 */
 
 /* protocol types */
 # define	DK_PROTO_DNS	3

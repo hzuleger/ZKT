@@ -634,6 +634,8 @@ char	*dki_algo2str (int algo)
 	case DK_ALGO_NSEC3RSASHA1:	return ("NSEC3RSASHA1");
 	case DK_ALGO_RSASHA256:		return ("RSASHA256");
 	case DK_ALGO_RSASHA512:		return ("RSASHA512");
+	case DK_ALGO_ECDSAP256SHA256:	return ("ECDSAP256SHA256");
+	case DK_ALGO_ECDSAP384SHA384:	return ("ECDSAP384SHA384");
 	}
 	return ("unknown");
 }
@@ -655,6 +657,8 @@ char	*dki_algo2sstr (int algo)
 	case DK_ALGO_NSEC3RSASHA1:	return ("N3RSA1");
 	case DK_ALGO_RSASHA256:		return ("RSASHA2");
 	case DK_ALGO_RSASHA512:		return ("RSASHA5");
+	case DK_ALGO_ECDSAP256SHA256:	return ("P256");
+	case DK_ALGO_ECDSAP384SHA384:	return ("P384");
 	}
 	return ("unknown");
 }
