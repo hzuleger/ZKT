@@ -216,3 +216,25 @@
 2014-11-17 19:14:01.846: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h4m45s: ZSK rollover deferred: waiting for published key
 2014-11-17 19:14:01.846: debug: 	Re-signing not necessary!
 2014-11-17 19:14:01.846: debug: 	Check if there is a parent file to copy
+2015-03-27 11:15:10.657: debug: 	Check RFC5011 status
+2015-03-27 11:15:10.657: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2015-03-27 11:15:10.657: debug: 	Check KSK status
+2015-03-27 11:15:10.657: debug: 	No active KSK found: generate new one
+2015-03-27 11:15:10.684: info: "sub.example.net.": generated new KSK 48396
+2015-03-27 11:15:10.684: debug: 	Check ZSK status
+2015-03-27 11:15:10.684: debug: 	No active ZSK found: generate new one
+2015-03-27 11:15:10.694: info: "sub.example.net.": generated new ZSK 3288
+2015-03-27 11:15:10.694: debug: 	Re-signing necessary: Modified zone key set
+2015-03-27 11:15:10.694: notice: "sub.example.net.": re-signing triggered: Modified zone key set
+2015-03-27 11:15:10.694: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2015-03-27 11:15:10.695: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2015-03-27 11:15:10.695: debug: 	Signing zone "sub.example.net."
+2015-03-27 11:15:10.695: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 6BDE86 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2015-03-27 11:15:10.959: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2015-03-27 11:15:10.960: debug: 	Signing completed after 0s.
+2015-03-27 11:16:58.498: debug: 	Check RFC5011 status
+2015-03-27 11:16:58.498: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2015-03-27 11:16:58.498: debug: 	Check KSK status
+2015-03-27 11:16:58.498: debug: 	Check ZSK status
+2015-03-27 11:16:58.498: debug: 	Re-signing not necessary!
+2015-03-27 11:16:58.498: debug: 	Check if there is a parent file to copy

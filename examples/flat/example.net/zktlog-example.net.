@@ -685,3 +685,42 @@
 2014-11-17 19:14:01.847: debug: 	  Run cmd "cd ./example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -A -3 7CF530 -C -g -p -d ../keysets -o example.net. -e +518400  zone.db K*.private 2>&1"
 2014-11-17 19:14:01.969: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
 2014-11-17 19:14:01.969: debug: 	Signing completed after 0s.
+2015-03-27 11:15:10.960: debug: 	Check RFC5011 status
+2015-03-27 11:15:10.960: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2015-03-27 11:15:10.960: debug: 	Check KSK status
+2015-03-27 11:15:10.960: warning: "example.net.": lifetime of key signing key 44671 exceeded since 10w2d17h5m54s
+2015-03-27 11:15:10.960: debug: 	Check ZSK status
+2015-03-27 11:15:10.960: debug: 	Lifetime(1209600 +/-150 sec) of active key 7929 exceeded (11466354 sec)
+2015-03-27 11:15:10.960: debug: 		->depreciate it
+2015-03-27 11:15:10.960: debug: 		->activate published key 2253
+2015-03-27 11:15:10.960: notice: "example.net.": lifetime of zone signing key 7929 exceeded: ZSK rollover done
+2015-03-27 11:15:10.960: debug: 	New key for pre-publishing needed
+2015-03-27 11:15:10.989: debug: 		->creating new key 22233
+2015-03-27 11:15:10.989: info: "example.net.": new key 22233 generated for pre-publishing
+2015-03-27 11:15:10.989: debug: 	Re-signing necessary: Modified zone key set
+2015-03-27 11:15:10.989: notice: "example.net.": re-signing triggered: Modified zone key set
+2015-03-27 11:15:10.989: debug: 	Writing key file "./example.net/dnskey.db"
+2015-03-27 11:15:10.994: debug: 	Incrementing serial number in file "./example.net/zone.db"
+2015-03-27 11:15:10.994: debug: 	Signing zone "example.net."
+2015-03-27 11:15:10.994: debug: 	  Run cmd "cd ./example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -A -3 6BDE86 -C -g -p -d ../keysets -o example.net. -e +518400  zone.db K*.private 2>&1"
+2015-03-27 11:15:11.139: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2015-03-27 11:15:11.139: debug: 	Signing completed after 1s.
+2015-03-27 11:16:58.498: debug: 	Check RFC5011 status
+2015-03-27 11:16:58.498: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2015-03-27 11:16:58.498: debug: 	Check KSK status
+2015-03-27 11:16:58.498: debug: 	No active KSK found: generate new one
+2015-03-27 11:16:58.505: info: "example.net.": generated new KSK 36746
+2015-03-27 11:16:58.505: debug: 	Check ZSK status
+2015-03-27 11:16:58.505: debug: 	No active ZSK found: generate new one
+2015-03-27 11:16:58.515: info: "example.net.": generated new ZSK 11695
+2015-03-27 11:16:58.516: debug: 	New key for pre-publishing needed
+2015-03-27 11:16:58.527: debug: 		->creating new key 29925
+2015-03-27 11:16:58.527: info: "example.net.": new key 29925 generated for pre-publishing
+2015-03-27 11:16:58.527: debug: 	Re-signing necessary: Modified zone key set
+2015-03-27 11:16:58.527: notice: "example.net.": re-signing triggered: Modified zone key set
+2015-03-27 11:16:58.527: debug: 	Writing key file "./example.net/dnskey.db"
+2015-03-27 11:16:58.527: debug: 	Incrementing serial number in file "./example.net/zone.db"
+2015-03-27 11:16:58.527: debug: 	Signing zone "example.net."
+2015-03-27 11:16:58.528: debug: 	  Run cmd "cd ./example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -A -3 C350C9 -C -g -p -d ../keysets -o example.net. -e +518400  zone.db K*.private 2>&1"
+2015-03-27 11:16:58.680: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2015-03-27 11:16:58.680: debug: 	Signing completed after 0s.
