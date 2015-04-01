@@ -13,3 +13,8 @@ sub.example.net		7200	IN DNSKEY 257 3 7 (
 					cebakcATH8e6Fp5+QLCSpyRJhfSZZF6qDJ/p
 					i2RCS2/VfwCwr+N7VRelFCzri6v+EEeV
 					) ; KSK; alg = RSASHA512; key id = 60396
+			7200	IN DNSKEY 257 3 13 (
+					VJ7/RZZrLzgOWNOYyjWE+AYQRx3KBV5m/Lu6
+					8wceQM9pV5N4lvkuyrvuk6dU1f40wtTzC2fq
+					Z+lEX5qOah/FKg==
+					) ; KSK; alg = ECDSAP256SHA256; key id = 48396
