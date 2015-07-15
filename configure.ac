@@ -14,6 +14,7 @@
 #	2009-12-02	the tr command in bind_version= didn't work well under solaris
 #	2010-10-14	new option to specify BIND_UTIL_PATH on command line (thanks to Mans Nilsson)
 #			No build in default BIND_UTIL_PATH used anymore
+#	2015-07-15	new option for USE_DS_TRACKING added (thanks to Sven Strickroth)
 #
 
 dnl AC_PREREQ(2.59)
@@ -117,6 +118,24 @@ AC_ARG_ENABLE([ttl_in_keyfile], AS_HELP_STRING([--disable-ttl-in-keyfiles], [do 
 ttl_in_keyfile=1
 AS_IF([test "$enable_ttl_in_keyfile" = "no"], [ttl_in_keyfile=0])
 AC_DEFINE_UNQUOTED(TTL_IN_KEYFILE_ALLOWED, $ttl_in_keyfile, TTL in keyfiles allowed)
+
+AC_ARG_ENABLE([ds_tracking], AS_HELP_STRING( [--enable-ds-tracking], [track DS record in parent zone (ksk-rollover)]))
+ds_tracking=0
+AS_IF([test "$enable_ds_tracking" = "yes"], [ds_tracking=1])
+AC_DEFINE_UNQUOTED(USE_DS_TRACKING, $ds_tracking, track DS record)
+if test "$ds_tracking" = 1
+then
+	### find the path to dig 
+	AC_PATH_PROG([dig_path], [dig]) 
+	if test -z "$dig_path"
+	then
+		AC_MSG_NOTICE([Could not found path to dig program. Please disable ds-tracking])
+	else
+		AC_DEFINE_UNQUOTED(DIG_PATH, "$dig_path", path to dig binary)
+	fi
+fi
+
+
 
 configpath="/var/named"
 AC_ARG_ENABLE([configpath], 

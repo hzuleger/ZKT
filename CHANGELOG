@@ -1,3 +1,10 @@
+zkt 1.1.4 -- 
+
+* func	New Compile time option "--enable-ds-tracking" added.
+	Now dig is used on KSK rollover to check if the DS record
+	is announced in the parent zone.
+	Thanks to Sven Strickroth providing the patch.
+
 zkt 1.1.3 -- 21. Nov 2014
 
 * func	New Config Parameter DependFiles added.

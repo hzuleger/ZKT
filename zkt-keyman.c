@@ -518,7 +518,12 @@ static	void	ksk_roll (const char *keyname, int phase, const dki_t *list, const z
 		parent_age = file_age (path);
 	}
 	// parent_propagation = 2 * DAYSEC;
+#if defined (USE_DS_TRACKING)
+	parent_propagation = 1 * DAYSEC;	/* dnssec-signer uses default TTL which is 1d,  */
+						/* also registries such as denic use 1d */
+#else
 	parent_propagation = 5 * MINSEC;
+#endif
 
 	ksk = 0;	/* count active(!) key signing keys */
 	standby = NULL;	/* find standby key if available */

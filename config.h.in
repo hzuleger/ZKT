@@ -15,6 +15,9 @@
 /* set path of config file (defaults to /var/named) */
 #undef CONFIG_PATH
 
+/* path to dig binary */
+#undef DIG_PATH
+
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
 
@@ -199,6 +202,9 @@
 
 /* TTL in keyfiles allowed */
 #undef TTL_IN_KEYFILE_ALLOWED
+
+/* track DS record */
+#undef USE_DS_TRACKING
 
 /* Use TREE data structure for dnssec-zkt */
 #undef USE_TREE
