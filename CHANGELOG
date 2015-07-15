@@ -1,5 +1,9 @@
 zkt 1.1.4 -- 
 
+* func	New binary zkt-delegate added
+	Because it depends on the ldns library, it is located in
+	a separate directory and use a different Makefile 
+
 * func	New Compile time option "--enable-ds-tracking" added.
 	Now dig is used on KSK rollover to check if the DS record
 	is announced in the parent zone.

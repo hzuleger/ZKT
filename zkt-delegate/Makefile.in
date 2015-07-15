@@ -1,0 +1,101 @@
+#################################################################
+#
+#	@(#) Makefile for zkt-delegation & co. (c) Mar 2015 hoz
+#
+#################################################################
+
+prefix	=	@prefix@
+mandir	=	@mandir@
+INSTALL_DIR =	$$HOME/bin
+
+CC	=	@CC@
+
+PROFILE =	# -pg
+OPTIM	=	# -O3 -DNDEBUG
+
+#CFLAGS	?=	@CFLAGS@ @DEFS@ -I@top_srcdir@
+CFLAGS	+=	-g @DEFS@ -I@top_srcdir@
+CFLAGS	+=	-Wall #-DDBG
+CFLAGS	+=	-Wmissing-prototypes
+CFLAGS	+=	$(PROFILE) $(OPTIM)
+LDFLAGS	+=	$(PROFILE)
+LIBS	=	@LIBS@
+
+PROJECT =	@PACKAGE_TARNAME@
+VERSION =	@PACKAGE_VERSION@
+
+HEADER	=	readkeyfile.h misc.h update.h debug.h nsrrlist.h config.h.in 
+SRC	=	readkeyfile.c misc.c update.c zkt-delegate.c nsrrlist.c
+OBJ	=	$(SRC:.c=.o)
+
+PROG	=	zkt-delegate
+
+MAN	=	zkt-delegate.8
+OTHER	=	README LICENSE CHANGELOG tags Makefile.in \
+		configure configure.ac config.h.in
+SAVE	=	$(HEADER) $(SRC)  man $(OTHER)
+
+
+all:	$(PROG)
+
+$(PROG):	$(OBJ) Makefile
+	$(CC) $(OBJ) $(LDFLAGS) $(LIBS) -o $(PROG)
+
+install:	## install binaries in INSTALL_DIR
+install:	$(PROG)
+	cp $(PROG) $(INSTALL_DIR)
+
+install-man:	## install man pages in mandir
+install-man:
+	test -d $(mandir)/man8/ && cp -p man/$(MAN) $(mandir)/man8/
+
+
+tags:		## create tags file
+tags:	$(SRC) 
+	ctags $(SRC)
+
+clean:		## remove objectfiles and binaries
+clean:
+	rm -f $(OBJ)
+
+dist:		## create tar file for distribution
+dist:	$(PROJECT)-$(VERSION).tar.gz
+
+tar:		## create tar file for distribution
+tar:	$(PROJECT)-$(VERSION).tar.gz
+
+maintain:	## create configure script
+maintain:	configure
+
+configure:	configure.ac
+	autoconf && autoheader
+
+man:	man/$(MAN).html man/$(MAN).pdf
+
+man/$(MAN).html: man/$(MAN)
+	groff -Thtml -man -mhtml man/$(MAN) > man/$(MAN).html
+man/$(MAN).pdf: man/$(MAN)
+	groff -Tps -man man/$(MAN) | ps2pdf - man/$(MAN).pdf
+	
+# generation of tar file out of the git archive
+# (use v$(VERSION) instead of HEAD if the tar file should depend on a tagged revision)
+$(PROJECT)-$(VERSION).tar.gz:   $(SAVE)
+	git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" $(VERSION) | \
+	gzip  > $(PROJECT)-$(VERSION).tar.gz
+	# git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" HEAD | \
+        # cat > $(PROJECT)-$(VERSION).tar
+
+depend:
+	$(CC) -MM $(SRC)
+
+help:
+	@grep "^.*:[ 	]*##" Makefile
+
+## all dependicies
+#:r !make depend
+#gcc -MM readkeyfile.c misc.c update.c zkt-delegate.c nsrrlist.c
+readkeyfile.o: readkeyfile.c debug.h readkeyfile.h
+misc.o: misc.c misc.h
+update.o: update.c debug.h misc.h nsrrlist.h update.h
+zkt-delegate.o: zkt-delegate.c debug.h misc.h readkeyfile.h update.h
+nsrrlist.o: nsrrlist.c debug.h misc.h nsrrlist.h

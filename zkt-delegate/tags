@@ -1,0 +1,83 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+KeyWords	readkeyfile.c	/^static struct KeyWords {$/;"	s	file:
+MAXNS	nsrrlist.c	29;"	d	file:
+TOK_ALG	readkeyfile.c	41;"	d	file:
+TOK_DIR	readkeyfile.c	36;"	d	file:
+TOK_HMAC_MD5	readkeyfile.c	42;"	d	file:
+TOK_HMAC_SHA1	readkeyfile.c	43;"	d	file:
+TOK_HMAC_SHA224	readkeyfile.c	44;"	d	file:
+TOK_HMAC_SHA256	readkeyfile.c	45;"	d	file:
+TOK_HMAC_SHA384	readkeyfile.c	46;"	d	file:
+TOK_HMAC_SHA512	readkeyfile.c	47;"	d	file:
+TOK_INCLUDE	readkeyfile.c	37;"	d	file:
+TOK_KEY	readkeyfile.c	39;"	d	file:
+TOK_SECRET	readkeyfile.c	40;"	d	file:
+TOK_STRING	readkeyfile.c	35;"	d	file:
+TOK_UNKNOWN	readkeyfile.c	49;"	d	file:
+canonicalize	update.c	/^static	int	canonicalize (char *fqdn, size_t fqdnsize, const char *dname, const char *origin)$/;"	f	file:
+delete	zkt-delegate.c	/^int	delete;		\/* update delete old RRsets before adding new one *\/$/;"	v
+error	misc.c	/^void	error (char *fmt, ...)$/;"	f
+extern	misc.c	25;"	d	file:
+extern	misc.c	27;"	d	file:
+extern	nsrrlist.c	13;"	d	file:
+extern	nsrrlist.c	15;"	d	file:
+extern	readkeyfile.c	15;"	d	file:
+extern	readkeyfile.c	17;"	d	file:
+extern	update.c	11;"	d	file:
+extern	update.c	9;"	d	file:
+fatal	misc.c	/^void	fatal (char *fmt, ...)$/;"	f
+get_ds_from_zonefile	update.c	/^static	int	get_ds_from_zonefile (ldns_rr_list **pds_list, const char *origin, const char *zonefile)$/;"	f	file:
+get_ns_from_zonefile	update.c	/^static	int	get_ns_from_zonefile (ldns_rr_list **pns_list, ldns_rr_list **pglue_list, const char *origin, const char *zonefile)$/;"	f	file:
+getresolver	zkt-delegate.c	/^static ldns_resolver *getresolver (const char *server, const char *zone, uint16_t port, ldns_tsig_credentials *tsig_cred, ldns_rdf **zone_rdf)$/;"	f	file:
+gettok	readkeyfile.c	/^static	int	gettok (FILE *fp, char *val, size_t valsize)$/;"	f	file:
+in_strarr	misc.c	/^int	in_strarr (const char *str, char *const arr[], int cnt)$/;"	f
+is_ipv4addr	misc.c	/^int	is_ipv4addr (const char *ipaddrstr)$/;"	f
+is_ipv6addr	misc.c	/^int	is_ipv6addr (const char *ipaddrstr)$/;"	f
+key	zkt-delegate.c	/^tsigkey_t	key;$/;"	v
+keyfile	zkt-delegate.c	/^char	*keyfile;$/;"	v
+kw	readkeyfile.c	/^} kw[] = {$/;"	v	typeref:struct:KeyWords	file:
+logflush	misc.c	/^void logflush ()$/;"	f
+logmesg	misc.c	/^void logmesg (char *fmt, ...)$/;"	f
+long_options	zkt-delegate.c	/^static	struct	option	long_options[] = {$/;"	v	typeref:struct:option	file:
+main	readkeyfile.c	/^main (int argc, char *argv[])$/;"	f
+main	zkt-delegate.c	/^int	main (int argc, char*argv[])$/;"	f
+name	readkeyfile.c	/^	char	*name;$/;"	m	struct:KeyWords	file:
+origin	zkt-delegate.c	/^char	origin[255+1];$/;"	v
+parentzone	zkt-delegate.c	/^char	parentzone[255+1];$/;"	v
+parse_keyconf	readkeyfile.c	/^static	int	parse_keyconf (const char *filename, char *dir, size_t dirsize, tsigkey_t *k, const char *lookup)$/;"	f	file:
+port	zkt-delegate.c	/^int	port;$/;"	v
+prepare_ds_update	update.c	/^ldns_rr_list	*prepare_ds_update (const char *origin, uint32_t ttl, ldns_rr_list **ppr_rrlist, int argc, char **argv)$/;"	f
+prepare_glue_update	update.c	/^ldns_rr_list	*prepare_glue_update (const char *origin, uint32_t ttl, ldns_rr_list **ppr_rrlist, int argc, char **argv)$/;"	f
+prepare_ns_update	update.c	/^ldns_rr_list	*prepare_ns_update (const char *origin, uint32_t ttl, int argc, char **argv)$/;"	f
+print_update	update.c	/^static	void	print_update (FILE *out, ldns_rr_list *upd)$/;"	f	file:
+printkey	readkeyfile.c	/^int	printkey (tsigkey_t *k)$/;"	f
+progname	readkeyfile.c	/^char	*progname;$/;"	v
+progname	zkt-delegate.c	/^const	char	*progname;$/;"	v
+readkeyfile	readkeyfile.c	/^int	readkeyfile (const char *fname, tsigkey_t *k, const char *lookupkey)$/;"	f
+searchkw	readkeyfile.c	/^static	int	searchkw (const char *keyword)$/;"	f	file:
+sendupdate	update.c	/^int	sendupdate (ldns_resolver *res, ldns_rdf *zone_rdf, ldns_rr_list *pr_rrlist, ldns_rr_list *up_rrlist, ldns_rr_list *ad_rrlist, ldns_tsig_credentials *tsig_cred)$/;"	f
+server	zkt-delegate.c	/^char	*server;$/;"	v
+set_tsig_cred	zkt-delegate.c	/^static	void	set_tsig_cred (ldns_tsig_credentials *tsig_cr, tsigkey_t *key)$/;"	f	file:
+short_options	zkt-delegate.c	47;"	d	file:
+skipdelim	misc.c	/^const char	*skipdelim (const char *line, int delim)$/;"	f
+str_chop	misc.c	/^char	*str_chop (char *str, char c)$/;"	f
+str_delspace	misc.c	/^char	*str_delspace (char *s)$/;"	f
+tok	readkeyfile.c	/^	int	tok;$/;"	m	struct:KeyWords	file:
+tok2str	readkeyfile.c	/^static	const char	*tok2str (int  tok)$/;"	f	file:
+tsig_cred	zkt-delegate.c	/^ldns_tsig_credentials	tsig_cred;$/;"	v
+ttl	zkt-delegate.c	/^ulong	ttl;$/;"	v
+ttlfromstr	misc.c	/^ulong	ttlfromstr (const char *s)$/;"	f
+ttltostr	misc.c	/^int	ttltostr (char *s, size_t size, ulong ttl)$/;"	f
+update_del_rr	update.c	/^static	int	update_del_rr (ldns_rr_list **pup_rrlist, const char *dname, int type)$/;"	f	file:
+update_del_rr_rdf	update.c	/^static	int	update_del_rr_rdf (ldns_rr_list **pup_rrlist, ldns_rdf *dname_rdf, int type)$/;"	f	file:
+usage	zkt-delegate.c	/^static	void	usage (const char *mesg)$/;"	f	file:
+verbmesg	misc.c	/^void	verbmesg (int verblvl, char *fmt, ...)$/;"	f
+verbose	zkt-delegate.c	/^int	verbose;$/;"	v
+version	zkt-delegate.c	/^const	char	*version = VERSION;$/;"	v
+zone_ds_rr_list	nsrrlist.c	/^ldns_rr_list	*zone_ds_rr_list (const ldns_zone *z, int use_cds)$/;"	f
+zone_ns_rr_list	nsrrlist.c	/^ldns_rr_list	*zone_ns_rr_list (const ldns_zone *z, ldns_rr_list **pglue_rr_list)$/;"	f
