@@ -72,8 +72,8 @@ The configuration file is named "/var/named/dnssec.conf" by default
 
 ### Change the default parameters  
 
-   To change the paremeters in the config file you can use a simple text  
-   editor, or use the zkt-conf command
+To change the paremeters in the config file you can use a simple text  
+editor, or use the zkt-conf command
 
 	$ zkt-conf -s -O "Zonedir: /var/named/zones" -w
 	$ zkt-conf -s -O "Recursive: True" -w
@@ -82,15 +82,13 @@ The configuration file is named "/var/named/dnssec.conf" by default
 
 ### Prepare one of your zone for zkt
 
-* Change to the zone directory
-
 	$ cd /var/named/zones/net/example.net
 
-* Copy and rename the existing zone file to `zone.db`
+Copy and rename the existing zone file to `zone.db`
 
 	$ cp <zonefile> zone.db
 
-* Create a local `dnssec.conf` file and include `dnskey.db` into the zone file
+Create a local `dnssec.conf` file and include `dnskey.db` into the zone file
 
 	$ zkt-conf -w zone.db		
 
