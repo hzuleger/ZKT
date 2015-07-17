@@ -455,6 +455,9 @@ int	touch (const char *fname, time_t sec)
 {
 	struct	utimbuf	utb;
 
+	if ( !sec )
+		time (&sec);
+
 	utb.actime = utb.modtime = sec;
 	return utime (fname, &utb);
 }

@@ -605,6 +605,13 @@ static	void	ksk_roll (const char *keyname, int phase, const dki_t *list, const z
 		/* remove the parentfile */
 		fprintf (stdout, "remove parentfile \n");
 		unlink (path);
+
+		/* touch new key to force a resigning */
+		dkp = keylist->next;	/* set dkp to new ksk */
+		pathname (path, sizeof (path), dkp->dname, conf->keyfile, NULL);
+		fprintf (stdout, "touch key database %s \n", path);
+		touch (path, dkp->time - 1);	/* set timestamp of dnskey.db back */
+
 		/* remove or rename the old key */
 		fprintf (stdout, "old ksk renamed \n");
 		dkp = keylist;	/* set dkp to old ksk */

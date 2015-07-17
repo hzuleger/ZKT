@@ -1,5 +1,13 @@
 zkt 1.1.4 -- 
 
+* misc	README file changed to Markdown
+
+* bug	running zkt-keyman -3 didn't change anything on the key database
+	so a zkt-signer run afterwards didn't see anything to do.
+	Now the timestamp of the dnskey.db will be reset to a value less
+	than the timestamp of the (new) key signing key.
+	Thanks to Sven Strickroth for finding this.
+
 * func	New binary zkt-delegate added
 	Because it depends on the ldns library, it is located in
 	a separate directory and use a different Makefile 

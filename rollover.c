@@ -232,7 +232,7 @@ static	int	get_parent_phase (const char *file)
 		return -1;
 
 	phase = 0;
-	if ( fscanf (fp, "; KSK rollover phase%d", &phase) != 1 )
+	 if ( fscanf (fp, "; KSK rollover phase%d", &phase) != 1 )
 		phase = 0;
 
 	fclose (fp);
@@ -240,6 +240,11 @@ static	int	get_parent_phase (const char *file)
 }
 
 #if defined (USE_DS_TRACKING)
+/*****************************************************************
+**	is_published_in_parent ()
+**	Use "dig" to track if the DS of the given KSK is published
+**	in the parent zone
+*****************************************************************/
 static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 {
 	char	cmd[2047+1];
@@ -259,7 +264,7 @@ static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 	if ( (fp = popen (cmd, "r")) == NULL )
 		return -1;
 
-	tag = 0L;
+	tag = -1;	/* never getting this, even if atol() couldn't parse an integer */
 	while ( fgets (str, sizeof str, fp) != NULL )	/* search for the right tag */
 	{
 		tag = atol (str);
@@ -272,7 +277,7 @@ static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 	dbg_line ();
 
 	str_chop (str, '\n');
-	verbmesg (2, zp->conf, "\t  Cmd dig return: \"%s\"\n", str);
+	verbmesg (2, zp->conf, "\t  Cmd dig return: \"%s\"; DS tag %ld found looking for %u\n", str, tag, ksk->tag);
 
 	return ( tag == ksk->tag );
 }
