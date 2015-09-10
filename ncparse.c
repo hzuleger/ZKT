@@ -255,7 +255,10 @@ int	parse_namedconf (const char *filename, const char *chroot_dir, char *dir, si
 				else
 					snprintf (path, sizeof (path), "%s", strval);
 				if ( !parse_namedconf (path, chroot_dir, dir, dirsize, func) )
+				{
+					fclose (fp);
 					return 0;
+				}
 			}
 			else
 			{

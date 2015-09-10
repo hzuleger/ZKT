@@ -111,12 +111,14 @@ static	int	read_serial_fromfile (const char *fname, unsigned long *serial)
 	char	buf[4095+1];
 	char	master[254+1];
 	int	c;
+	int	ret;
 	int	soafound;
 
 	if ( (fp = fopen (fname, "r")) == NULL )
 		return -1;		/* file not found */
 
 		/* read until the line matches the beginning of a soa record ... */
+	ret = 0;
 	soafound = 0;
 	while ( !soafound && fgets (buf, sizeof buf, fp) )
 	{
@@ -126,21 +128,24 @@ static	int	read_serial_fromfile (const char *fname, unsigned long *serial)
 			soafound = 1;
 	}
 
-	if ( !soafound )
-		return -2;	/* no zone file (soa not found) */
+	if ( soafound )
+	{
+		/* move forward until any non ws is reached */
+		while ( (c = getc (fp)) != EOF && isspace (c) )
+			;
+		ungetc (c, fp);		/* pushback the non ws */
 
-	/* move forward until any non ws is reached */
-	while ( (c = getc (fp)) != EOF && isspace (c) )
-		;
-	ungetc (c, fp);		/* pushback the non ws */
-
-	*serial = 0L;	/* read in the current serial number */
-	if ( fscanf (fp, "%lu", serial) != 1 )	/* try to get serial no */
-		return -3;	/* no serial number found */
+		/* read in the current serial number */
+		*serial = 0L;
+		if ( fscanf (fp, "%lu", serial) != 1 )	/* try to get serial no */
+			ret = -3;	/* no serial number found */
+	}
+	else
+		ret = -2;	/* no zone file (soa not found) */
 
 	fclose (fp);
 
-	return 0;	/* ok! */
+	return ret;
 }
 
 /*****************************************************************

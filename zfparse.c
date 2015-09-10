@@ -223,7 +223,10 @@ int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *k
 					{
 						len = snprintf (inclfiles, *plen, ",%s", fname);
 						if ( *plen <= len )	/* no space left in include file string */
+						{
+							fclose (infp);
 							return keydbfilefound;
+						}
 						inclfiles += len;
 						*plen -= len;
 					}
@@ -257,8 +260,7 @@ int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *k
 		is_multiline_rr (&multi_line_rr, p);
 	}
 
-	if ( file )
-		fclose (infp);
+	fclose (infp);
 
 	dbg_val5 ("parsezonefile (\"%s\", %ld, %ld, \"%s\") ==> %d\n",
 			file, *pminttl, *pmaxttl, keydbfile, keydbfilefound);

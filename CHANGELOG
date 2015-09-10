@@ -1,6 +1,10 @@
 zkt 1.1.4 -- 
 
-* misc	README file changed to Markdown
+* bug	Fixed some potential memory leaks in ncparse.c dki.c zfparse.c
+	and zkt-soaserial.c (mostly a missing fclose() on error conditions).
+	Thanks to Jeremy C. Reed
+
+* misc	README file changed to Markdown syntax
 
 * bug	running zkt-keyman -3 didn't change anything on the key database
 	so a zkt-signer run afterwards didn't see anything to do.

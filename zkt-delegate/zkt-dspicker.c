@@ -2,6 +2,8 @@
 **
 **	zkt-dspicker.c -- Update bind ds-file based on CDS records
 **
+**	! WORK IN PROGRESS (or even actually quite less progress) !
+**
 **	See the file LICENSE for the license
 **			
 *****************************************************************/

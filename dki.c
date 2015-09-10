@@ -68,7 +68,7 @@ static	char	dki_estr[255+1];
 static	dki_t	*dki_alloc ()
 {
 	dki_estr[0] = '\0';
-	dki_t	*dkp = malloc (sizeof (dki_t));
+	dki_t	*dkp;
 
 	if ( (dkp = malloc (sizeof (dki_t))) )
 	{
@@ -167,9 +167,14 @@ static	int	dki_writeinfo (const dki_t *dkp, const char *path)
 
 	if ( (fp = fopen (path, "w")) == NULL )
 		return 0;
+
 	dbg_val1 ("dki_writeinfo %s\n", path);
 	if ( dki_prt_dnskey_raw (dkp, fp) == 0 )
+	{
+		fclose (fp);
 		return 0;
+	}
+
 	fclose (fp);
 	touch (path, dkp->time);	/* restore time of key file */
 
@@ -349,6 +354,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	{
 		snprintf (dki_estr, sizeof (dki_estr),
 			"dki_read: Can\'t stat file %s", fname);
+		fclose (fp);
 		return (NULL);
 	}
 	dkp->time = st.st_mtime;
