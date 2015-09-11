@@ -327,6 +327,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	{
 		snprintf (dki_estr, sizeof (dki_estr),
 			"dki_read: Filename don't match expected format (%s)", fname);
+		dki_free (dkp);
 		return (NULL);
 	}
 
@@ -336,6 +337,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 	{
 		snprintf (dki_estr, sizeof (dki_estr),
 			"dki_read: Can\'t open file \"%s\" for reading", path);
+		dki_free (dkp);
 		return (NULL);
 	}
 	
@@ -346,6 +348,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 		snprintf (dki_estr, sizeof (dki_estr),
 			"dki_read: Can\'t read key from file %s (errno %d)", path, err);
 		fclose (fp);
+		dki_free (dkp);
 		return (NULL);
 	}
 
@@ -355,6 +358,7 @@ dki_t	*dki_read (const char *dirname, const char *filename)
 		snprintf (dki_estr, sizeof (dki_estr),
 			"dki_read: Can\'t stat file %s", fname);
 		fclose (fp);
+		dki_free (dkp);
 		return (NULL);
 	}
 	dkp->time = st.st_mtime;
