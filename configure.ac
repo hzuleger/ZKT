@@ -129,7 +129,7 @@ then
 	AC_PATH_PROG([dig_path], [dig]) 
 	if test -z "$dig_path"
 	then
-		AC_MSG_NOTICE([Could not found path to dig program. Please disable ds-tracking])
+		AC_MSG_NOTICE([Could not find path to dig program. Please disable ds-tracking])
 	else
 		AC_DEFINE_UNQUOTED(DIG_PATH, "$dig_path", path to dig binary)
 	fi

@@ -239,7 +239,7 @@ static	int	get_parent_phase (const char *file)
 	return phase;
 }
 
-#if defined (USE_DS_TRACKING)
+#if defined (USE_DS_TRACKING) && USE_DS_TRACKING
 /*****************************************************************
 **	is_published_in_parent ()
 **	Use "dig" to track if the DS of the given KSK is published
@@ -296,7 +296,9 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 	int	currphase;
 	int	parfile_age;
 	int	parent_propagation;
+#if defined(PARENT_RESIGN)	/* parent_resign no longer used */
 	int	parent_resign;
+#endif
 	int	parent_keyttl;
 
 
@@ -359,8 +361,10 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 
 	/* TODO: Set these values to the one found in the parent dnssec.conf file */
 	parent_propagation = PARENT_PROPAGATION;
+#if defined(PARENT_RESIGN)
 	parent_resign = z->resign;
-#if defined (USE_DS_TRACKING)
+#endif
+#if defined (USE_DS_TRACKING) && USE_DS_TRACKING
 	parent_keyttl = 86400;		/* z->key_ttl; -> dnssec-keysign uses default TTL for */
 					/* DS records, also registries such as denic use 1d */
 #else
@@ -377,7 +381,7 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 			if ( !create_parent_file (path, currphase+1, z->key_ttl, ksk) )
 				lg_mesg (LG_ERROR, "Couldn't create parentfile %s\n", path);
 			lg_mesg (LG_INFO, "\"%s\": kskrollover phase2: send new key %d to the parent zone", zp->zone, ksk->tag);
-#if defined (USE_DS_TRACKING)
+#if defined (USE_DS_TRACKING) && USE_DS_TRACKING
 			if ( !is_parentdirsigned (zonelist, zp) )
 				verbmesg (0, z, "\"%s\": kskrollover phase2: repla key %d to the parent zone now\n", zp->zone, ksk->tag);
 #endif
@@ -389,7 +393,7 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 
 	case 2:	/* we are currently in state two (propagation of new key to the parent) */
 
-#if defined (USE_DS_TRACKING)
+#if defined (USE_DS_TRACKING) && USE_DS_TRACKING
 		/* do not automatically go into phase3 if DS entry is not available in parent yet */
 		if ( parfile_age >= parent_propagation + parent_keyttl && !is_published_in_parent (zp, ksk->next))
 		{
@@ -408,8 +412,11 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 		}
 #endif
 
-		// if ( parfile_age >= parent_propagation + parent_resign + parent_keyttl )	/* can we go to phase 3 ? */
+#if defined(PARENT_RESIGN)
+		if ( parfile_age >= parent_propagation + parent_resign + parent_keyttl )	/* can we go to phase 3 ? */
+#else
 		if ( parfile_age >= parent_propagation + parent_keyttl )	/* can we go to phase 3 ? */
+#endif
 		{
 			/* remove the parentfile */
 			unlink (path);
@@ -424,8 +431,11 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 			return 1;
 		}
 		else
-			// verbmesg (2, z, "\t\tkskrollover: we are in state 2 and  waiting for parent propagation (parentfile %d < parentprop %d + parentresig %d + parentkeyttl %d\n", parfile_age, parent_propagation, parent_resign, parent_keyttl);
+#if defined(PARENT_RESIGN)
+			verbmesg (2, z, "\t\tkskrollover: we are in state 2 and  waiting for parent propagation (parentfile %d < parentprop %d + parentresig %d + parentkeyttl %d\n", parfile_age, parent_propagation, parent_resign, parent_keyttl);
+#else
 			verbmesg (2, z, "\t\tkskrollover: we are in state 2 and waiting for parent propagation (parentfile %dsec < parentprop %dsec + parentkeyttl %dsec\n", parfile_age, parent_propagation, parent_keyttl);
+#endif
 		break;
 	default:
 		assert ( currphase == 1 || currphase == 2 );
