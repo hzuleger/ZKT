@@ -716,12 +716,21 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	return err;
 }
 
+/*****************************************************************
+**	This function is no longer needed, and us doing in fact
+**	nothing.
+**	The primary idea was to register a new KSK at a experimental
+**	key registration instance.
+**	This code is still here, to have an anchor for a (new) client
+**	parent DS update protocol (e.g. via dynamic updates).
+*****************************************************************/
 static	void	register_key (dki_t *list, const zconf_t *z)
 {
+#if 0
 	dki_t	*dkp;
 	time_t	age;
-
 	time_t	currtime;
+
 	assert ( list != NULL );
 	assert ( z != NULL );
 
@@ -729,7 +738,7 @@ static	void	register_key (dki_t *list, const zconf_t *z)
 	for ( dkp = list; dkp && dki_isksk (dkp); dkp = dkp->next )
 	{
 		age = dki_age (dkp, currtime);
-#if 0
+
 		/* announce "new" and active key signing keys */
 		if ( REG_URL && *REG_URL && dki_status (dkp) == DKI_ACT && age <= z->resign * 4 )
 		{
@@ -737,8 +746,8 @@ static	void	register_key (dki_t *list, const zconf_t *z)
 				logmesg ("\tRegister new KSK with tag %d for domain %s\n",
 								dkp->tag, dkp->name);
 		}
-#endif
 	}
+#endif
 }
 
 /*
