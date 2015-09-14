@@ -850,7 +850,6 @@ static	int	sign_zone (const zone_t *zp)
 	const	char	*pseudo;
 	const	char	*param;
 	int	len;
-	FILE	*fp;
 
 	const	char	*dir;
 	const	char	*domain;
@@ -946,21 +945,21 @@ static	int	sign_zone (const zone_t *zp)
 	*str = '\0';
 	if ( noexec == 0 )
 	{
-#if 0
-		if ( (fp = popen (cmd, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
-			return -1;
-#else
+		FILE	*fp;
+		int	exitcode;
+
 		if ( (fp = popen (cmd, "r")) == NULL )
 			return -1;
+
 		str[0] = '\0';
 		while ( fgets (str, sizeof str, fp) != NULL )	/* eat up all output until the last line */
 			;
-#endif
-		pclose (fp);
+
+		exitcode = pclose (fp);
+		verbmesg (2, conf, "\t  Cmd dnssec-signzone returns with exitcode=%d: \"%s\"\n", exitcode, str_chop (str, '\n'));
 	}
 
 	dbg_line();
-	verbmesg (2, conf, "\t  Cmd dnssec-signzone return: \"%s\"\n", str_chop (str, '\n'));
 	len = strlen (str) - 6;
 	if ( len < 0 || strcmp (str+len, "signed") != 0 )
 		return -1;

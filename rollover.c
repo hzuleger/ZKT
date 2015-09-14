@@ -249,6 +249,7 @@ static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 {
 	char	cmd[2047+1];
 	char	str[1023+1];
+	int	exicode;
 	long	tag;
 	FILE	*fp;
 
@@ -256,7 +257,7 @@ static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 	assert ( zp != NULL );
 
 	//snprintf (cmd, sizeof (cmd), "/usr/bin/dig +short %s DS | /bin/grep \"^%d \"", zp->zone, ksk->tag);
-	snprintf (cmd, sizeof (cmd), "%s +short -t DS %s", DIG_PATH, zp->zone);
+	snprintf (cmd, sizeof (cmd), "%s +short -t DS %s 2>&1", DIG_PATH, zp->zone);
 
 	verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmd);
         
@@ -272,12 +273,13 @@ static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 			break;
 	}
 
-	pclose (fp);
+	exitcode = pclose (fp);
 
 	dbg_line ();
 
 	str_chop (str, '\n');
-	verbmesg (2, zp->conf, "\t  Cmd dig return: \"%s\"; DS tag %ld found looking for %u\n", str, tag, ksk->tag);
+	verbmesg (2, zp->conf, "\t  Cmd dig returns with exitcode=%d: \"%s\"; DS tag %ld found looking for %u\n",
+									exitcode, str, tag, ksk->tag);
 
 	return ( tag == ksk->tag );
 }

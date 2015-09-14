@@ -55,6 +55,7 @@ int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)
 	char	cmdline[254+1];
 	char	str[254+1];
 	char	*action;
+	int	exitcode;
 	FILE	*fp;
 
 	assert (z != NULL);
@@ -72,20 +73,22 @@ int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)
 	verbmesg (1, z, "\t%s dynamic zone %s\n", action, str);
 
 	if ( z->view )
-		snprintf (cmdline, sizeof (cmdline), "%s %s %s IN %s", RELOADCMD, action, domain, z->view);
+		snprintf (cmdline, sizeof (cmdline), "%s %s %s IN %s 2>&1", RELOADCMD, action, domain, z->view);
 	else
-		snprintf (cmdline, sizeof (cmdline), "%s %s %s", RELOADCMD, action, domain);
+		snprintf (cmdline, sizeof (cmdline), "%s %s %s 2>&1", RELOADCMD, action, domain);
 
 	verbmesg (2, z, "\t  Run cmd \"%s\"\n", cmdline);
 	*str = '\0';
 	if ( z->noexec == 0 )
 	{
-		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+		if ( (fp = popen (cmdline, "r")) == NULL ) 
 			return -1;
-		pclose (fp);
-	}
+		fgets (str, sizeof str, fp);
+		
+		exitcode = pclose (fp);
 
-	verbmesg (2, z, "\t  rndc %s return: \"%s\"\n", action, str_chop (str, '\n'));
+		verbmesg (2, z, "\t  rndc %s returns with exitcode=%d: \"%s\"\n", action, exitcode, str_chop (str, '\n'));
+	}
 
 	return 0;
 }
@@ -104,6 +107,7 @@ int	dist_and_reload (const zone_t *zp, int what)
 	char	str[254+1];
 	char	*view;
 	FILE	*fp;
+	int	exitcode;
 
 	assert (zp != NULL);
 	assert (zp->conf->dist_cmd != NULL);
@@ -141,16 +145,20 @@ int	dist_and_reload (const zone_t *zp, int what)
 	{
 		lg_mesg (LG_NOTICE, "%s: key distribution triggered", zone);
 		verbmesg (1, zp->conf, "\tDistribute keys for zone %s\n", zone);
-		snprintf (cmdline, sizeof (cmdline), "%s distkeys %s %s %s",
+		snprintf (cmdline, sizeof (cmdline), "%s distkeys %s %s %s 2>&1",
 					zp->conf->dist_cmd, zp->zone, path, view);
 		*str = '\0';
 		if ( zp->conf->noexec == 0 )
 		{
 			verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmdline);
-			if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+			if ( (fp = popen (cmdline, "r")) == NULL )
 				return -2;
-			pclose (fp);
-			verbmesg (2, zp->conf, "\t  %s distribute return: \"%s\"\n", zp->conf->dist_cmd, str_chop (str, '\n'));
+
+			fgets (str, sizeof str, fp);
+
+			exitcode = pclose (fp);
+			verbmesg (2, zp->conf, "\t  %s distribute returns with exitcode=%d: \"%s\"\n",
+						zp->conf->dist_cmd, exitcode, str_chop (str, '\n'));
 		}
 
 		return 0;
@@ -160,30 +168,37 @@ int	dist_and_reload (const zone_t *zp, int what)
 
 	lg_mesg (LG_NOTICE, "%s: distribution triggered", zone);
 	verbmesg (1, zp->conf, "\tDistribute zone %s\n", zone);
-	snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s %s", zp->conf->dist_cmd, zp->zone, path, view);
+	snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s %s 2>&1", zp->conf->dist_cmd, zp->zone, path, view);
 
 	*str = '\0';
 	if ( zp->conf->noexec == 0 )
 	{
 		verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmdline);
-		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+		if ( (fp = popen (cmdline, "r")) == NULL )
 			return -2;
-		pclose (fp);
-		verbmesg (2, zp->conf, "\t  %s distribute return: \"%s\"\n", zp->conf->dist_cmd, str_chop (str, '\n'));
+
+		fgets (str, sizeof str, fp);
+
+		exitcode = pclose (fp);
+		verbmesg (2, zp->conf, "\t  %s distribute returns with exitcode=%d: \"%s\"\n",
+						zp->conf->dist_cmd, exitcode, str_chop (str, '\n'));
 	}
 
 
 	lg_mesg (LG_NOTICE, "%s: reload triggered", zone);
 	verbmesg (1, zp->conf, "\tReload zone %s\n", zone);
-	snprintf (cmdline, sizeof (cmdline), "%s reload %s %s %s", zp->conf->dist_cmd, zp->zone, path, view);
+	snprintf (cmdline, sizeof (cmdline), "%s reload %s %s %s 2>&1", zp->conf->dist_cmd, zp->zone, path, view);
 
 	*str = '\0';
 	if ( zp->conf->noexec == 0 )
 	{
 		verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmdline);
-		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+		if ( (fp = popen (cmdline, "r")) == NULL )
 			return -2;
-		pclose (fp);
+
+		fgets (str, sizeof str, fp);
+
+		exitcode = pclose (fp);
 		verbmesg (2, zp->conf, "\t  %s reload return: \"%s\"\n", zp->conf->dist_cmd, str_chop (str, '\n'));
 	}
 
@@ -197,6 +212,7 @@ int	reload_zone (const char *domain, const zconf_t *z)
 {
 	char	cmdline[254+1];
 	char	str[254+1];
+	int	exitcode;
 	FILE	*fp;
 
 	assert (z != NULL);
@@ -210,18 +226,20 @@ int	reload_zone (const char *domain, const zconf_t *z)
 	verbmesg (1, z, "\tReload zone %s\n", str);
 
 	if ( z->view )
-		snprintf (cmdline, sizeof (cmdline), "%s reload %s IN %s", RELOADCMD, domain, z->view);
+		snprintf (cmdline, sizeof (cmdline), "%s reload %s IN %s 2>&1", RELOADCMD, domain, z->view);
 	else
-		snprintf (cmdline, sizeof (cmdline), "%s reload %s", RELOADCMD, domain);
+		snprintf (cmdline, sizeof (cmdline), "%s reload %s 2>&1", RELOADCMD, domain);
 
 	*str = '\0';
 	if ( z->noexec == 0 )
 	{
 		verbmesg (2, z, "\t  Run cmd \"%s\"\n", cmdline);
-		if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+		if ( (fp = popen (cmdline, "r")) == NULL )
 			return -1;
-		pclose (fp);
-		verbmesg (2, z, "\t  rndc reload return: \"%s\"\n", str_chop (str, '\n'));
+		fgets (str, sizeof str, fp);
+		exitcode = pclose (fp);
+		
+		verbmesg (2, z, "\t  rndc reload returns with exticode=%d: \"%s\"\n", exitcode, str_chop (str, '\n'));
 	}
 
 	return 0;

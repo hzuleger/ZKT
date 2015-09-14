@@ -261,16 +261,20 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 		expflag = "-e ";
 #endif
 	if ( dir && *dir )
-		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s%s%s-n ZONE -a %s -b %d %s %s",
+		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s%s%s-n ZONE -a %s -b %d %s %s 2>&1",
 			dir, KEYGENCMD, KEYGEN_COMPMODE, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
 	else
-		snprintf (cmdline, sizeof (cmdline), "%s %s%s%s-n ZONE -a %s -b %d %s %s",
+		snprintf (cmdline, sizeof (cmdline), "%s %s%s%s-n ZONE -a %s -b %d %s %s 2>&1",
 			KEYGENCMD, KEYGEN_COMPMODE, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
 
 	dbg_msg (cmdline);
 
-	if ( (fp = popen (cmdline, "r")) == NULL || fgets (fname, sizeof fname, fp) == NULL )
+	if ( (fp = popen (cmdline, "r")) == NULL )
 		return NULL;
+
+	fname[0] = '\0';
+	fgets (fname, sizeof fname, fp);
+
 	pclose (fp);
 
 	len = strlen (fname) - 1;

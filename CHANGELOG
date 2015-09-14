@@ -1,5 +1,8 @@
 zkt 1.1.4 -- 
 
+* misc	Exitcode of external command is now visible in log messages
+	stderr of each external command is redirected to stdin
+
 * bug	Fixed some potential memory leaks in ncparse.c dki.c zfparse.c
 	and zkt-soaserial.c (mostly a missing fclose() on error conditions).
 	Thanks to Jeremy C. Reed
