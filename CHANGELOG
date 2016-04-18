@@ -1,5 +1,7 @@
 zkt 1.1.4 -- 
 
+* bug	move $(LIBS) at the end of the ggc link line in Makefile.in
+
 * misc	Exitcode of external command is now visible in log messages
 	stderr of each external command is redirected to stdin
 

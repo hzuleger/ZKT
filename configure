@@ -3739,8 +3739,8 @@ fi
 
 	if test -z "$dig_path"
 	then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: Could not found path to dig program. Please disable ds-tracking" >&5
-$as_echo "$as_me: Could not found path to dig program. Please disable ds-tracking" >&6;}
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: Could not find path to dig program. Please disable ds-tracking" >&5
+$as_echo "$as_me: Could not find path to dig program. Please disable ds-tracking" >&6;}
 	else
 
 cat >>confdefs.h <<_ACEOF
