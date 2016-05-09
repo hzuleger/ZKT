@@ -65,7 +65,7 @@ OBJ_PRG	=	$(SRC_PRG:.c=.o)
 PROG_PRG=	$(PROG_SIG) $(PROG_CNF) $(PROG_LS) $(PROG_SER) $(PROG_KEY)
 
 MAN_ALL	=	$(MAN_SIG) $(MAN_LS) $(MAN_CNF) $(MAN_KEY)
-OTHER	=	README README.logging TODO LICENSE CHANGELOG tags Makefile.in \
+OTHER	=	README.md README.logging TODO LICENSE CHANGELOG tags Makefile.in \
 		configure distribute.sh examples
 SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_CNF) $(SRC_KLS) \
 		$(SRC_LS) $(SRC_KEY) $(SRC_SER) $(OTHER) \

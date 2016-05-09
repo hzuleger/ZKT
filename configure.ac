@@ -20,7 +20,7 @@
 dnl AC_PREREQ(2.59)
 
 ### Package name and current version
-AC_INIT(ZKT, 1.1.3, Holger Zuleger hznet.de)
+AC_INIT(ZKT, 1.1.4, Holger Zuleger hznet.de)
 dnl AC_REVISION($Revision: 1.397 $)
 
 ### Files to test to check if src dir contains the package
