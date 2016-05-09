@@ -141,6 +141,7 @@ int	dist_and_reload (const zone_t *zp, int what)
 		snprintf (zone, sizeof (zone), "\"%s\"", zp->zone);
 
 
+	pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
 	if ( what == 2 )
 	{
 		lg_mesg (LG_NOTICE, "%s: key distribution triggered", zone);
@@ -163,8 +164,6 @@ int	dist_and_reload (const zone_t *zp, int what)
 
 		return 0;
 	}
-
-	pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
 
 	lg_mesg (LG_NOTICE, "%s: distribution triggered", zone);
 	verbmesg (1, zp->conf, "\tDistribute zone %s\n", zone);

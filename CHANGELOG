@@ -1,5 +1,10 @@
 zkt 1.1.4 -- 
 
+* misc	Hint to mailinglist removed from README file
+
+* bug	pathname wasn't initialized in any case (dist_and_reload() in nscomm.c
+	Thanks Jeremy C. Reed
+
 * bug	move $(LIBS) at the end of the ggc link line in Makefile.in
 
 * misc	Exitcode of external command is now visible in log messages

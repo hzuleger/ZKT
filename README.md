@@ -10,9 +10,6 @@ A dnssec zone and key management toolset
 For more information about the DNSSEC Zone Key Tool please
 have a look at "http://www.zonekeytool.de/"
 
-You can subscribe to the zkt-users@sourceforge.net mailing list
-on the following website: https://lists.sourceforge.net/lists/listinfo/zkt-users
-
 The ZKT software is licenced under BSD (see LICENCE file)
 
 ## Install the software
