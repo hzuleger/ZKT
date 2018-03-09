@@ -121,7 +121,7 @@ tags:	$(SRC_ALL) $(SRC_SIG) $(SRC_CNF) $(SRC_KEY) $(SRC_LS) $(SRC_SER) $(SRC_KLS
 
 clean:		## remove objectfiles and binaries
 clean:
-	-rm -f $(OBJ_PRG) $(OBJ_ALL) $(PROG_PRG)
+	-rm -f $(OBJ_PRG) $(OBJ_ALL) $(PROG_PRG) $(OBJ_KLS)
 
 distclean:	## remove objectfiles, binaries and distribution files
 distclean:	clean
