@@ -39,4 +39,5 @@
 # define ZFPARSE_H
 extern	int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *keydbfile, char *inclfiles, size_t *plen);
 extern	int	addkeydb (const char *file, const char *keydbfile);
+extern	time_t  recursive_file_mtime (const char *path, const char *file, const char *keydbfile);
 #endif
