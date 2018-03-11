@@ -48,6 +48,7 @@
 # include "misc.h"
 # include "log.h"
 # include "debug.h"
+# include "dki.h"
 #define extern
 # include "zfparse.h"
 #undef extern
@@ -267,6 +268,93 @@ int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *k
 	return keydbfilefound;
 }
 
+// ugly copy of function above
+time_t	recursive_file_mtime (const char *path, const char *file, const char *keydbfile)
+{
+	FILE	*infp;
+	int	len;
+	int	lnr;
+	int	multi_line_rr;
+	char	buf[1024];
+	const	char	*p;
+	char	filepath[MAX_PATHSIZE+1];
+	time_t	latestChange;
+
+	assert (path != NULL);
+	assert (file != NULL);
+
+	if (file[0] == '/') {
+		memcpy(filepath, file,  sizeof (filepath));
+	} else {
+		pathname (filepath, sizeof (filepath), path, file, NULL);
+	}
+	latestChange = file_mtime(filepath);
+
+	dbg_val2 ("parsezonefile (\"%s\", \"%s\")\n", filepath, keydbfile);
+
+	if ( (infp = fopen (filepath, "r")) == NULL )
+	{
+		error ("recursive_file_mtime: couldn't open file \"%s\" for input\n", filepath); 
+		return 0;
+	}
+
+	lnr = 0;
+	multi_line_rr = 0;
+	while ( fgets (buf, sizeof buf, infp) != NULL ) 
+	{
+		len = strlen (buf);
+		if ( buf[len-1] != '\n' )	/* line too long ? */
+			fprintf (stderr, "line too long\n");
+		lnr++;
+
+		p = buf;
+		if ( multi_line_rr )	/* skip line if it's part of a multiline rr */
+		{
+			is_multiline_rr (&multi_line_rr, p);
+			continue;
+		}
+
+		if ( *p == '$' )	/* special directive ? */
+		{
+			if ( strncmp (p+1, "INCLUDE", 7) == 0 )	/* $INCLUDE ? */
+			{
+				char	fname[100+1];
+
+				sscanf (p+9, "%100s", fname);
+				dbg_val ("$INCLUDE directive for file \"%s\" found\n", fname);
+				if ( keydbfile && strcmp (fname, keydbfile) == 0 )
+					continue;
+				else
+				{
+					time_t	ret = recursive_file_mtime (path, fname, keydbfile);
+					if ( ret > latestChange || ret == 0)
+						latestChange = ret;
+				}
+			}
+		}
+		else if ( !isspace (*p) )	/* label ? */
+			p = skiplabel (p);
+
+		p = skipws (p);
+		if ( *p == ';' )	/* skip line if it's  a comment line */
+			continue;
+
+			/* skip class (hesiod is not supported now) */
+		if ( (toupper (*p) == 'I' && toupper (p[1]) == 'N') ||
+		     (toupper (*p) == 'C' && toupper (p[1]) == 'H') )
+			p += 2;
+		p = skipws (p);
+
+		/* check the rest of the line if it's the beginning of a multi_line_rr */
+		is_multiline_rr (&multi_line_rr, p);
+	}
+
+	fclose (infp);
+
+	dbg_val3 ("recursive_file_mtime (\"%s\", \"%s\") ==> %ld\n",
+			filepath, keydbfile, latestChange);
+	return latestChange;
+}
 
 #ifdef TEST
 const char *progname;
