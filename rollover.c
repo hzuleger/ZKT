@@ -249,7 +249,7 @@ static int	is_published_in_parent(const zone_t *zp, const dki_t *ksk)
 {
 	char	cmd[2047+1];
 	char	str[1023+1];
-	int	exicode;
+	int	exitcode;
 	long	tag;
 	FILE	*fp;
 
@@ -385,7 +385,7 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 			lg_mesg (LG_INFO, "\"%s\": kskrollover phase2: send new key %d to the parent zone", zp->zone, ksk->tag);
 #if defined (USE_DS_TRACKING) && USE_DS_TRACKING
 			if ( !is_parentdirsigned (zonelist, zp) )
-				verbmesg (0, z, "\"%s\": kskrollover phase2: repla key %d to the parent zone now\n", zp->zone, ksk->tag);
+				verbmesg (0, z, "\"%s\": kskrollover phase2: send new key %d to the parent zone now\n", zp->zone, ksk->tag);
 #endif
 			return 1;
 		}
