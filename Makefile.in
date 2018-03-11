@@ -104,13 +104,13 @@ $(PROG_SER):	$(OBJ_SER) Makefile
 
 install:	## install binaries in prefix/bin
 install:	$(PROG_PRG)
-		test -d $(prefix)/bin || mkdir -p $(prefix)/bin
-		cp $(PROG_PRG) $(prefix)/bin/
+		test -d $(DESTDIR)$(prefix)/bin || mkdir -p $(DESTDIR)$(prefix)/bin
+		cp $(PROG_PRG) $(DESTDIR)$(prefix)/bin/
 
 install-man:	## install man pages in mandir
 install-man:
-	test -d $(mandir)/man8/ || mkdir -p $(mandir)/man8/
-	cp -p man/$(MAN_LS) man/$(MAN_SIG) man/$(MAN_KEY) man/$(MAN_CNF) $(mandir)/man8/
+	test -d $(DESTDIR)$(mandir)/man8/ || mkdir -p $(DESTDIR)$(mandir)/man8/
+	cp -p man/$(MAN_LS) man/$(MAN_SIG) man/$(MAN_KEY) man/$(MAN_CNF) $(DESTDIR)$(mandir)/man8/
 
 
 
