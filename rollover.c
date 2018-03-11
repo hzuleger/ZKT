@@ -343,8 +343,8 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 		}
 		else	/* print out a warning only */
 		{
-			logmesg ("\t\tWarning: Lifetime of Key Signing Key %d exceeded: %s\n",
-							ksk->tag, str_delspace (age2str (age)));
+			logmesg ("\t\tWarning: %s: Lifetime of Key Signing Key %d exceeded: %s\n",
+							zp->zone, ksk->tag, str_delspace (age2str (age)));
 			lg_mesg (LG_WARNING, "\"%s\": lifetime of key signing key %d exceeded since %s",
 							zp->zone, ksk->tag, str_delspace (age2str (age - lifetime)));
 		}
