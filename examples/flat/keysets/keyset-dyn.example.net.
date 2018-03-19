@@ -1,0 +1,8 @@
+$ORIGIN .
+dyn.example.net		7200	IN DNSKEY 257 3 7 (
+					AwEAAdMgKVj+5F1XNT/83gicNFh53+Y3Awch
+					bKZ86q+POM0ylO7QNcM4Yu7aWpEgeNkorfB8
+					5IssYy3WBg2FxGzt7TzfjWN4fiixRjktyzD1
+					LAvvxBbz0pJsw2vQGrkmq0WNive49v/5UB87
+					175zp3l13ArAIPWA/uAV0mAxDhKpQMzT
+					) ; KSK; alg = NSEC3RSASHA1 ; key id = 36123

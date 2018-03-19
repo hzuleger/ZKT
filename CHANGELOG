@@ -1,5 +1,15 @@
 zkt 1.1.5 -- 
 
+* misc	Log name of zone if KSK is expired
+	Thanks to Sven Stickroth
+
+* misc	DEST_DIR added to Makefile to install executables at common places
+	Thanks to Sven Stickroth
+
+* bug	Fix typos in rollover.c
+	make clean also cleans OBJ_KLS files
+	Thanks to Sven Stickroth
+
 zkt 1.1.4 -- 9. May 2016
 
 * misc	Hint to mailinglist removed from README file
