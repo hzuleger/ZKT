@@ -482,7 +482,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 #if defined (USE_INCLUDE_FILE_TRACKING) && USE_INCLUDE_FILE_TRACKING
 	zfile_time = recursive_file_mtime (zp->dir, zp->file, zp->conf->keyfile);
 #else
-	zfile_time = file_time (path);
+	zfile_time = file_mtime (path);
 #endif
 	if ( !zfile_time )
 	{
