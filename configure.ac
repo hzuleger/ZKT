@@ -15,12 +15,13 @@
 #	2010-10-14	new option to specify BIND_UTIL_PATH on command line (thanks to Mans Nilsson)
 #			No build in default BIND_UTIL_PATH used anymore
 #	2015-07-15	new option for USE_DS_TRACKING added (thanks to Sven Strickroth)
+#	2018-03-20	new option for USE_INCLUDE_FILE added (thanks to Sven Strickroth)
 #
 
 dnl AC_PREREQ(2.59)
 
 ### Package name and current version
-AC_INIT(ZKT, 1.1.4, Holger Zuleger hznet.de)
+AC_INIT(ZKT, 1.1.5, Holger Zuleger hznet.de)
 dnl AC_REVISION($Revision: 1.397 $)
 
 ### Files to test to check if src dir contains the package
@@ -119,6 +120,11 @@ ttl_in_keyfile=1
 AS_IF([test "$enable_ttl_in_keyfile" = "no"], [ttl_in_keyfile=0])
 AC_DEFINE_UNQUOTED(TTL_IN_KEYFILE_ALLOWED, $ttl_in_keyfile, TTL in keyfiles allowed)
 
+AC_ARG_ENABLE([inc_file_tracking], AS_HELP_STRING([--enable-inc-file-tracking], [track time stamp of included zone files]))
+inc_file_tracking=0
+AS_IF([test "$enable_inc_file_tracking" = "yes"], [inc_file_tracking=1])
+AC_DEFINE_UNQUOTED(USE_INCLUDE_FILE_TRACKING, $inc_file_tracking, track timestamp of included files)
+
 AC_ARG_ENABLE([ds_tracking], AS_HELP_STRING( [--enable-ds-tracking], [track DS record in parent zone (ksk-rollover)]))
 ds_tracking=0
 AS_IF([test "$enable_ds_tracking" = "yes"], [ds_tracking=1])
@@ -166,7 +172,7 @@ fi
 AC_DEFINE_UNQUOTED(USE_TREE, $usetree, Use TREE data structure for dnssec-zkt)
 
 AC_DEFINE_UNQUOTED(ZKT_VERSION, "$t$PACKAGE_VERSION", ZKT version string)
-AC_DEFINE_UNQUOTED(ZKT_COPYRIGHT, "(c) Feb 2005 - Nov 2012 Holger Zuleger hznet.de", ZKT copyright string)
+AC_DEFINE_UNQUOTED(ZKT_COPYRIGHT, "(c) Feb 2005 - Mar 2018 Holger Zuleger hznet.de", ZKT copyright string)
 
 ### Checks for libraries.
 

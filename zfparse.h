@@ -37,6 +37,9 @@
 
 #ifndef ZFPARSE_H
 # define ZFPARSE_H
-extern	int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *keydbfile, char *inclfiles, size_t *plen);
+extern	int	parsezonefile (const char *path, const char *file, long *pminttl, long *pmaxttl, const char *keydbfile, char *inclfiles, size_t *plen);
 extern	int	addkeydb (const char *file, const char *keydbfile);
+#if defined (USE_INCLUDE_FILE_TRACKING) && USE_INCLUDE_FILE_TRACKING
+extern	time_t  recursive_file_mtime (const char *path, const char *file, const char *keydbfile);
+#endif
 #endif

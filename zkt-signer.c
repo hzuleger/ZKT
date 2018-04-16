@@ -63,6 +63,7 @@
 # include "dki.h"
 # include "rollover.h"
 # include "log.h"
+# include "zfparse.h"
 
 # define	short_options	"c:L:V:D:N:o:O:dfHhnrv"
 #if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
@@ -478,7 +479,17 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 		return 2;
 	}
 	
-	zfile_time = file_mtime (path);
+#if defined (USE_INCLUDE_FILE_TRACKING) && USE_INCLUDE_FILE_TRACKING
+	zfile_time = recursive_file_mtime (zp->dir, zp->file, zp->conf->keyfile);
+#else
+	zfile_time = file_time (path);
+#endif
+	if ( !zfile_time )
+	{
+		error ("Error parsing zone file (%s)!\n", path);
+		lg_mesg (LG_ERROR, "\"%s\": error parsing zone file (%s)!", zp->zone, path);
+		return 2;
+	}
 	currtime = time (NULL);
 
 	/* check for domain based logging */
@@ -557,7 +568,7 @@ static	int	dosigning (zone_t *zonelist, zone_t *zp)
 	**	b) new keys are generated, or
 	**	c) we found a new KSK of a delegated domain, or
 	**	d) the "dnskey.db" file is newer than "zone.db" 
-	**	e) the "zone.db" is newer than "zone.db.signed" or
+	**	e) the "zone.db" or any included file is newer than "zone.db.signed" or
 	**	f) "zone.db.signed" is older than the re-sign interval
 	**/
 	mesg[0] = '\0';

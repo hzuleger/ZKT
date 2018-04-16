@@ -56,6 +56,7 @@
 
 # include "debug.h"
 # include "misc.h"
+# include "dki.h"
 # include "zfparse.h"
 # include "zconf.h"
 
@@ -266,8 +267,22 @@ int	main (int argc, char *argv[])
 		long	maxttl;
 		int	keydbfound;
 		char	*dnskeydb;
+		char	path[MAX_PATHSIZE+1];
+		char	fname[MAX_PATHSIZE+1];
 
 		file = argv[c++];
+
+		/* split file argument to path and filename */
+		strcpy (path, ".");
+		if ( (p = strrchr (file, '/')) != NULL )
+		{
+			snprintf (path, sizeof (path), "%.*s", (int)(p - file), file);
+fprintf (stderr, "%d %s \n", (int)(p - file), path);
+			snprintf (fname, sizeof (fname), "%s", p+1);
+		}
+		else
+			snprintf (fname, sizeof (fname), "%s", file);
+			
 
 		dnskeydb = config->keyfile;
 
@@ -275,7 +290,7 @@ int	main (int argc, char *argv[])
 		maxttl = 0;
 		includefiles[0] = '\0';
 		filelistsize = sizeof (includefiles);
-		keydbfound = parsezonefile (file, &minttl, &maxttl, dnskeydb, includefiles, &filelistsize);
+		keydbfound = parsezonefile (path, fname, &minttl, &maxttl, dnskeydb, includefiles, &filelistsize);
 		if ( keydbfound < 0 )
 			error ("can't parse zone file %s\n", file);
 

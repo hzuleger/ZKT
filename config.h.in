@@ -206,6 +206,9 @@
 /* track DS record */
 #undef USE_DS_TRACKING
 
+/* track timestamp of included files */
+#undef USE_INCLUDE_FILE_TRACKING
+
 /* Use TREE data structure for dnssec-zkt */
 #undef USE_TREE
 

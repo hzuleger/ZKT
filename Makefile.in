@@ -31,7 +31,7 @@ SRC_ALL	=	dki.c misc.c domaincmp.c zconf.c log.c
 OBJ_ALL	=	$(SRC_ALL:.c=.o)
 
 SRC_SIG	=	zkt-signer.c zone.c ncparse.c rollover.c \
-		nscomm.c soaserial.c
+		nscomm.c soaserial.c zfparse.c
 OBJ_SIG	=	$(SRC_SIG:.c=.o)
 MAN_SIG	=	zkt-signer.8
 PROG_SIG=	zkt-signer

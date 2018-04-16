@@ -1,5 +1,13 @@
 zkt 1.1.5 -- 
 
+* func	recursive_file_mtime() function added by Sven Stickroth
+	This is useful if several zone files are included in a main zone.db
+	file to track a change of any of the input files.
+	It is not compiled in by default (use configure --enable-inc-file-tracking
+	to enable) because for large zone files this could be a time consuming process.
+	It is possible to add all included files to the local config parameter
+	"DependFiles" instead. (Use zkt-conf <zonefile> to get a list of files to be added).
+
 * misc	Log name of zone if KSK is expired
 	Thanks to Sven Stickroth
 
