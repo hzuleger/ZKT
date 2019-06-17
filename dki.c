@@ -253,8 +253,10 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 		flag = "-f KSK";
 
 	randfile[0] = '\0';
+#if defined(BIND_VERSION) && BIND_VERSION < 91304
 	if ( rfile && *rfile )
 		snprintf (randfile, sizeof (randfile), "-r %.250s ", rfile);
+#endif
 
 #if defined(BIND_VERSION) && BIND_VERSION < 90902
 	if ( algo == DK_ALGO_RSA || algo == DK_ALGO_RSASHA1 || algo == DK_ALGO_RSASHA256 || algo == DK_ALGO_RSASHA512 )

@@ -1,4 +1,7 @@
-zkt 1.1.5 -- 
+zkt 1.1.5 -- 17. Jun 2019
+
+* misc	Option -r of dnssec-keygen has been deprecated since 9.13 (or so)
+	Usage removed in dki_new()
 
 * func	recursive_file_mtime() function added by Sven Stickroth
 	This is useful if several zone files are included in a main zone.db
