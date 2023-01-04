@@ -36,11 +36,6 @@
 *****************************************************************/
 #ifndef LOG_H
 # define LOG_H
-# include <sys/types.h>
-# include <stdarg.h>
-# include <stdio.h>
-# include <time.h>
-# include <syslog.h>
 
 #ifndef LOG_FNAMETMPL
 # define	LOG_FNAMETMPL	"/zkt-%04d-%02d-%02dT%02d%02d%02dZ+log"

@@ -98,7 +98,9 @@ static	void    usage (char *mesg);
 int	main (int argc, char *argv[])
 {
 	int	c;
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 	int	opt_index;
+#endif
 	int	major = 0;
 	int	minor = 0;
 	int	revision = 0;
@@ -129,7 +131,9 @@ int	main (int argc, char *argv[])
 	confname = defconfname;
 
         opterr = 0;
+#if defined(HAVE_GETOPT_LONG) && HAVE_GETOPT_LONG
 	opt_index = 0;
+#endif
 
 	/* set current config version based on ZKT version */
 	switch ( sscanf (ZKT_VERSION, "%d.%d.%d", &major, &minor, &revision) )

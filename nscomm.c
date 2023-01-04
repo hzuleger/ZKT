@@ -35,6 +35,11 @@
 **
 *****************************************************************/
 # include <stdio.h>
+# include <assert.h>
+# include <unistd.h>
+# include <sys/types.h>
+# include <time.h>
+
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -42,6 +47,13 @@
 
 #include "config_zkt.h"
 #include "zconf.h"
+
+#include "dki.h"
+#include "zone.h"
+#include "log.h"
+#include "misc.h"
+#include "debug.h"
+
 #define extern
 #include "nscomm.h"
 #undef extern
@@ -102,7 +114,7 @@ int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)
 int	dist_and_reload (const zone_t *zp, int what)
 {
 	char	path[MAX_PATHSIZE+1];
-	char	cmdline[254+1];
+	char	cmdline[255+MAX_PATHSIZE+1];
 	char	zone[254+1];
 	char	str[254+1];
 	char	*view;

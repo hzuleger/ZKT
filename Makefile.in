@@ -12,7 +12,6 @@ CC	=	@CC@
 PROFILE =	# -pg
 OPTIM	=	# -O3 -DNDEBUG
 
-#CFLAGS	?=	@CFLAGS@ @DEFS@ -I@top_srcdir@
 CFLAGS	+=	-g @DEFS@ -I@top_srcdir@
 CFLAGS	+=	-Wall #-DDBG
 CFLAGS	+=	-Wmissing-prototypes

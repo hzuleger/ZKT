@@ -3,31 +3,15 @@
 #
 #	@(#) configure.ac 
 #
-#	2008-06-27	initial setup
-#	2008-06-29	add of BIND path checking
-#	2008-06-30	add of arg checkings
-#	2008-07-02	additional arg checkings
-#	2008-07-04	check for getopt_long() added
-#	2008-08-30	check for unsigned integer types
-#	2008-10-01	if BIND_UTIL_PATH check failed, use config_zkt.h setting as last resort
-#	2009-07-30	check for timegm() added
-#	2009-12-02	the tr command in bind_version= didn't work well under solaris
-#	2010-10-14	new option to specify BIND_UTIL_PATH on command line (thanks to Mans Nilsson)
-#			No build in default BIND_UTIL_PATH used anymore
-#	2015-07-15	new option for USE_DS_TRACKING added (thanks to Sven Strickroth)
-#	2018-03-20	new option for USE_INCLUDE_FILE added (thanks to Sven Strickroth)
-#
 
-dnl AC_PREREQ(2.59)
+AC_PREREQ([2.71])
 
 ### Package name and current version
-AC_INIT(ZKT, 1.1.5, Holger Zuleger hznet.de)
-dnl AC_REVISION($Revision: 1.397 $)
+AC_INIT(ZKT, 1.1.6, Holger Zuleger hznet.de)
 
 ### Files to test to check if src dir contains the package
 AC_CONFIG_SRCDIR([zkt-signer.c])
-AC_CONFIG_HEADER([config.h])
-
+AC_CONFIG_HEADERS([config.h])
 
 ### Checks for programs.
 AC_PROG_CC
@@ -178,31 +162,20 @@ AC_DEFINE_UNQUOTED(ZKT_COPYRIGHT, "(c) Feb 2005 - Mar 2018 Holger Zuleger hznet.
 
 ### Checks for header files.
 AC_HEADER_DIRENT
-AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h netdb.h stdlib.h getopt.h string.h strings.h sys/socket.h sys/time.h sys/types.h syslog.h unistd.h utime.h term.h curses.h])
-
+#AC_HEADER_STDC
+# AC_CHECK_HEADERS([fcntl.h netdb.h stdlib.h getopt.h string.h strings.h sys/socket.h sys/time.h sys/types.h syslog.h unistd.h utime.h term.h curses.h])
+AC_CHECK_HEADERS([fcntl.h strings.h sys/time.h syslog.h unistd.h utime.h term.h])
 
 ### Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_STRUCT_TM
 AC_TYPE_UID_T
 
 
 ### Checks for library functions.
-dnl AC_FUNC_MALLOC
-AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_ERROR_AT_LINE
+AC_FUNC_MALLOC
 AC_FUNC_MKTIME
-AC_FUNC_STAT
-AC_FUNC_STRFTIME
-AC_FUNC_UTIME_NULL
-AC_FUNC_VPRINTF
-# 2008-07-04 getopt_long added
-# 2009-07-30 timegm added
-AC_CHECK_FUNCS([getopt_long gettimeofday memset putenv socket strcasecmp strchr strdup strerror strncasecmp strrchr tzset utime getuid timegm])
-
+AC_CHECK_FUNCS([gettimeofday getopt_long memset putenv strcasecmp strchr strcspn strdup strerror strncasecmp strrchr strspn tzset utime])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

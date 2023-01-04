@@ -37,11 +37,6 @@
 #ifndef ZONE_H
 # define ZONE_H
 
-# include <sys/types.h>
-# include <stdio.h>
-# include <time.h>
-# include "dki.h"
-
 /* all we have to know about a zone */
 typedef	struct	Zone {
 	const	char	*zone;	/* domain name or label */

@@ -43,6 +43,8 @@
 # include <dirent.h>
 # include <errno.h>	
 # include <unistd.h>	
+# include <sys/types.h>
+# include <stdarg.h>
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -51,8 +53,8 @@
 # include "debug.h"
 
 # include "misc.h"
-# include "zone.h"
 # include "dki.h"
+# include "zone.h"
 # include "log.h"
 #define extern
 # include "rollover.h"

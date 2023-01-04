@@ -45,6 +45,7 @@
 # include <stdlib.h>
 # include <sys/types.h>
 # include <sys/time.h>
+# include <time.h>
 # include <sys/stat.h>
 # include <dirent.h>
 # include <assert.h>
@@ -63,7 +64,7 @@
 /*****************************************************************
 **	private (static) function declaration and definition
 *****************************************************************/
-static	char	dki_estr[255+1];
+static	char	dki_estr[MAX_PATHSIZE+MAX_FNAMESIZE+1];
 
 static	dki_t	*dki_alloc ()
 {

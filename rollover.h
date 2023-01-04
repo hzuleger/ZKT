@@ -36,13 +36,6 @@
 *****************************************************************/
 #ifndef ROLLOVER_H
 # define ROLLOVER_H
-# include <sys/types.h>
-# include <stdarg.h>
-# include <stdio.h>
-
-#ifndef ZCONF_H
-# include "zconf.h"
-#endif
 
 # define	OFFSET			((int) (2.5 * MINSEC))
 # define	PARENT_PROPAGATION	(5 * MINSEC)

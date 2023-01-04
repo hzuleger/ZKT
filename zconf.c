@@ -746,7 +746,7 @@ zconf_t	*dupconfig (const zconf_t *conf)
 *****************************************************************/
 zconf_t	*freeconfig (zconf_t *conf)
 {
-	if (conf != NULL);
+	if ( conf != NULL )
 		free (conf);
 
 	return (zconf_t *)NULL;

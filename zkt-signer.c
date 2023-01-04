@@ -45,6 +45,8 @@
 # include <errno.h>	
 # include <unistd.h>	
 # include <ctype.h>	
+# include <sys/types.h>
+# include <time.h>
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -57,10 +59,10 @@
 # include "debug.h"
 # include "misc.h"
 # include "ncparse.h"
+# include "dki.h"
+# include "zone.h"
 # include "nscomm.h"
 # include "soaserial.h"
-# include "zone.h"
-# include "dki.h"
 # include "rollover.h"
 # include "log.h"
 # include "zfparse.h"
@@ -852,7 +854,7 @@ static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl)
 static	int	sign_zone (const zone_t *zp)
 {
 	char	cmd[2047+1];
-	char	str[1023+1];
+	char	str[254+1];
 	char	rparam[254+1];
 	char	nsec3param[637+1];
 	char	keysetdir[254+1];

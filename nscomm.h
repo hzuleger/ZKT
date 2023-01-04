@@ -36,15 +36,6 @@
 *****************************************************************/
 #ifndef NSCOMM_H
 # define NSCOMM_H
-# include <assert.h>
-# include <unistd.h>
-# include <sys/types.h>
-
-# include "zconf.h"
-# include "zone.h"
-# include "log.h"
-# include "misc.h"
-# include "debug.h"
 
 extern	int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze);
 extern	int	reload_zone (const char *domain, const zconf_t *z);
