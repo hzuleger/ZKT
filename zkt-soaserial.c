@@ -76,7 +76,7 @@ static	char	*timestr (time_t sec)
 	int	h,	s;
 
 	t = localtime (&sec);
-	s = abs (t->tm_gmtoff);
+	s = abs ((int)t->tm_gmtoff);
 	h = t->tm_gmtoff / 3600;
 	s = t->tm_gmtoff % 3600;
 	snprintf (timestr, sizeof (timestr), "%s %2d %4d %02d:%02d:%02d %c%02d%02d", 
@@ -109,7 +109,7 @@ static	int	read_serial_fromfile (const char *fname, unsigned long *serial)
 {
 	FILE	*fp;
 	char	buf[4095+1];
-	char	master[254+1];
+	char	master[255+1];
 	int	c;
 	int	ret;
 	int	soafound;

@@ -14,7 +14,7 @@ OPTIM	=	# -O3 -DNDEBUG
 
 CFLAGS	+=	-g @DEFS@ -I@top_srcdir@
 CFLAGS	+=	-Wall #-DDBG
-CFLAGS	+=	-Wmissing-prototypes
+CFLAGS	+=	-Wmissing-prototypes -Wabsolute-value
 CFLAGS	+=	$(PROFILE) $(OPTIM)
 LDFLAGS	+=	$(PROFILE)
 LIBS	=	@LIBS@
