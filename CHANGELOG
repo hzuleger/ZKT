@@ -1,4 +1,8 @@
 
+* misc	Removed the Compiler warning -Wabsolute-value again, because it seems that
+	it is only available with newer gcc versions
+	Thanks to Othmar Truniger
+
 * misc	Added Compiler warning -Wabsolute-value, which found a long<->int
 	missmatch in zkt-soaerial using abs(int).
 	In the same source file "char master[]" was defined one byte off.
