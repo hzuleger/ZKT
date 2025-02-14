@@ -193,7 +193,8 @@ static	int	gettok (FILE *fp, char *val, size_t valsize)
 **	- For every master zone "func (directory, zone, filename)" will be called
 **
 *****************************************************************/
-int	parse_namedconf (const char *filename, const char *chroot_dir, char *dir, size_t dirsize, int (*func) ())
+// int	parse_namedconf (const char *filename, const char *chroot_dir, char *dir, size_t dirsize, int (*func) ())
+int	parse_namedconf (const char *filename, const char *chroot_dir, char *dir, size_t dirsize, int (*func) (const char *, const char *, const char *, const char *))
 {
 	FILE	*fp;
 	int	tok;

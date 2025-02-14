@@ -1,10 +1,17 @@
 
+* misc	Eliminate some compiler warnings
+
+* bug	Saltbits can be set to 0 (which is also the default value now).
+	Adding salt provides no practical benefits.
+	See the man page of dnssec-signzone and RFC 9276.
+	Thank you Vladislav Kurz
+
 * misc	Removed the Compiler warning -Wabsolute-value again, because it seems that
 	it is only available with newer gcc versions
 	Thanks to Othmar Truniger
 
 * misc	Added Compiler warning -Wabsolute-value, which found a long<->int
-	missmatch in zkt-soaerial using abs(int).
+	missmatch in zkt-soaserial using abs(int).
 	In the same source file "char master[]" was defined one byte off.
 	Thanks to Frank Behrens
 
@@ -14,9 +21,9 @@ zkt 1.1.6 -- 04. Jan 2023
 
 * bug	Jan Münnich found out that "-fcommon" is needed to compile ZKT
 	with gcc 10.
-	This is because of a double external definition caused by
+	This was because of multiple external definition caused by
 	including header files while defining "extern" as empty.
-	This is fixed now by eliminating includes within include files
+	Fixed now by eliminating includes within include files
 	so "-fcommon" is not needed.
 
 * misc	Increase of some string vars because of compiler warnings

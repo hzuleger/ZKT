@@ -77,7 +77,7 @@
 # define	ZSK_ALWAYS	0
 # define	ZSK_RANDOM	"/dev/urandom"
 # define	NSEC3		0		/* by default nsec3 is off */
-# define	SALTLEN		24		/* salt length in bits (resolution is 4 bits)*/
+# define	SALTLEN		0		/* salt length in bits (resolution is 4 bits)*/
 
 #if 0
 # define	ZONEDIR		"."

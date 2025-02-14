@@ -1014,11 +1014,17 @@ int	gensalt (char *salt, size_t saltsize, int saltbits, unsigned int seed)
 	if ( saltlen+1 > saltsize )
 		return 0;
 
-	for ( i = 0; i < saltlen; i++ )
+	i = 0;
+	if ( saltlen <= 0 )
+		salt[i++] = '-';
+	else
 	{
-		hex = random () % 16;
-		assert ( hex >= 0 && hex < 16 );
-		salt[i] = hexstr[hex];
+		while ( i < saltlen )
+		{
+			hex = random () % 16;
+			assert ( hex >= 0 && hex < 16 );
+			salt[i++] = hexstr[hex];
+		}
 	}
 	salt[i] = '\0';
 
