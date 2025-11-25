@@ -7,7 +7,7 @@
 AC_PREREQ([2.71])
 
 ### Package name and current version
-AC_INIT(ZKT, 1.1.6, Holger Zuleger hznet.de)
+AC_INIT(ZKT, 1.1.7, Holger Zuleger hznet.de)
 
 ### Files to test to check if src dir contains the package
 AC_CONFIG_SRCDIR([zkt-signer.c])
@@ -38,6 +38,18 @@ else
         	AC_MSG_ERROR([*** 'could not determine BIND utility path, please use --enable-bind_util_path= ' to set it manually ***])
 	fi
 fi
+### find out the path to BIND rndc command
+AC_PATH_PROG([RNDC_PROG], rndc)
+AC_MSG_NOTICE([BIND utility $RNDC_PROG found])
+if test -n "$RNDC_PROG" 
+then
+	bind_rndc_path=`dirname "$RNDC_PROG"`
+	AC_MSG_NOTICE([BIND rndc path set to $bind_rndc_path.])
+else
+	bind_rndc_path="$bind_util_path"
+	AC_MSG_NOTICE([BIND rndc path automatically set to $bind_util_path.])
+fi
+
 ### By now, we have a path. We'll use it.  
 # define BIND_UTIL_PATH in config.h.in
 AC_DEFINE_UNQUOTED(BIND_UTIL_PATH, "$bind_util_path/", Path to BIND utilities)

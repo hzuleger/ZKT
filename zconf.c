@@ -617,7 +617,7 @@ void	setconfigversion (int version)
 
 const char	*timeint2str (unsigned long val)
 {
-	static	char	str[20+1];
+	static	char	str[21+1];
 
 	if ( val == 0 )
 		snprintf (str, sizeof (str), "Unset");

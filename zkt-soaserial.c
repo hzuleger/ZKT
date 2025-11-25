@@ -63,7 +63,7 @@ static	void	usage (const char *msg);
 static	char	*timestr (time_t sec)
 {
 	struct	tm	*t;
-	static	char	timestr[31+1];	/* 27+1 should be enough */
+	static	char	timestr[33+1];	/* 27+1 should be enough but compiler insist on 34 */
 
 #if defined(HAVE_STRFTIME) && HAVE_STRFTIME
 	t = localtime (&sec);
