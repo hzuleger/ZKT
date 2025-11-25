@@ -120,7 +120,10 @@
 #endif
 # define	SIGNCMD		BIND_UTIL_PATH "dnssec-signzone"
 # define	KEYGENCMD	BIND_UTIL_PATH "dnssec-keygen"
-# define	RELOADCMD	BIND_UTIL_PATH "rndc"
+#ifndef BIND_RNDC_PATH
+# define BIND_RNDC_PATH	BIND_UTIL_PATH
+#endif
+# define	RELOADCMD	BIND_RNDC_PATH "rndc"
 
 /* macros */
 # define	isflistdelim(c)	( (c) == ':' || (c) == ',' || isspace (c) )

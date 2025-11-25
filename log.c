@@ -410,9 +410,9 @@ void	lg_mesg (int priority, char *fmt, ...)
 #if defined (LOG_WITH_TIMESTAMP) && LOG_WITH_TIMESTAMP
 		gettimeofday (&tv, NULL);
 		t = localtime ((time_t *) &tv.tv_sec);
-		fprintf (lg_fp, "%04d-%02d-%02d ",
+		fprintf (lg_fp, "%04u-%02u-%02u ",
 			t->tm_year+1900, t->tm_mon+1, t->tm_mday);
-		fprintf (lg_fp, "%02d:%02d:%02d.%03d: ",
+		fprintf (lg_fp, "%02d:%02u:%02u.%03lu: ",
 			t->tm_hour, t->tm_min, t->tm_sec, tv.tv_usec / 1000);
 #endif
 #if defined (LOG_WITH_PROGNAME) && LOG_WITH_PROGNAME
