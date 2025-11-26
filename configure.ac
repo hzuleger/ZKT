@@ -38,21 +38,34 @@ else
         	AC_MSG_ERROR([*** 'could not determine BIND utility path, please use --enable-bind_util_path= ' to set it manually ***])
 	fi
 fi
+
 ### find out the path to BIND rndc command
-AC_PATH_PROG([RNDC_PROG], rndc)
-AC_MSG_NOTICE([BIND utility $RNDC_PROG found])
-if test -n "$RNDC_PROG" 
+AC_ARG_ENABLE([bind_rndc_path], AS_HELP_STRING(	[--enable-bind_rndc_path=PATH], [Define path to BINDs rndc command]), [bind_rndc_path=$enableval])
+if test -n "$bind_rndc_path"
 then
-	bind_rndc_path=`dirname "$RNDC_PROG"`
-	AC_MSG_NOTICE([BIND rndc path set to $bind_rndc_path.])
+	if test -x "$bind_rndc_path/rndc"
+	then
+		AC_MSG_NOTICE([BIND rndc path successfully set to $bind_rndc_path.])
+		RNDC_PROG=$bind_rndc_path/rndc
+	else
+        	AC_MSG_ERROR([*** 'BIND rndc not found in $bind_rndc_path, please use --enable-bind_rndc_path= to set it manually' ***])
+	fi
 else
-	bind_rndc_path="$bind_util_path"
-	AC_MSG_NOTICE([BIND rndc path automatically set to $bind_util_path.])
+	AC_PATH_PROG([RNDC_PROG], rndc)
+	AC_MSG_NOTICE([BIND rndc $RNDC_PROG found])
+	if test -n "$RNDC_PROG"
+	then
+		bind_rndc_path=`dirname "$RNDC_PROG"`
+		AC_MSG_NOTICE([BIND rndc path automatically set to $bind_util_path.])
+	else
+        	AC_MSG_ERROR([*** 'could not determine BIND rndc path, please use --enable-bind_rndc_path= ' to set it manually ***])
+	fi
 fi
 
 ### By now, we have a path. We'll use it.  
 # define BIND_UTIL_PATH in config.h.in
 AC_DEFINE_UNQUOTED(BIND_UTIL_PATH, "$bind_util_path/", Path to BIND utilities)
+AC_DEFINE_UNQUOTED(BIND_RNDC_PATH, "$bind_rndc_path/", Path to BIND rndc command)
 
 # define BIND_VERSION in config.h.in
 bind_version=`$SIGNZONE_PROG 2>&1 |  awk -F: '/^Version:/ { split ($2, v, "."); printf ("%2d%02d%02d\n", atoi (v[[1]]), atoi (v[[2]]), atoi (v[[3]])); };'`
