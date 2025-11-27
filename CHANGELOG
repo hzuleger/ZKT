@@ -1,4 +1,6 @@
-zkt 1.1.7 -- 25. Nov 2025
+zkt 1.1.7 -- 27. Nov 2025
+
+* bug	Fixed configure info message related to rndc path setting
 
 * bug	Fixed some compiler warnings.
 	Different path for rndc command added.

@@ -56,7 +56,7 @@ else
 	if test -n "$RNDC_PROG"
 	then
 		bind_rndc_path=`dirname "$RNDC_PROG"`
-		AC_MSG_NOTICE([BIND rndc path automatically set to $bind_util_path.])
+		AC_MSG_NOTICE([BIND rndc path automatically set to $bind_rndc_path.])
 	else
         	AC_MSG_ERROR([*** 'could not determine BIND rndc path, please use --enable-bind_rndc_path= ' to set it manually ***])
 	fi
